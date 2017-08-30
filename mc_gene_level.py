@@ -30,10 +30,10 @@ def mc_gene_level(samples,
     
     outfilename = os.path.join(outdir,sample+"_mCH_genebody.txt")
     if os.path.isfile(outfilename):
-        print "File exists "+outfilename+", skipping..."
-        continue
+        print("File exists "+outfilename+", skipping...")
+        # continue
 
-    outfile_CH = open(, "w")
+    outfile_CH = open(outdir+'temp', "w")
     outfile_CH.write("id\tname\tchr\tstart\tend\tstrand\tmc\tc\n")
 
     for i,row in df_gtf.iterrows():
@@ -55,6 +55,28 @@ def mc_gene_level(samples,
         p.close()
         p.join()
 
-def mc_gene_level(samples,
-    genebody='/cndd/projects/Public_Datasets/references/hg19/transcriptome/gencode.v19.annotation_genes_mypy.tsv',
-    outdir="./genebody"):
+
+def create_parser():
+    """
+
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("sample", help="sample name")
+    parser.add_argument("--genebody", help="file of gene body")
+    parser.add_argument("--outdir", help="output directory")
+    return parser
+
+
+if __name__ == '__main__':
+    parser = create_parser()
+    args = parser.parse_args()
+
+    if not args.genebody:
+        args.genebody = '/cndd/projects/Public_Datasets/references/hg19/transcriptome/gencode.v19.annotation_genes_mypy.tsv'
+
+    if not args.outdir:
+        args.outdir = './genebody' 
+
+    mc_gene_level(args.sample, genebody=args.genebody, outdir=args.outdir)
+
+
