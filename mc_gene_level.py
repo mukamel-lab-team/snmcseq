@@ -42,15 +42,24 @@ def mc_gene_level(sample,
     outfile_CH = open(outfilename, "w")
     outfile_CH.write("id\tname\tchr\tstart\tend\tstrand\tmc\tc\n")
 
-    for i,row in df_gtf.iterrows():
+    for group in df_gtf.groupby(['chr']):
+        chrom, df = group
+        
+        allc = tabix.open(sample+'_bismark/allc_'+sample_basename+'_'+str(chrom)+'.tsv.gz')
+        for i, row in df.iterrows():
+            records = allc.query(row['chr'], row['start'], row['end'])
+            mc, c = snmcseq_utils.tabix_summary(records, context="CH", cap=2)
+            outfile_CH.write(row['gene_id'] + "\t" + row['name'] + "\t" + row['chr'] + "\t" + str(row['start']) + "\t" + 
+                 str(row['end']) + "\t" + row['strand'] + "\t" + str(mc) + "\t" + str(c) + "\n")
 
-        allc = tabix.open(sample+'_bismark/allc_'+sample_basename+'_'+row['chr']+'.tsv.gz')
+    # for i,row in df_gtf.iterrows():
 
-        # Gene body CH
-        records = allc.query(row['chr'], row['start'], row['end'])
-        mc, c = snmcseq_utils.tabix_summary(records, context="CH", cap=2)
-        outfile_CH.write(row['gene_id'] + "\t" + row['name'] + "\t" + row['chr'] + "\t" + str(row['start']) + "\t" + 
-           str(row['end']) + "\t" + row['strand'] + "\t" + str(mc) + "\t" + str(c) + "\n")
+    #     allc = tabix.open(sample+'_bismark/allc_'+sample_basename+'_'+row['chr']+'.tsv.gz')
+    #     # Gene body CH
+    #     records = allc.query(row['chr'], row['start'], row['end'])
+    #     mc, c = snmcseq_utils.tabix_summary(records, context="CH", cap=2)
+    #     outfile_CH.write(row['gene_id'] + "\t" + row['name'] + "\t" + row['chr'] + "\t" + str(row['start']) + "\t" + 
+    #        str(row['end']) + "\t" + row['strand'] + "\t" + str(mc) + "\t" + str(c) + "\n")
 
     return 0
 
