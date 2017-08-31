@@ -20,6 +20,9 @@ def mc_gene_level(sample,
     genebody = BED file with gene body or other annotation features
     """
 
+    if sample.endswith('_bismark'):
+        sample = sample[:-8]
+
     chromosomes = snmcseq_utils.get_human_chromosomes()
 
     df_gtf = pd.read_table(genebody)
