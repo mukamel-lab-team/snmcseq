@@ -4,15 +4,15 @@
 #
 
 import pandas as pd
-# import mypy
 import tabix
 import multiprocessing as mp
 import numpy as np
 import os
-import snmcseq_utils as mypy
 import argparse
 
-def mc_gene_level(samples,
+import snmcseq_utils
+
+def mc_gene_level(sample,
     genebody='/cndd/projects/Public_Datasets/references/hg19/transcriptome/gencode.v19.annotation_genes_mypy.tsv',
     outdir="./genebody"):
     """
@@ -20,40 +20,43 @@ def mc_gene_level(samples,
     genebody = BED file with gene body or other annotation features
     """
 
-    chromosomes = mypy.get_human_chromosomes()
+    chromosomes = snmcseq_utils.get_human_chromosomes()
 
-    df_gtf = pd.read_csv(genebody, sep="\t")
+    df_gtf = pd.read_table(genebody)
     df_gtf.chr = df_gtf.chr.apply(lambda x: x[3:])
     df_gtf = df_gtf.loc[df_gtf.chr.isin(chromosomes)]
 
     print("mc_gene_level processing: "+sample)
-    
-    outfilename = os.path.join(outdir,sample+"_mCH_genebody.txt")
-    if os.path.isfile(outfilename):
-        print("File exists "+outfilename+", skipping...")
-        # continue
 
-    outfile_CH = open(outdir+'temp', "w")
+    sample_basename = os.path.basename(sample)
+    outfilename = os.path.join(outdir, sample_basename+"_mch_genebody.txt")
+
+    # if os.path.isfile(outfilename):
+    #     print("File exists "+outfilename+", skipping...")
+    #     # continue
+    # else:
+
+    outfile_CH = open(outfilename, "w")
     outfile_CH.write("id\tname\tchr\tstart\tend\tstrand\tmc\tc\n")
 
     for i,row in df_gtf.iterrows():
 
-        allc = tabix.open(sample+'_bismark/allc_'+sample+'_'+row['chr']+'.tsv.gz')
+        allc = tabix.open(sample+'_bismark/allc_'+sample_basename+'_'+row['chr']+'.tsv.gz')
 
         # Gene body CH
         records = allc.query(row['chr'], row['start'], row['end'])
-        mc, c = mypy.tabix_summary(records, context="CH", cap=2)
+        mc, c = snmcseq_utils.tabix_summary(records, context="CH", cap=2)
         outfile_CH.write(row['gene_id'] + "\t" + row['name'] + "\t" + row['chr'] + "\t" + str(row['start']) + "\t" + 
            str(row['end']) + "\t" + row['strand'] + "\t" + str(mc) + "\t" + str(c) + "\n")
 
-        return True
+    return 0 
         
-        procs = min(len(samples), 16)
-        p = mp.Pool(processes=procs)
-        split_samples = np.array_split(samples,procs)
-        pool_results = p.map(process, split_samples)
-        p.close()
-        p.join()
+        # procs = min(len(samples), 16)
+        # p = mp.Pool(processes=procs)
+        # split_samples = np.array_split(samples,procs)
+        # pool_results = p.map(process, split_samples)
+        # p.close()
+        # p.join()
 
 
 def create_parser():
@@ -75,7 +78,7 @@ if __name__ == '__main__':
         args.genebody = '/cndd/projects/Public_Datasets/references/hg19/transcriptome/gencode.v19.annotation_genes_mypy.tsv'
 
     if not args.outdir:
-        args.outdir = './genebody' 
+        args.outdir = './genebody'
 
     mc_gene_level(args.sample, genebody=args.genebody, outdir=args.outdir)
 
