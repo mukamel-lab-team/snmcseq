@@ -3,7 +3,7 @@
 # Directory containing allc files for each sample
 input_dir=$1 
 outdir=$2
-nproc=8
+nproc=16
 
 genebody=/cndd/projects/Public_Datasets/references/hg19/transcriptome/gencode.v19.annotation_genes_mypy.tsv
 
@@ -12,9 +12,9 @@ genebody=/cndd/projects/Public_Datasets/references/hg19/transcriptome/gencode.v1
 # sample=`basename $f`;
 # sample=${sample%_bismark}
 #
- echo "Processing $sample"
+# echo "Processing $sample"
 
- # Run tabix indexing if not done already. Use maximum of nproc processors
+# Run tabix indexing if not done already. Use maximum of nproc processors
 # ls $f/allc_*.tsv.gz | xargs --max-procs=$nproc -I{} allc_tabix {}
 
  # Step 1: gene-body methylation

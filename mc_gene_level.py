@@ -9,6 +9,7 @@ import multiprocessing as mp
 import numpy as np
 import os
 import argparse
+import time
 
 import snmcseq_utils
 
@@ -34,10 +35,9 @@ def mc_gene_level(sample,
     sample_basename = os.path.basename(sample)
     outfilename = os.path.join(outdir, sample_basename+"_mch_genebody.txt")
 
-    # if os.path.isfile(outfilename):
-    #     print("File exists "+outfilename+", skipping...")
-    #     # continue
-    # else:
+    if os.path.isfile(outfilename):
+         print("File exists "+outfilename+", skipping...")
+         return 0
 
     outfile_CH = open(outfilename, "w")
     outfile_CH.write("id\tname\tchr\tstart\tend\tstrand\tmc\tc\n")
@@ -52,8 +52,8 @@ def mc_gene_level(sample,
         outfile_CH.write(row['gene_id'] + "\t" + row['name'] + "\t" + row['chr'] + "\t" + str(row['start']) + "\t" + 
            str(row['end']) + "\t" + row['strand'] + "\t" + str(mc) + "\t" + str(c) + "\n")
 
-    return 0 
-        
+    return 0
+
         # procs = min(len(samples), 16)
         # p = mp.Pool(processes=procs)
         # split_samples = np.array_split(samples,procs)
@@ -83,6 +83,9 @@ if __name__ == '__main__':
     if not args.outdir:
         args.outdir = './genebody'
 
+    ti = time.time()
     mc_gene_level(args.sample, genebody=args.genebody, outdir=args.outdir)
+    tf = time.time()
+    print("time: %s sec" % (tf-ti))
 
 
