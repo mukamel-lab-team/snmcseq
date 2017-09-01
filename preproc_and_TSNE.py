@@ -1,4 +1,5 @@
-import mypy
+#!/usr/bin/env python3
+
 import numpy as np
 import pandas as pd
 from collections import OrderedDict
@@ -11,6 +12,26 @@ import numpy as np
 import sys, getopt
 import argparse
 import warnings
+
+# import mypy
+
+def get_sample_names(df):
+	"""
+	"""
+	col_names = df.columns.tolist()
+
+	samples = []
+	for col_name in col_names:
+		if col_name.endswith('_c'):
+			col_name = col_name[:-len('_c')] 
+		elif col_name.endswith('_mc'):
+			col_name = col_name[:-len('_mc')]
+		else:
+			raise
+		samples.append(col_name)
+
+	sample_names = list(set(samples))
+	return sample_names
 
 
 warnings.filterwarnings("ignore")
@@ -26,22 +47,22 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 parser.add_argument("-i", "--input", help="input file name. Must have columns named as sample1_mc, sample1_c, sample2_mc, etc.", 
                     required=True)
 parser.add_argument("-o", "--output", help="output file name", required=True)
-parser.add_argument("-s", "--species", help="mouse or human", default="mouse")
-parser.add_argument("-n", "--normalize", help="normalize the data before running PCA and TSNE", default=True)
+# parser.add_argument("-s", "--species", help="mouse or human", default="mouse")
+parser.add_argument("-n", "--normalize", help="normalize the data before running PCA and TSNE", default=False)
 parser.add_argument("-p", "--perplexity", type=int, help="TSNE perplexity", default=25)
 parser.add_argument("-d", "--seed", type=int, help="TSNE seed", default=1)
 parser.add_argument("-b", "--base_call_cutoff", type=int, help="minimum base calls for a bin to not be imputed.", default=100)
-parser.add_argument("-m", "--mdata", help="path to metdata file", required=True)
+# parser.add_argument("-m", "--mdata", help="path to metdata file", required=False)
 args = parser.parse_args()
 
-species = args.species
+# species = args.species
 normalize = args.normalize
 perplexity = args.perplexity
 infile = args.input
 outfile = args.output
 base_call_cutoff = args.base_call_cutoff
 seed = args.seed
-mdata = args.mdata
+# mdata = args.mdata
 
 
 
@@ -52,12 +73,14 @@ mdata = args.mdata
 print("Loading data.")
 
 
+
 # Load input and metadata
 df_gene_level_mCH = pd.read_csv(infile, sep="\t")
-metadata = pd.read_csv(mdata, sep="\t")
+# metadata = pd.read_csv(mdata, sep="\t")
 
 df = df_gene_level_mCH
-samples = df.samples.tolist()
+# samples = df.samples.tolist()
+samples = get_sample_names(df)
 
 print("Computing mCH levels.")
 df = df.loc[(df.filter(regex='_c') > base_call_cutoff).sum(axis=1) >= .995*len(samples)]
@@ -75,11 +98,11 @@ means = df.mean(axis=1)
 fill_value = pd.DataFrame({col: means for col in df.columns})
 df.fillna(fill_value, inplace=True)
 
-if normalize:
-    print('Normalizing.')
-    for i,row in metadata.iterrows():
-        samp = row['Sample']
-        df[samp+'_mcc'] = (df[samp+'_mcc'] / (row['mCH/CH']+.01))
+# if normalize:
+#     print('Normalizing.')
+#     for i,row in metadata.iterrows():
+#         samp = row['Sample']
+#         df[samp+'_mcc'] = (df[samp+'_mcc'] / (row['mCH/CH']+.01))
 
 
 
