@@ -62,7 +62,8 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 parser.add_argument("-i", "--input", help="input file name. Columns should be named sample1_mcc, sample2_mcc, etc." +
                     " All additional columns will be removed.", required=True, type=str)
 parser.add_argument("-o", "--output", help="output file name. Output data are ", required=True, type=str)
-parser.add_argument("-v", "--min_var", help="required increase in average correlation of at least one of the new clusters over the clusters together required to keep the split.", 
+parser.add_argument("-v", "--min_var", 
+                    help="required increase in average correlation of at least one of the new clusters over the clusters together required to keep the split.", 
                     default=.15, type=float)
 parser.add_argument("-n", "--num_genes", help="number of top-most variable bins or genes used at each iteration to compute the correlation matrix", default=500, type=int)
 parser.add_argument("-m", "--min_size", help="minimum cluster size that will be considered for splitting. Set to -1 to turn off this filter.", default=50, type=int)

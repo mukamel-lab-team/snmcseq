@@ -86,6 +86,9 @@ def bin_allc(sample, path='.', bin_size=10000, chromosomes=None, outpath = '.', 
             print("bin_allc: " + fname + " does not exist.")
             return
 
+        if not os.path.exists(outpath):
+            os.makedirs(outpath)
+            
         output_filename = outpath + "/binc_" + sample + "_" + str(bin_size) + "_" + chromosome + ".tsv"
         if os.path.isfile(output_filename):
             print("File exists "+output_filename+", skipping...")
@@ -129,7 +132,7 @@ def create_parser():
     parser.add_argument('-i', '--input', help='input directory containing allc files', required=True)
     parser.add_argument('-o', '--output', help='directory storing output files', required=True)
     parser.add_argument('-s', '--species', help='mouse or human', default='mouse')
-    parser.add_argument('-bz', '--bin_size', help='bin size', default=100000, type=int)
+    parser.add_argument('-bz', '--bin_size', help='bin size', default=10000, type=int)
     parser.add_argument('-c', '--compressed', help='compressed or not', action='store_true') 
 
     return parser
