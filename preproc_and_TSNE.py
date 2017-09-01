@@ -83,6 +83,8 @@ df = df_gene_level_mCH
 samples = get_sample_names(df)
 
 print("Computing mCH levels.")
+
+# Keep only bins that have sufficient coverage in at least 99.5% of all cells
 df = df.loc[(df.filter(regex='_c') > base_call_cutoff).sum(axis=1) >= .995*len(samples)]
 df_mc = df[[x+'_mc' for x in samples]]
 df_c = df[[x+'_c' for x in samples]]
@@ -92,6 +94,7 @@ df_mc.columns = [x+'_mcc' for x in samples]
 df = df_mc/df_c
 
 print('Imputing data.')
+# Impute missing values
 df = df.loc[df.count(axis=1) > 0]
 df.reset_index(inplace=True, drop=True)
 means = df.mean(axis=1)
