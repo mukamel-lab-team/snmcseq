@@ -1,4 +1,5 @@
 # Library with utilities from Chris Keown's "mypy"
+import pandas as pd
 
 def get_human_chromosomes(include_x=True):
     chromosomes = [str(x) for x in range(1,23)]
@@ -56,3 +57,19 @@ def get_mCH_contexts():
         for base2 in ['A','C','G','T']:
             contexts.append('C' + base1 + base2)
     return contexts
+
+
+def read_allc(fname, position_as_index=True, compressed=False):
+    if compressed:
+        os.system("bgzip -cd " + fname + ".gz > " + fname)
+
+    if position_as_index == True:
+        df = pd.read_csv(fname, sep="\t", index_col=1, skiprows=1,
+                         names=['chr','pos','strand','context','mc','c','methylated'])
+    else:
+        df = pd.read_csv(fname, sep="\t", skiprows=1,
+                         names=['chr','pos','strand','context','mc','c','methylated'])
+
+    if compressed:
+        os.remove(fname)
+    return df
