@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# Script to combine a set of allc tables
+#
+# Eran Mukamel, emukamel@ucsd.edu
+
+prefix=$1
+
+# Output directory where the allc tables will be saved
+outdir=allc_${prefix}_combined
+mkdir -p $outdir
+
+# Max number of simultaneous processes
+maxprocs=16
+
+# Temp directory
+mytmpdir=`mktemp -d`
+mytmpdir2=`mktemp -d`
+
+echo "Storing temp files in $mytmpdir and $mytmpdir2"
+
+# Split all files
+# find $infiles -name allc_*.tsv -print | xargs -I{} --max-procs=$maxprocs mysplit {}
+ls allc_*.tsv* | xargs -I{} --max-procs=$maxprocs allc_combine_mysplit.sh {} $mytmpdir
+
+echo "**** DONE splitting allc files"
+ls $mytmpdir/*_bin* | awk '{split($1, x, "_chr*"); print x[2]}' | sort | uniq | \
+  xargs --max-procs=$maxprocs -I{} allc_combine_mycombine.sh $mytmpdir/*{} $prefix "chr"{} $mytmpdir2
+
+for f in $mytmpdir2/allc_${prefix}_*; do
+ x=`basename $f`
+ x=${x%_chr*}".tsv"
+ cat $f >> $outdir/$x
+done
+
+echo "**** DONE combining allc files"
+
+# Clean up:
+rm -r $mytmpdir $mytmpdir2
+echo "**** Cleaned up temp files"
