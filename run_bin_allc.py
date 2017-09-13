@@ -60,7 +60,7 @@ if __name__ == '__main__':
 	# if args.binallc:
 	# 	pipe_bin_allc()
 
-	ALLC_DIR = '/cndd/Public_Datasets/single_cell_methylome/allc_singlecells/hs_MB_EB'
-	OUT_DIR = '/cndd/Public_Datasets/single_cell_methylome/binc/human_MB_EB' 
+	ALLC_DIR = '/cndd/Public_Datasets/single_cell_methylome/allc_singlecells/hs_20161229'
+	OUT_DIR = '/cndd/Public_Datasets/single_cell_methylome/binc/human_v1' 
 
 	run_bin_allc(ALLC_DIR, nprocs=16)

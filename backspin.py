@@ -59,16 +59,28 @@ import random
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                  description="Input is the methylation level in each cell for each bin. Scripts outputs a file where each line is a comma-separated list of cells in the same cluster.")
-parser.add_argument("-i", "--input", help="input file name. Columns should be named sample1_mcc, sample2_mcc, etc." +
-                    " All additional columns will be removed.", required=True, type=str)
-parser.add_argument("-o", "--output", help="output file name. Output data are ", required=True, type=str)
+parser.add_argument("-i", "--input", 
+    help="input file name. Columns should be named sample1_mcc, sample2_mcc, etc." +
+    " All additional columns will be removed.", 
+    required=True, type=str)
+parser.add_argument("-o", "--output",
+    help="output file name. Output data are ",
+    required=True, type=str)
 parser.add_argument("-v", "--min_var", 
-                    help="required increase in average correlation of at least one of the new clusters over the clusters together required to keep the split.", 
-                    default=.15, type=float)
-parser.add_argument("-n", "--num_genes", help="number of top-most variable bins or genes used at each iteration to compute the correlation matrix", default=500, type=int)
-parser.add_argument("-m", "--min_size", help="minimum cluster size that will be considered for splitting. Set to -1 to turn off this filter.", default=50, type=int)
-parser.add_argument("-a", "--axes", help="apply the spin algorithm the cells (1), genes (0), or both (2)", default=1, type=int)
-parser.add_argument("-d", "--seed", help="Seed for shuffling the cell order, which backSPIN is sensitive to", default=1, type=int)
+    help="required increase in average correlation of at least one of the new clusters over the clusters together required to keep the split.", 
+    default=.15, type=float)
+parser.add_argument("-n", "--num_genes", 
+    help="number of top-most variable bins or genes used at each iteration to compute the correlation matrix",
+    default=500, type=int)
+parser.add_argument("-m", "--min_size", 
+    help="minimum cluster size that will be considered for splitting. Set to -1 to turn off this filter.",
+    default=50, type=int)
+parser.add_argument("-a", "--axes", 
+    help="apply the spin algorithm the cells (1), genes (0), or both (2)",
+    default=1, type=int)
+parser.add_argument("-d", "--seed", 
+    help="Seed for shuffling the cell order, which backSPIN is sensitive to",
+    default=1, type=int)
 args = parser.parse_args()
 
 
@@ -819,7 +831,7 @@ def spinit(df, num_genes, var_increase, min_cluster_size):
     # Correlation matrix
     corrmat = df.corr().values
 
-    # Find the maximal cutpoint
+    # Find the maximal cutpoin
     scores = np.zeros(df.shape[1])-1 
     for i in range(2, df.shape[1]-2):
         scores[i] = (sum(corrmat[:i,:i]) + sum(corrmat[i:,i:])) / float(i**2 + (df.shape[1]-i)**2)

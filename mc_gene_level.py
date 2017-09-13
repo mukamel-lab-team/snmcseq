@@ -52,6 +52,7 @@ def mc_gene_level(sample,
             outfile_CH.write(row['gene_id'] + "\t" + row['name'] + "\t" + row['chr'] + "\t" + str(row['start']) + "\t" + 
                  str(row['end']) + "\t" + row['strand'] + "\t" + str(mc) + "\t" + str(c) + "\n")
 
+
     # for i,row in df_gtf.iterrows():
 
     #     allc = tabix.open(sample+'_bismark/allc_'+sample_basename+'_'+row['chr']+'.tsv.gz')
@@ -61,6 +62,7 @@ def mc_gene_level(sample,
     #     outfile_CH.write(row['gene_id'] + "\t" + row['name'] + "\t" + row['chr'] + "\t" + str(row['start']) + "\t" + 
     #        str(row['end']) + "\t" + row['strand'] + "\t" + str(mc) + "\t" + str(c) + "\n")
 
+    outfile_CH.close()
     return 0
 
         # procs = min(len(samples), 16)
