@@ -47,6 +47,13 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 
 parser.add_argument("-i", "--input", help="input file name. Must have columns named as sample1_mc, sample1_c, sample2_mc, etc.", 
                     required=True)
+# added 10/31/2017 ---
+parser.add_argument("-ex", "--ex_cols", help="number of the first few columns to remove", 
+                    type=int, required=True)
+parser.add_argument("-cx", "--context", help="CG or CH", 
+                    required=True)
+# end of the adding --- 
+
 parser.add_argument("-o", "--output", help="output file name", required=True)
 # parser.add_argument("-s", "--species", help="mouse or human", default="mouse")
 parser.add_argument("-n", "--normalize", help="normalize the data before running PCA and TSNE", action='store_true')
@@ -64,8 +71,8 @@ outfile = args.output
 base_call_cutoff = args.base_call_cutoff
 # seed = args.seed
 mdata = args.mdata
-
-
+ex_cols = args.ex_cols
+context = args.context
 
 
 ##################################
@@ -80,16 +87,16 @@ df_gene_level_mCH = pd.read_csv(infile, sep="\t")
 metadata = pd.read_csv(mdata, sep="\t")
 
 # df = df_gene_level_mCH
-df = df_gene_level_mCH.ix[:, 2:] ##### remove chrom and bin position
-# df = df.drop(['Pool_1924_AD008_indexed_R1_mc', 'Pool_1924_AD008_indexed_R1_c'], axis=1)### remove the outlier
+df = df_gene_level_mCH.iloc[:, ex_cols:] ##### remove chrom and bin position
 
 # samples = df.samples.tolist()
 samples = get_sample_names(df)
 
-print("Computing mCH levels.")
+print("Computing m%s levels." % context)
 
 # Keep only bins that have sufficient coverage in at least 99.5% of all cells
-df = df.loc[(df.filter(regex='_c') > base_call_cutoff).sum(axis=1) >= .995*len(samples)]
+df = df.loc[(df.filter(regex='_c$') > base_call_cutoff).sum(axis=1) >= .995*len(samples)]
+print("Matrix size after pruning... "+ str(df.shape))
 df_mc = df[[x+'_mc' for x in samples]]
 df_c = df[[x+'_c' for x in samples]]
 df_c[df_c < base_call_cutoff] = np.nan
@@ -123,6 +130,11 @@ if normalize:
     for i,row in metadata.iterrows():
         samp = row['Sample']
         if samp+'_mcc' in df.columns:  # fangming edit 09/04/2017
-        	df[samp+'_mcc'] = (df[samp+'_mcc'] / (row['mCH/CH']+.01))
+            if context == 'CH':
+                df[samp+'_mcc'] = (df[samp+'_mcc'] / (row['mCH/CH']+.01))
+            elif context == 'CG':
+                df[samp+'_mcc'] = (df[samp+'_mcc'] / (row['mCG/CG']+.01))
+            else:
+                raise ValueError('Wrong context: %s' % context)
 
 df.to_csv(outfile, sep='\t', header=True, index=False)

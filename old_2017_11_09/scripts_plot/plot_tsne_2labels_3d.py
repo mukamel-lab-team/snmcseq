@@ -8,6 +8,7 @@ import pandas as pd
 import argparse
 import glob
 import time
+from mpl_toolkits.mplot3d import Axes3D
 
 def plot_tsne_label_joint(input_fname,
 				ref_fname, label_col, merge_col, 
@@ -27,19 +28,29 @@ def plot_tsne_label_joint(input_fname,
 	df_merged = pd.merge(df, df_ref, left_on='cells', right_on=merge_col, how='left', sort=True)
 	df_merged['biosample'] = [int(sample.split('_')[0].strip('hv')) 
 							for sample in df_merged['cells'].tolist()]
-
-	fig, ax = plt.subplots()
-	fig.set_size_inches(11, h=8.5)
+	fig = plt.figure()
+	ax = fig.add_subplot(111, projection='3d')
+	# fig.set_size_inches(11, h=8.5)
 	shapes = ['o', 'x']
 	for (i, (label, df_sub)) in enumerate(df_merged.groupby(label_col)):
 		for biosample, df_sub_2 in df_sub.groupby('biosample'):
-			ax.plot(df_sub_2['tsne_x'], df_sub_2['tsne_y'],
-					shapes[(biosample-1)%len(shapes)], color='C'+str(i%10), 
-					label=label+'_human#'+str(biosample), markersize=4, alpha=0.9)
+			# if biosample == 1:
+			#	continue
+			ax.plot(
+				df_sub_2['tsne_1'].values, 
+				df_sub_2['tsne_2'].values, 
+				df_sub_2['tsne_3'].values,
+				shapes[(biosample-1)%len(shapes)], color='C'+str(i%10), 
+				label=label+'_human#'+str(biosample), markersize=4, alpha=0.9
+				)
 
-	ax.set_xlabel('tsne_x')
-	ax.set_ylabel('tsne_y')
-	if legend_mode == 0:
+	ax.set_xlabel('tsne_1')
+	ax.set_ylabel('tsne_2')
+	ax.set_zlabel('tsne_3')
+	# ax.set_aspect('equal')
+	if legend_mode == -1:
+		pass
+	elif legend_mode == 0:
 		ax.legend()
 	elif legend_mode == 1:
 		# Shrink current axis's height by 10% on the bottom

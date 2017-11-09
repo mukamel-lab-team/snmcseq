@@ -26,14 +26,24 @@ def plot_tsne_ratio(cluster_fname,
 	df_ref = pd.DataFrame()
 	df_ref['cluster_ID'] = clusters	
 	df_plot = pd.DataFrame()
-	df_plot['cluster_ID'] = clusters	
+	# df_plot['cluster_ID'] = clusters	
 
 	for biosample, df_bio in df.groupby('biosample'):
 		count = df_bio.groupby('cluster_ID').count()
 		count['cluster_ID'] = count.index.values
 		df_new = pd.merge(df_ref, count, how='left',
 					left_on='cluster_ID', right_on='cluster_ID', sort=True)
+
+		# format: 1/2 (int) biosample
 		df_plot[biosample] = df_new['sample'].values
+
+	# normalize
+	total_counts = df_plot.sum(axis=1)
+	for col in df_plot.columns:
+		df_plot[col] = df_plot[col]/total_counts
+	# sort
+	df_plot['total'] = total_counts
+	df_plot.sort_values([biosamples[0]], ascending=False, inplace=True)
 
 	# # format: cluster_ID/1/2 (int) biosample
 	# fig, ax = plt.subplots()	
@@ -46,22 +56,36 @@ def plot_tsne_ratio(cluster_fname,
 	# 	index += bar_width
 	# ax.legend()
 
-	# format: cluster_ID/1/2 (int) biosample
-	fig, ax = plt.subplots()	
+	fig, axs = plt.subplots(2,1)	
+	ax = axs[0]
 	index = np.arange(n_clusters, dtype=float)
 	bar_width = 0.9
 	colors = ['b', 'r', 'y', 'g']
 	heights = np.zeros(n_clusters)
 	for i, biosample in enumerate(biosamples):
 		ax.bar(index, df_plot[biosample].values, bar_width, heights, 
-			color=colors[i%len(colors)], label='human_'+str(biosample))	
+			color=colors[i%len(colors)],
+			label='human_'+str(biosample))	
 		heights += df_plot[biosample].values 
 	ax.set_xlabel('Cluster number')
-	ax.set_ylabel('Cell count')
+	ax.set_ylabel('Cell number propotion')
 	ax.legend()
-
 	if title:
 		ax.set_title(title)
+
+	ax = axs[1]
+	index = np.arange(n_clusters, dtype=float)
+	bar_width = 0.9
+	colors = ['b', 'r', 'y', 'g']
+	ax.bar(index[:80], df_plot['total'].values[:80], bar_width,  
+			color=colors[i%len(colors)],
+			label='total number')	
+	ax.set_xlabel('Cluster number')
+	ax.set_ylabel('Number of cells')
+	ax.legend()
+	ax.set_title('Total number of cells in each cluster')
+
+	fig.tight_layout()
 	if output_fname:
 		fig.savefig(output_fname)
 		print("save file %s" % output_fname)

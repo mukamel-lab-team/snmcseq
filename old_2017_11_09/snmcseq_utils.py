@@ -32,8 +32,10 @@ def tabix_summary(records, context="CH", cap=0):
         contexts = ["CAG"]
     elif context == "CAC":
         contexts = ["CAC"]
-    else:
+    elif context == "CG":
         contexts = get_mCG_contexts()+['CGN']
+    else:
+        raise ValueError('Invalid context.')
 
     if cap > 0:
         for record in records:
@@ -58,6 +60,8 @@ def get_mCH_contexts():
             contexts.append('C' + base1 + base2)
     return contexts
 
+def get_mCG_contexts():
+    return ['CGA','CGC','CGG','CGT']
 
 def read_allc(fname, position_as_index=True, compressed=False):
     if compressed:

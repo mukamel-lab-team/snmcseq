@@ -56,12 +56,15 @@ def gen_tsne_input(local_dirs,
 
 	df_combined = pd.DataFrame()
 	# loop over different samples (local_dirs)
+	tc = []
 	for i, local_dir in enumerate(sorted(local_dirs)):
 		sample_name = get_sample_from_dir(local_dir)	
 		print("Processing " + sample_name + "...")
 		# loop over different bin files within a sample
 		sample_mch = np.array([], dtype=int) 
 		sample_ch = np.array([], dtype=int)
+		sample_mcg = np.array([], dtype=int) 
+		sample_cg = np.array([], dtype=int)
 		# i==0 dealing with chr and bin
 		if i == 0:
 			chrom = np.array([], dtype=np.unicode)
@@ -109,6 +112,8 @@ def gen_tsne_input(local_dirs,
 			# dealing with mCH and CH 
 			sample_chr_mch = df[4].values 
 			sample_chr_ch = df[5].values 
+			sample_chr_mcg = df[2].values 
+			sample_chr_cg = df[3].values 
 			# sum over neighboring bins at a certain "pooling rate"
 			if pooling_num:
 				sample_chr_mch = [np.sum(array) 
@@ -117,17 +122,27 @@ def gen_tsne_input(local_dirs,
 				sample_chr_ch = [np.sum(array) 
 							for array in 
 							split_by_stride(sample_chr_ch, pooling_num)]	
+				sample_chr_mcg = [np.sum(array) 
+							for array in 
+							split_by_stride(sample_chr_mcg, pooling_num)]	
+				sample_chr_cg = [np.sum(array) 
+							for array in 
+							split_by_stride(sample_chr_cg, pooling_num)]	
 
 			sample_mch = np.concatenate((sample_mch, sample_chr_mch)) 
 			sample_ch = np.concatenate((sample_ch, sample_chr_ch))	
 
+			sample_mcg = np.concatenate((sample_mcg, sample_chr_mcg)) 
+			sample_cg = np.concatenate((sample_cg, sample_chr_cg))	
 
 		if i != 0:
 			# check the order of chromosomes and pos 
 			assert chrom.tolist() == chrom_test.tolist()
 			assert bin_pos.tolist() == bin_pos_test.tolist()
 		# assert len(chrom) == len(bin_pos) == len(sample_ch) == len(sample_mch)
-		if not (len(chrom) == len(bin_pos) == len(sample_ch) == len(sample_mch)):
+		if not (len(chrom) == len(bin_pos) 
+			== len(sample_ch) == len(sample_mch)
+			== len(sample_cg) == len(sample_mcg)):
 			print("Corrupted sample: %s, removed from dataset" % sample_name)
 			continue	
 		# ignore empty samples
@@ -141,24 +156,42 @@ def gen_tsne_input(local_dirs,
 			df_combined['chr'] = chrom
 			df_combined['bin'] = bin_pos 
 
-		col_names.append(sample_name+'_mc')
-		col_names.append(sample_name+'_c')
-		df_combined[sample_name+'_mc'] = sample_mch	
-		df_combined[sample_name+'_c'] = sample_ch 
+			tc = sample_ch + sample_cg
+		else:
+			tc += (sample_ch+sample_cg)
+
+		# col_names.append(sample_name+'_mch')
+		# col_names.append(sample_name+'_ch')
+		# col_names.append(sample_name+'_mcg')
+		# col_names.append(sample_name+'_cg')
+		# df_combined[sample_name+'_mch'] = sample_mch	
+		# df_combined[sample_name+'_ch'] = sample_ch 
+		# df_combined[sample_name+'_mcg'] = sample_mcg	
+		# df_combined[sample_name+'_cg'] = sample_cg 
+
+		# col_names.append(sample_name+'_tc')
+		# df_combined[sample_name+'_tc'] = sample_ch + sample_cg	
+
+
+	mean_tc = tc/len(local_dirs)
+	col_names.append('mean_tc')
+	df_combined['mean_tc'] = mean_tc 
 
 	# output format:
-	# columns: chr, bin, sample1_mc, sample1_c, sample2_mc, sample2_c, ...
+	# columns: chr, bin, sample1_mch, sample1_ch, sample1_mcg, sample1_cg ...
 	df_combined.reindex_axis(col_names, axis=1)
 	df_combined.to_csv(output_filename, sep='\t', index=False)
+	print(df_combined.head())
 	print("All done!")
 	return 0
 
 
 if __name__ == '__main__':
 
-	DIR = '/cndd/Public_Datasets/single_cell_methylome/binc/human_v1'
-	local_dirs = glob.glob(os.path.join(DIR, '*_bismark'))
-	output_filename = './tsne/human_combined_v1_CH_100000.tsv' 
+	DIR = '/cndd/Public_Datasets/single_cell_methylome/binc/human_combined'
+	local_dirs = glob.glob(os.path.join(DIR, '*'))
+	# output_filename = '/cndd/Public_Datasets/single_cell_methylome/binc/human_combined_100kb_bins.tsv' 
+	output_filename = '/cndd/fangming/side_project/snmcseq_dev/binc/human_combined_100kb_bins_mean_tc.tsv' 
 	# DIR = '/cndd/Public_Datasets/single_cell_methylome/binc/human'
 	# local_dirs = glob.glob(os.path.join(DIR, 'Pool_*'))
 	# output_filename = './tsne/human_combined_100000.tsv' 
