@@ -1,5 +1,9 @@
-__pycache__/
-tsne/
-preprocessed/
-metadata/
+# put all dataset into data folder 
+# to avoid being synced to github 
+
+*.tsv
+*.mat
+*.pdf
+data/
+
 
