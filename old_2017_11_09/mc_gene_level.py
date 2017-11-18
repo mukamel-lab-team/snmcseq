@@ -22,8 +22,8 @@ def mc_gene_level(sample,
     genebody = BED file with gene body or other annotation features
     """
 
-    if sample.endswith('_bismark'):
-        sample = sample[:-8]
+    # if sample.endswith('_bismark'):
+    #     sample = sample[:-8]
 
     chromosomes = snmcseq_utils.get_human_chromosomes()
 
@@ -47,7 +47,7 @@ def mc_gene_level(sample,
         chrom, df = group
         df = df.sort_values('start') 
 
-        allc = tabix.open(sample+'_bismark/allc_'+sample_basename+'_'+str(chrom)+'.tsv.gz')
+        allc = tabix.open(sample+'/allc_'+sample_basename+'_'+str(chrom)+'.tsv.gz')
         for i, row in df.iterrows():
             records = allc.query(row['chr'], row['start'], row['end'])
             mc, c = snmcseq_utils.tabix_summary(records, context=context, cap=2)
