@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 1. check if the metadata and allc files are in place
@@ -107,31 +107,35 @@ path1 = './data/allc/MB_v1'
 path2 = './data/allc/MB_EA'
 path3 = './data/allc/MB_EB'
 
-samples1 = os.listdir(path1)
-samples2 = os.listdir(path2)
-samples3 = os.listdir(path3)
-
 # set allc file names
-for sample in samples1:
-	pth = os.path.join(path1, sample)
-	files = os.listdir(pth)
-	gz_files = [file for file in files if file.endswith('.gz')]
-	tbi_files = [file for file in files if file.endswith('.tbi')]
-	for gz_file in gz_files:
-		chrom=gz_file.split('_')[-1][:-len('.tsv.gz')]
-		src = os.path.join(pth, gz_file)
-		gz_file_new = 'allc_'+sample+'_'+chrom+'.tsv.gz'
-		dst = os.path.join(pth, gz_file_new) 
-		# print(src)
-		# print(dst)
-		os.rename(src, dst)
+def rename_allc(path1):
+	samples1 = os.listdir(path1)
+	for sample in samples1:
+		pth = os.path.join(path1, sample)
+		files = os.listdir(pth)
+		gz_files = [file for file in files if file.endswith('.gz')]
+		tbi_files = [file for file in files if file.endswith('.tbi')]
+		for gz_file in gz_files:
+			chrom=gz_file.split('_')[-1][:-len('.tsv.gz')]
+			src = os.path.join(pth, gz_file)
+			gz_file_new = 'allc_'+sample+'_'+chrom+'.tsv.gz'
+			dst = os.path.join(pth, gz_file_new) 
+			# print(src)
+			# print(dst)
+			os.rename(src, dst)
 
-	for tbi_file in tbi_files:
-		chrom=tbi_file.split('_')[-1][:-len('.tsv.gz.tbi')]
-		src = os.path.join(pth, tbi_file)
-		tbi_file_new = 'allc_'+sample+'_'+chrom+'.tsv.gz.tbi'
-		dst = os.path.join(pth, tbi_file_new) 
-		# print(src)
-		# print(dst)
-		os.rename(src, dst)
+		for tbi_file in tbi_files:
+			chrom=tbi_file.split('_')[-1][:-len('.tsv.gz.tbi')]
+			src = os.path.join(pth, tbi_file)
+			tbi_file_new = 'allc_'+sample+'_'+chrom+'.tsv.gz.tbi'
+			dst = os.path.join(pth, tbi_file_new) 
+			# print(src)
+			# print(dst)
+			os.rename(src, dst)
+	return 0
 
+
+# rename_allc(path1)
+# check if path2 and path3 have the same naming convention with path1 
+rename_allc(path2)
+rename_allc(path3)

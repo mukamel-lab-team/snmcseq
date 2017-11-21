@@ -6,4 +6,5 @@
 *.pdf
 data/
 results/
-
+__pycache__/
+logs/
