@@ -92,7 +92,7 @@ def bin_allc(sample_path,
         binned_allc = binned_allc[['chr','bin','mCG','CG','mCH','CH']]
 
         binned_allc.to_csv(output_filename,
-                           sep="\t", header=True, index=False)
+                           na_rep='NA', sep="\t", header=True, index=False)
 
 
 def create_parser():

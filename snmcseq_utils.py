@@ -4,8 +4,11 @@ library from Chris's mypy
 Fangming edited
 """
 
+import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import logging
+import seaborn as sns
 
 def create_logger(name='log'):
     """
@@ -141,3 +144,195 @@ def read_allc(fname, position_as_index=True, compressed=False):
 #     else:
 #         fname= prefix+'gencode.'+version+'.annotation_genes_mypy.tsv'
 #     return pd.read_csv(fname, sep="\t")
+
+def get_id_from_name(gene_name, 
+    f_gene_id_to_names='/cndd/fangming/snmcseq_dev/data/references/gene_id_to_names.tsv'):
+    """
+    get the first matching gene_id from gene_name
+    """
+    df_gene_id_to_names = pd.read_table(f_gene_id_to_names, index_col='geneID') 
+    gene_name = gene_name.upper()
+    try:
+        gene_id = df_gene_id_to_names[df_gene_id_to_names.geneName==gene_name].index.values[0]
+        return gene_id
+    except:
+        raise ValueError('No matching gene id is found for gene name: %s' % gene_name)
+
+
+def set_value_by_percentile(this, lo, hi):
+    """set `this` below or above percentiles to given values
+    this (float)
+    lo(float)
+    hi(float)
+    """
+    if this < lo:
+        return lo
+    elif this > hi:
+        return hi
+    else:
+        return this
+
+def mcc_percentile_norm(mcc, low_p=5, hi_p=95):
+    """
+    set values above and below specific percentiles to be at the value of percentiles 
+
+    args: mcc, low_p, hi_p  
+
+    return: normalized mcc levels
+    """
+#   mcc_norm = [np.isnan(mcc) for mcc_i in list(mcc)]
+    mcc_norm = np.copy(mcc)
+    mcc_norm = mcc_norm[~np.isnan(mcc_norm)]
+
+    lo = np.percentile(mcc_norm, low_p)
+    hi = np.percentile(mcc_norm, hi_p)
+
+    mcc_norm = [set_value_by_percentile(mcc_i, lo, hi) for mcc_i in list(mcc)]
+    mcc_norm = np.array(mcc_norm)
+
+    return mcc_norm
+
+def plot_tsne_values(df, tx='tsne_x', ty='tsne_y', tc='mCH',
+                    s=2,
+                    cbar_label=None,
+                    output=None, show=True, close=False, 
+                    t_xlim=None, t_ylim=None, title=None, figsize=(8,6)):
+    """
+    tSNE plot
+
+    xlim, ylim is set to facilitate displaying glial clusters only
+
+    """
+    fig, ax = plt.subplots(figsize=figsize)
+
+    im = ax.scatter(df[tx], df[ty], s=s, 
+        c=mcc_percentile_norm(df[tc].values))
+    if title:
+        ax.set_title(title)
+    ax.set_xlabel(tx)
+    ax.set_ylabel(ty)
+    ax.set_aspect('auto')
+    clb = plt.colorbar(im, ax=ax)
+    if cbar_label:
+        clb.set_label(cbar_label, rotation=270, labelpad=10)
+    if t_xlim:
+        ax.set_xlim(t_xlim)
+    if t_ylim:
+        ax.set_ylim(t_ylim)
+
+    fig.tight_layout()
+    if output:
+        fig.savefig(output)
+        print('Saved to ' + output) 
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+
+def plot_tsne_labels(df, tx='tsne_x', ty='tsne_y', tc='cluster_ID', 
+                    legend_mode=0,
+                    s=1,
+                    output=None, show=True, close=False, 
+                    t_xlim=None, t_ylim=None, title=None, figsize=(8,6),
+                    colors=['C0', 'C2', 'C1', 'C3', 'C4', 'C5', 'C6', 'C8', 'C9']):
+    """
+    tSNE plot
+
+    xlim, ylim is set to facilitate displaying glial clusters only
+
+    # avoid gray-like 'C7' in colors
+    # color orders are arranged for exci-inhi-glia plot 11/1/2017
+    """
+    fig, ax = plt.subplots(figsize=figsize)
+
+    for i, (label, df_sub) in enumerate(df.fillna('unlabelled').groupby(tc)):
+        if label == 'unlabelled':
+            ax.scatter(df_sub[tx], df_sub[ty], c='gray',
+                    label=label, s=s) 
+        else:
+            ax.scatter(df_sub[tx], df_sub[ty], c=colors[i%len(colors)], 
+                    label=label, s=s)
+
+
+    if title:
+        ax.set_title(title)
+    ax.set_xlabel(tx)
+    ax.set_ylabel(ty)
+    ax.set_aspect('auto')
+    if t_xlim:
+        ax.set_xlim(t_xlim)
+    if t_ylim:
+        ax.set_ylim(t_ylim)
+
+    if legend_mode == 0:
+        ax.legend()
+        fig.tight_layout()
+        
+    elif legend_mode == 1:
+        # Shrink current axis's height by 10% on the bottom
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                         box.width, box.height * 0.9])
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.07),
+              ncol=6, fancybox=False, shadow=False) 
+
+    if output:
+        fig.savefig(output)
+        print('Saved to ' + output) 
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+
+
+def tsne_and_boxplot(df, tx='tsne_x', ty='tsne_y', tc='mCH', bx='cluster_ID', by='mCH',
+                    output=None, show=True, close=False, title=None, figsize=(6,8),
+                    t_xlim=None, t_ylim=None, b_xlim=None, b_ylim=None, 
+                    low_p=5, hi_p=95):
+    """
+    boxplot and tSNE plot
+
+    xlim, ylim is set to facilitate displaying glial clusters only
+
+    """
+    fig, axs = plt.subplots(2,1,figsize=figsize)
+
+    ax = axs[0]
+    im = ax.scatter(df[tx], df[ty], s=2, 
+        c=mcc_percentile_norm(df[tc].values, low_p=low_p, hi_p=hi_p))
+    # ax.set_xlim([-40, 40])
+    # ax.set_ylim([40, 100])
+    if title:
+        ax.set_title(title)
+    ax.set_xlabel('tsne_x')
+    ax.set_ylabel('tsne_y')
+    ax.set_aspect('auto')
+    clb = plt.colorbar(im, ax=ax)
+    clb.set_label(tc, rotation=270, labelpad=10)
+    if t_ylim:
+        ax.set_ylim(t_ylim)
+    if t_xlim:
+        ax.set_xlim(t_xlim)
+
+    ax = axs[1]
+    sns.boxplot(x=bx, y=by, data=df, ax=ax)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+    if b_ylim:
+        ax.set_ylim(b_ylim)
+    if b_xlim:
+        ax.set_xlim(b_xlim)
+
+    fig.tight_layout()
+    if output:
+        # output_dir = './preprocessed/marker_genes_%s' % method
+        # if not os.path.exists(output_dir):
+        #   os.makedirs(output_dir)
+
+        # output_fname = os.path.join(output_dir, '%s_%s.pdf' % (cluster_ID, gene_name))
+        fig.savefig(output)
+        print('Saved to ' + output) 
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+

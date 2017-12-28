@@ -8,3 +8,4 @@ data/
 results/
 __pycache__/
 logs/
+*.log*
