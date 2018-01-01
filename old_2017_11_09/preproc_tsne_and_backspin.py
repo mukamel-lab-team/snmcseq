@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-"""
-samples and metadata should be one-to-one matched
-"""
 
 import numpy as np
 import pandas as pd
@@ -16,6 +13,7 @@ import sys, getopt
 import argparse
 import warnings
 
+# import mypy
 
 def get_sample_names(df):
 	"""
@@ -57,17 +55,21 @@ parser.add_argument("-cx", "--context", help="CG or CH",
 # end of the adding --- 
 
 parser.add_argument("-o", "--output", help="output file name", required=True)
+# parser.add_argument("-s", "--species", help="mouse or human", default="mouse")
 parser.add_argument("-n", "--normalize", help="normalize the data before running PCA and TSNE", action='store_true')
+# parser.add_argument("-p", "--perplexity", type=int, help="TSNE perplexity", default=25)
+# parser.add_argument("-d", "--seed", type=int, help="TSNE seed", default=1)
 parser.add_argument("-b", "--base_call_cutoff", type=int, help="minimum base calls for a bin to not be imputed.", default=100)
-parser.add_argument("-s", "--sufficient_coverage_fraction", type=float, help="fraction of cells that have sufficient coverage", default=0.995)
 parser.add_argument("-m", "--mdata", help="path to metdata file")
 args = parser.parse_args()
 
+# species = args.species
 normalize = args.normalize
+# perplexity = args.perplexity
 infile = args.input
 outfile = args.output
 base_call_cutoff = args.base_call_cutoff
-sufficient_coverage_fraction = args.sufficient_coverage_fraction
+# seed = args.seed
 mdata = args.mdata
 ex_cols = args.ex_cols
 context = args.context
@@ -87,13 +89,13 @@ metadata = pd.read_csv(mdata, sep="\t")
 # df = df_gene_level_mCH
 df = df_gene_level_mCH.iloc[:, ex_cols:] ##### remove chrom and bin position
 
+# samples = df.samples.tolist()
 samples = get_sample_names(df)
 
 print("Computing m%s levels." % context)
 
 # Keep only bins that have sufficient coverage in at least 99.5% of all cells
-print("Matrix size before pruning... "+ str(df.shape))
-df = df.loc[(df.filter(regex='_c$') > base_call_cutoff).sum(axis=1) >= sufficient_coverage_fraction*len(samples)]
+df = df.loc[(df.filter(regex='_c$') > base_call_cutoff).sum(axis=1) >= .995*len(samples)]
 print("Matrix size after pruning... "+ str(df.shape))
 df_mc = df[[x+'_mc' for x in samples]]
 df_c = df[[x+'_c' for x in samples]]
@@ -112,28 +114,27 @@ df.fillna(fill_value, inplace=True)
 
 if normalize:
     print('Normalizing.')
-   	# # check if samples in df match samples in metadata
-    # # fangming 09/09/2017	 
-    # samples_filtered = []
-    # # extract a sample only if it's in the metadata
-    # for sample in samples:
-    #     if sample in metadata['Sample'].values:
-    #         samples_filtered.append(sample) 
-    # # truncate dfs fangming 09/09/2017
-    # df_columns_filtered = [item+'_mcc' for item in samples_filtered]
-    # # print(df.shape)
-    # df = df[df_columns_filtered]
-    # # print(df.shape)
+   	# check if samples in df match samples in metadata
+    # fangming 09/09/2017	 
+    samples_filtered = []
+    # extract a sample only if it's in the metadata
+    for sample in samples:
+        if sample in metadata['Sample'].values:
+            samples_filtered.append(sample) 
+    # truncate dfs fangming 09/09/2017
+    df_columns_filtered = [item+'_mcc' for item in samples_filtered]
+    # print(df.shape)
+    df = df[df_columns_filtered]
+    # print(df.shape)
 
     for i,row in metadata.iterrows():
         samp = row['Sample']
-        # if samp+'_mcc' in df.columns:  # fangming edit 09/04/2017
-        if context == 'CH':
-            df[samp+'_mcc'] = (df[samp+'_mcc'] / (row['mCH/CH']+.01))
-        elif context == 'CG':
-            df[samp+'_mcc'] = (df[samp+'_mcc'] / (row['mCG/CG']+.01))
-        else:
-            raise ValueError('Wrong context: %s' % context)
+        if samp+'_mcc' in df.columns:  # fangming edit 09/04/2017
+            if context == 'CH':
+                df[samp+'_mcc'] = (df[samp+'_mcc'] / (row['mCH/CH']+.01))
+            elif context == 'CG':
+                df[samp+'_mcc'] = (df[samp+'_mcc'] / (row['mCG/CG']+.01))
+            else:
+                raise ValueError('Wrong context: %s' % context)
 
-df.to_csv(outfile, sep='\t', na_rep='NA', header=True, index=False)
-print('Saved to %s' % outfile)
+df.to_csv(outfile, sep='\t', header=True, index=False)

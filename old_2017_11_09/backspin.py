@@ -47,12 +47,13 @@ import getopt
 import sys
 import os
 import csv
+# from Cef_tools import CEF_obj
 import ipdb
+# import mypy
 from scipy import stats
 import csv
 import argparse
 import random
-import time
 
 
 
@@ -880,8 +881,6 @@ def spinit(df, num_genes, var_increase, min_cluster_size):
 df = pd.read_csv(infile, sep="\t")
 df = df.filter(regex='_mcc$')
 
-ti = time.time()
-
 # set the seed
 np.random.seed(seed)
 df = df[np.random.permutation(df.columns)]
@@ -935,28 +934,9 @@ while keep_splitting:
         all_levels.append(curr_level)
         level += 1
 
+for i,level in enumerate(all_levels):
+    with open(outfile, 'w') as f:
+        writer = csv.writer(f, delimiter=",", quoting=csv.QUOTE_NONE)
+        writer.writerows(level)
 
 
-# this is deprecated
-# all levels get over-wrote, so only the last level stays.
-# for i,level in enumerate(all_levels):
-#     with open(outfile, 'w') as f:
-#         writer = csv.writer(f, delimiter=",", quoting=csv.QUOTE_NONE)
-#         writer.writerows(level)
-
-# this is the new form of output
-# transform it into sample - cluster_ID dataframe 
-last_level = all_levels[-1]
-cluster_list = []
-for i, cells in enumerate(last_level): 
-    cluster_ID = 'cluster_' + str(i+1)
-    for cell in cells:
-        if cell.endswith('_mcc'):
-            cell = cell[:-len('_mcc')]
-        cluster_list.append({'sample': cell,
-                        'cluster_ID': cluster_ID})
-df_cluster = pd.DataFrame(cluster_list)
-df_cluster.to_csv(outfile, sep='\t', na_rep="NA", header=True, index=False)
-
-tf = time.time()
-print('Running time: %.2f seconds.' % (tf-ti))

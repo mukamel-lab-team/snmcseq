@@ -47,52 +47,59 @@ import getopt
 import sys
 import os
 import csv
+# from Cef_tools import CEF_obj
 import ipdb
+# import mypy
 from scipy import stats
 import csv
 import argparse
 import random
-import time
 
 
 
-parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                 description="Input is the methylation level in each cell for each bin. Scripts outputs a file where each line is a comma-separated list of cells in the same cluster.")
-parser.add_argument("-i", "--input", 
-    help="input file name. Columns should be named sample1_mcc, sample2_mcc, etc." +
-    " All additional columns will be removed.", 
-    required=True, type=str)
-parser.add_argument("-o", "--output",
-    help="output file name. Output data are ",
-    required=True, type=str)
-parser.add_argument("-v", "--min_var", 
-    help="required increase in average correlation of at least one of the new clusters over the clusters together required to keep the split.", 
-    default=.15, type=float)
-parser.add_argument("-n", "--num_genes", 
-    help="number of top-most variable bins or genes used at each iteration to compute the correlation matrix",
-    default=500, type=int)
-parser.add_argument("-m", "--min_size", 
-    help="minimum cluster size that will be considered for splitting. Set to -1 to turn off this filter.",
-    default=50, type=int)
-parser.add_argument("-a", "--axes", 
-    help="apply the spin algorithm the cells (1), genes (0), or both (2)",
-    default=1, type=int)
-parser.add_argument("-d", "--seed", 
-    help="Seed for shuffling the cell order, which backSPIN is sensitive to",
-    default=1, type=int)
-args = parser.parse_args()
+# parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+#                                  description="Input is the methylation level in each cell for each bin. Scripts outputs a file where each line is a comma-separated list of cells in the same cluster.")
+# parser.add_argument("-i", "--input", 
+#     help="input file name. Columns should be named sample1_mcc, sample2_mcc, etc." +
+#     " All additional columns will be removed.", 
+#     required=True, type=str)
+# parser.add_argument("-o", "--output",
+#     help="output file name. Output data are ",
+#     required=True, type=str)
+# parser.add_argument("-v", "--min_var", 
+#     help="required increase in average correlation of at least one of the new clusters over the clusters together required to keep the split.", 
+#     default=.15, type=float)
+# parser.add_argument("-n", "--num_genes", 
+#     help="number of top-most variable bins or genes used at each iteration to compute the correlation matrix",
+#     default=500, type=int)
+# parser.add_argument("-m", "--min_size", 
+#     help="minimum cluster size that will be considered for splitting. Set to -1 to turn off this filter.",
+#     default=50, type=int)
+# parser.add_argument("-a", "--axes", 
+#     help="apply the spin algorithm the cells (1), genes (0), or both (2)",
+#     default=1, type=int)
+# parser.add_argument("-d", "--seed", 
+#     help="Seed for shuffling the cell order, which backSPIN is sensitive to",
+#     default=1, type=int)
+# args = parser.parse_args()
 
+GLIA_ONLY = False 
+infile = './preprocessed/human_hv1_hv2_CGCH_genebody_nmcc.mat' 
+outfile = './preprocessed/human_hv1_hv2_CGCH_genebody_nmcc_backspin_all.txt' 
 
-infile = args.input
-outfile = args.output
-min_cluster_size = args.min_size
-num_genes = args.num_genes
-var_increase = args.min_var
-seed = args.seed
-if args.axes == 2:
+output_table = './preprocessed/human_hv1_hv2_CGCH_genebody_nmcc_backspin_all.tsv'
+tsne_fname = './preprocessed/human_hv1_hv2_CGCH_genebody_nmcc_tsne_all.tsv'
+output_plot = './preprocessed/human_hv1_hv2_CGCH_genebody_nmcc_backspin_all.pdf' 
+
+min_cluster_size = 50 
+num_genes = 500 
+var_increase = 0.15 
+seed = 1 
+axes = 1
+if axes == 2:
     normal_spin_axis = 'both'
 else:
-    normal_spin_axis = args.axes
+    normal_spin_axis = axes
 
 
 
@@ -879,8 +886,13 @@ def spinit(df, num_genes, var_increase, min_cluster_size):
 
 df = pd.read_csv(infile, sep="\t")
 df = df.filter(regex='_mcc$')
-
-ti = time.time()
+if GLIA_ONLY:
+    # get glial cells
+    df_meta = pd.read_table('./metadata/human_hv1_hv2_metadata_cells.tsv', 
+        header=0, index_col='Sample')
+    samples = df_meta[df_meta.cluster_label=='glia'].index.tolist()
+    df = df[[sample+'_mcc' for sample in samples]]
+print(df.shape)
 
 # set the seed
 np.random.seed(seed)
@@ -935,28 +947,62 @@ while keep_splitting:
         all_levels.append(curr_level)
         level += 1
 
-
-
-# this is deprecated
 # all levels get over-wrote, so only the last level stays.
-# for i,level in enumerate(all_levels):
-#     with open(outfile, 'w') as f:
-#         writer = csv.writer(f, delimiter=",", quoting=csv.QUOTE_NONE)
-#         writer.writerows(level)
+for i,level in enumerate(all_levels):
+    with open(outfile, 'w') as f:
+        writer = csv.writer(f, delimiter=",", quoting=csv.QUOTE_NONE)
+        writer.writerows(level)
 
-# this is the new form of output
+print('Saved to ' + outfile)
+print('Backspin done!')
+
 # transform it into sample - cluster_ID dataframe 
-last_level = all_levels[-1]
 cluster_list = []
-for i, cells in enumerate(last_level): 
+for i, cells in enumerate(level): # get the last level
     cluster_ID = 'cluster_' + str(i+1)
     for cell in cells:
         if cell.endswith('_mcc'):
             cell = cell[:-len('_mcc')]
-        cluster_list.append({'sample': cell,
+        cluster_list.append({'Sample': cell,
                         'cluster_ID': cluster_ID})
-df_cluster = pd.DataFrame(cluster_list)
-df_cluster.to_csv(outfile, sep='\t', na_rep="NA", header=True, index=False)
 
-tf = time.time()
-print('Running time: %.2f seconds.' % (tf-ti))
+df_cluster = pd.DataFrame(cluster_list)
+print(df_cluster.head())
+df_cluster.to_csv(output_table, sep='\t', na_rep="NA", header=True, index=False)
+
+# make tSNE plot
+
+def plot_tsne_label(df, tx, ty, tc, 
+                    output=None, show=True, close=False, 
+                    b_ylim=None, title=None):
+    """
+
+    """
+    fig, ax = plt.subplots()
+
+    for label, df_sub in df.groupby(tc):
+        ax.scatter(df_sub[tx], df_sub[ty], s=2, label=label)
+
+    if title:
+        ax.set_title(title)
+
+    ax.set_xlabel('tsne_x')
+    ax.set_ylabel('tsne_y')
+    ax.set_aspect('equal')
+    ax.legend()
+
+    fig.tight_layout()
+    if output:
+        fig.savefig(output)
+        print('Saved to ' + output) 
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+
+df_tsne = pd.read_table(tsne_fname, header=0)
+df_plot = pd.merge(df_cluster, df_tsne, left_on='Sample', right_on='cells')
+
+plot_tsne_label(df_plot, 'tsne_x', 'tsne_y', 'cluster_ID', 
+                title='BackSPIN clustering on genebody mCH of glial cells',
+                output=output_plot)

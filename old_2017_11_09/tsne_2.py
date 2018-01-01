@@ -44,7 +44,7 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
                                  "DETAILS: Load the data, filter out any samples not in the QC list, impute mCH at bins/gene where coverage is poor, normalize the data, "+
                                  "run PCA (50 components) and TSNE (2 components) and save the output to file.")
 
-parser.add_argument("-i", "--input", help="input file name. Must have columns named as sample1_mc, sample1_c, sample2_mc, etc.", 
+parser.add_argument("-i", "--input", help="input file name. Columns should be named as sample1_mcc, sample2_mcc, etc.", 
                     required=True)
 parser.add_argument("-o", "--output", help="output file name", required=True)
 # parser.add_argument("-s", "--species", help="mouse or human", default="mouse")
@@ -141,7 +141,7 @@ sklearn_transf = tsne.fit_transform(sklearn_transf_PCA)
 
 print("Saving output to file.")
 df_tsne = pd.DataFrame(sklearn_transf, columns=['tsne_x','tsne_y'])
-df_tsne['cells'] = [sample[:-4] for sample in df.columns.tolist()]
+df_tsne['cells'] = [sample[:-len('_mcc')] for sample in df.columns.tolist()]
 df_tsne.to_csv(outfile, sep="\t", index=False)
 
 

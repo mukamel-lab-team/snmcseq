@@ -17,6 +17,7 @@ def combine_metadata(meta_hv1_fname, meta_hv2_fname, output_fname):
 	# df_hv1['Sample'] = ['hv1_'+item+'_R1' for item in df_hv1['Sample'].tolist()]
 	df_hv1['Sample'] = ['hv1_'+item for item in df_hv1['Sample'].tolist()]
 	df_hv1['Batch'] = ['hv1']*df_hv1.shape[0]
+	df_hv1['% Genome covered'] = df_hv1['Coverage (%)'].values
 	# df_hv1 = df_hv1[['Sample', 'mCH/CH', 'Batch']]
 	# print(df_hv1.head())
 	# print(df_hv1.shape)
@@ -32,7 +33,7 @@ def combine_metadata(meta_hv1_fname, meta_hv2_fname, output_fname):
 	# print(df_combined.head())
 	# print(df_combined.shape)
 
-	df_combined.to_csv(output_fname, sep='\t', header=True, index=False)
+	df_combined.to_csv(output_fname, sep='\t', na_rep='NA', header=True, index=False)
 
 	return
 
