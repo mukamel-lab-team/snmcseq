@@ -5,8 +5,12 @@ import numpy as np
 import pandas as pd
 import time
 import argparse
+from collections import OrderedDict
+import subprocess as sp
 
+from __init__ import *
 import snmcseq_utils
+from snmcseq_utils import create_logger
 
 
 ################
@@ -14,95 +18,130 @@ import snmcseq_utils
 ################
 
 
-######### INPUT PARAMETERS #################
-# species = 'human' # or human
-# samples = ['Pool_2256_AD010_indexed_R1'] # LIST OF SAMPLE NAMES
-# allc_dir = '/cndd/Public_Datasets/single_cell_methylome/allc_singlecells/hs_MB_EB/' 
-# # DIRECTORY WITH ALLC FILES IN IT
-
-# FILE NAME TO ALLC FILES WILL BE CONSTRUCTED AS: allc_dir + "/allc_" + sample[n] + "_" + chromosome + ".tsv"
-# OUTPUT FILE NAME: "binc_" + sample[n] + "_" + str(bin_size) + "_" + chromosome + ".tsv",
-
-# species = 'human'
-# sample = '/cndd/Public_Datasets/single_cell_methylome/allc_singlecells/hs_MB_EB/Pool_2256_AD006_indexed_R1_bismark'
-### ---
-
 
 ### FUNCTION FOR BINNING THE ALLC FILES
-def bin_allc(sample_path, 
-    bin_size=10000, 
+def bin_allc_worker(allc_file, output_file,
+    bin_size=BIN_SIZE, 
+    contexts=CONTEXTS,
     chromosomes=None, 
-    outpath = '.', 
-    species='mouse', 
-    compressed=False):
+    species='mouse',
+    compression='gzip'
+    ):
 
-    sample = os.path.basename(sample_path)
+    logger = create_logger()
+    logger.info("binc processing: {} {}".format(allc_file, contexts))
+
     if chromosomes == None:
         if species == 'human':
             chromosomes = snmcseq_utils.get_human_chromosomes()
         elif species == 'mouse':
             chromosomes = snmcseq_utils.get_mouse_chromosomes()
 
-    for chromosome in chromosomes:
+    df_allc = snmcseq_utils.read_allc_CEMBA(allc_file, pindex=False, compression=compression)
+    df_allc = df_allc.loc[df_allc.chr.isin(chromosomes)]
 
-        fname = sample_path + "/allc_" + sample + "_" + chromosome + ".tsv"
+    chr_allc = np.array([])
+    bins_allc = np.array([])
+    mc_c_allc = OrderedDict()
+    for context in contexts:
+        mc_c_allc['m'+context] = np.array([])
+        mc_c_allc[context] = np.array([])
 
-        if compressed:
-            os.system("bgzip -cd " + fname + ".gz > " + fname)
-
-        if not os.path.isfile(fname):
-            print("bin_allc: " + fname + " does not exist.")
-            return
-
-        if not os.path.exists(outpath):
-            os.makedirs(outpath)
-            
-        output_filename = outpath + "/binc_" + sample + "_" + str(bin_size) + "_" + chromosome + ".tsv"
-        if os.path.isfile(output_filename):
-            print("File exists "+output_filename+", skipping...")
-            return 0
-        else:
-            print("Processing: " + output_filename)
-
-        df = snmcseq_utils.read_allc(fname)
-        
-        if compressed:
-            os.remove(fname)
-
+    for chromosome, df in df_allc.groupby('chr'):
         if species == 'human':
             bins = np.arange(0, snmcseq_utils.get_chrom_lengths_human()[chromosome], bin_size)
-        else:
+        elif species == 'mouse':
             bins = np.arange(0, snmcseq_utils.get_chrom_lengths_mouse()[chromosome], bin_size)
+        else:
+            raise ValueError("No such species available: {}".format(species))
+        # remove the last bin
+        chrs = np.asarray([chromosome]*(len(bins)-1))
 
-        # mCG
-        df_CG = df.loc[df.context.isin(snmcseq_utils.get_mCG_contexts())]
-        groups = df_CG.groupby(pd.cut(df_CG.index, bins))
-        mCG = groups.sum().mc.fillna(0)
-        CG = groups.sum().c.fillna(0)
+        bins_allc = np.concatenate([bins_allc, bins[:len(bins)-1]])
+        chr_allc = np.concatenate([chr_allc, chrs])
 
-        # mCH
-        df_CH = df.loc[df.context.isin(snmcseq_utils.get_mCH_contexts())]
-        groups = df_CH.groupby(pd.cut(df_CH.index, bins))
-        mCH = groups.sum().mc.fillna(0)
-        CH = groups.sum().c.fillna(0)
+        # mCG, mCH, mCA
+        for context in contexts:
+            df_context = df.loc[df.context.isin(snmcseq_utils.get_expanded_context(context))]
+            df_mc_c = df_context.groupby(pd.cut(df_context.pos, bins)).sum().fillna(0)[['mc', 'c']]
+            mc_c_allc['m'+context] = np.concatenate([mc_c_allc['m'+context], df_mc_c.mc])
+            mc_c_allc[context] = np.concatenate([mc_c_allc[context], df_mc_c.c])
 
-        data = np.array([bins[:len(bins)-1], mCG.values, CG.values, mCH.values, CH.values]).astype(int)
-        binned_allc = pd.DataFrame(data.transpose(), columns=['bin','mCG','CG','mCH','CH'])
-        binned_allc['chr'] = chromosome
-        binned_allc = binned_allc[['chr','bin','mCG','CG','mCH','CH']]
+    columns = ['chr', 'bin'] + [key for key in mc_c_allc]
+    binc = pd.DataFrame(columns=columns)
+    binc['chr'] = chr_allc.astype(object)
+    binc['bin'] = bins_allc.astype(int)
+    for key, value in mc_c_allc.items():
+        binc[key] = value.astype(int) 
 
-        binned_allc.to_csv(output_filename,
-                           na_rep='NA', sep="\t", header=True, index=False)
+    binc.to_csv(output_file, na_rep='NA', sep="\t", header=True, index=False)
+    logger.info("Done with binc processing: {} {}".format(allc_file, contexts))
+
+def bin_allc(allc_file, 
+    convention='CEMBA',
+    bin_size=BIN_SIZE, 
+    contexts=CONTEXTS,
+    chromosomes=None, 
+    species='mouse',
+    compression='gzip',
+    overwrite=False
+    ):
+    """
+    set up conventions for output_file
+    """
+
+    if convention=='CEMBA':
+        CEMBA_DATASETS = '/cndd/Public_Datasets/CEMBA/Datasets'
+        allc_file = os.path.abspath(allc_file)
+        assert allc_file[:len(CEMBA_DATASETS)] == CEMBA_DATASETS
+
+        dataset, *dis, allc_basename = allc_file[len(CEMBA_DATASETS)+1:].split('/')
+
+        sample = allc_basename[len('allc_'):-len('.tsv.bgz')] 
+
+        output_dir = "{}/{}/binc".format(CEMBA_DATASETS, dataset)
+        output_file = "{}/binc_{}_{}.tsv".format(output_dir, sample, bin_size) 
+
+        if not overwrite:
+            if os.path.isfile(output_file) or os.path.isfile(output_file+'.gz') or os.path.isfile(output_file+'.bgz'):
+                print("File exists "+output_file+", skipping...")
+                return 0
+
+        if not os.path.isdir(output_dir):
+            os.makedirs(output_dir)
+
+        bin_allc_worker(allc_file, output_file,
+                bin_size=bin_size, 
+                contexts=CONTEXTS,
+                chromosomes=chromosomes, 
+                species=species,
+                compression=compression)
+
+        # compress and name them .bgz
+        sp.run("bgzip -f {}".format(output_file), shell=True)
+        sp.run("mv {}.gz {}.bgz".format(output_file, output_file), shell=True)
+
+    else: 
+        raise ValueError('Invalid convention! choose from ["CEMBA"]!')
+    
+    return 0
+    
+
 
 
 def create_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input', help='input directory containing allc files', required=True)
-    parser.add_argument('-o', '--output', help='directory storing output files', required=True)
-    parser.add_argument('-s', '--species', help='mouse or human', default='mouse')
-    parser.add_argument('-bz', '--bin_size', help='bin size', default=10000, type=int)
-    parser.add_argument('-c', '--compressed', help='compressed or not', action='store_true') 
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--input_allc", help="allc file path", required=True)
+    parser.add_argument('-s', '--species', help='mouse or human', default='mouse')
+    parser.add_argument('-bz', '--bin_size', help='bin size', default=BIN_SIZE, type=int)
+    parser.add_argument("-c", "--contexts", help="list of contexts: CH/CG/...", nargs='+', default=CONTEXTS)
+    parser.add_argument('-cp', '--compression', help='compression type of allc file (bgz is gzip)', default='gzip') 
+    parser.add_argument("-chr", "--chromosomes", help="list of chromosomes", nargs='+', default=None)
+    parser.add_argument("-f", "--overwrite", 
+        action='store_true',
+        help="overwrite a file if it exists")
     return parser
 
 
@@ -112,11 +151,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ti = time.time()
-    bin_allc(args.input, 
-            outpath=args.output, 
-            species=args.species, 
-            bin_size=args.bin_size, 
-            compressed=args.compressed)
+    bin_allc(args.input_allc, 
+        bin_size=args.bin_size, 
+        contexts=args.contexts,
+        chromosomes=args.chromosomes, 
+        species=args.species,
+        compression=args.compression,
+        overwrite=args.overwrite
+        )
     tf = time.time()
     print("time: %s sec" % (tf-ti))
 

@@ -23,22 +23,31 @@ def create_logger(name='log'):
     return logging.getLogger(name)
 
 
-
-def get_mCH_contexts(wildcard=True):
+def get_mCH_contexts():
     contexts = []
     for base1 in ['A','C','T']:
         for base2 in ['A','C','G','T']:
             contexts.append('C' + base1 + base2)
-    if wildcard:
-        return contexts+['CAN', 'CTN', 'CCN']
-    else:
-        return contexts 
+    return contexts+['CAN', 'CTN', 'CCN']
 
-def get_mCG_contexts(wildcard=True):
-    if wildcard:
-        return ['CGA','CGC','CGG','CGT'] + ['CGN']
+def get_expanded_context(context):
+
+    if context == "CH":
+        # 15 contexts 
+        contexts = get_mCH_contexts()
+    elif context == "CG":
+        contexts = ["CGA","CGC","CGG","CGT","CGN"]
+    elif context == "CA":
+        contexts = ["CAA","CAC","CAG","CAT","CAN"]
+    elif context == "CT":
+        contexts = ["CTA","CTC","CTG","CTT","CTN"]
+    elif context == "CAG":
+        contexts = ["CAG"]
+    elif context == "CAC":
+        contexts = ["CAC"]
     else:
-        return ['CGA','CGC','CGG','CGT']
+        raise ValueError('Invalid context.')
+    return contexts
 
 
 def get_mouse_chromosomes(include_x=True, include_chr=False):
@@ -59,18 +68,16 @@ def get_human_chromosomes(include_x=True, include_chr=False):
     else:
         return ['chr'+chrom for chrom in chromosomes]
 
-def get_chrom_lengths_mouse():
-    return {'1': 195471971, '2': 182113224, '3': 160039680, '4': 156508116, '5': 151834684, 
-            '6': 149736546, '7': 145441459, '8': 129401213, '9': 124595110, '10': 130694993, 
-            '11': 122082543, '12': 120129022, '13': 120421639, '14': 124902244, '15': 104043685, 
-            '16': 98207768, '17': 94987271, '18': 90702639, '19': 61431566, 'X': 171031299, 'Y': 91744698}
-
-# hg38
-# def get_chrom_lengths_human():
-#     return {'1': 248956422, '2': 242193529, '3': 198295559, '4': 190214555, '5': 181538259, '6': 170805979, 
-#             '7': 159345973, '8': 145138636, '9': 138394717, '10': 133797422, '11': 135086622, '12': 133275309, 
-#             '13': 114364328, '14': 107043718, '15': 101991189, '16': 90338345, '17': 83257441, '18': 80373285, 
-#             '19': 58617616, '20': 64444167, '21': 46709983, '22': 50818468, 'X': 156040895, 'Y': 57227415}
+# mm10 
+def get_chrom_lengths_mouse(
+    genome_size_fname='/cndd/Public_Datasets/CEMBA/References/Genome/mm10.chrom.sizes'):  
+    """
+    """
+    srs_gsize = pd.read_table(genome_size_fname, header=None, index_col=0, squeeze=True)
+    srs_gsize = srs_gsize.loc[get_human_chromosomes(include_chr=True)]
+    # remove leading 'chr'
+    srs_gsize.index = [idx[len('chr'):] for idx in srs_gsize.index]
+    return srs_gsize
 
 # hg19
 def get_chrom_lengths_human(
@@ -83,27 +90,26 @@ def get_chrom_lengths_human(
     srs_gsize.index = [idx[len('chr'):] for idx in srs_gsize.index]
     return srs_gsize
 
+# def get_chrom_lengths_mouse():
+#     return {'1': 195471971, '2': 182113224, '3': 160039680, '4': 156508116, '5': 151834684, 
+#             '6': 149736546, '7': 145441459, '8': 129401213, '9': 124595110, '10': 130694993, 
+#             '11': 122082543, '12': 120129022, '13': 120421639, '14': 124902244, '15': 104043685, 
+#             '16': 98207768, '17': 94987271, '18': 90702639, '19': 61431566, 'X': 171031299, 'Y': 91744698}
+
+# hg38
+# def get_chrom_lengths_human():
+#     return {'1': 248956422, '2': 242193529, '3': 198295559, '4': 190214555, '5': 181538259, '6': 170805979, 
+#             '7': 159345973, '8': 145138636, '9': 138394717, '10': 133797422, '11': 135086622, '12': 133275309, 
+#             '13': 114364328, '14': 107043718, '15': 101991189, '16': 90338345, '17': 83257441, '18': 80373285, 
+#             '19': 58617616, '20': 64444167, '21': 46709983, '22': 50818468, 'X': 156040895, 'Y': 57227415}
+
+
 def tabix_summary(records, context="CH", cap=0):
 
     mc = 0
     c = 0
 
-    if context == "CH":
-    	# 15 contexts 
-        contexts = get_mCH_contexts()
-    elif context == "CG":
-    	# 5 contexts 
-        contexts = get_mCG_contexts()
-    elif context == "CA":
-        contexts = ["CAA","CAC","CAG","CAT"]
-    elif context == "CT":
-        contexts = ["CTA","CTC","CTG","CTT"]
-    elif context == "CAG":
-        contexts = ["CAG"]
-    elif context == "CAC":
-        contexts = ["CAC"]
-    else:
-        raise ValueError('Invalid context.')
+    contexts = get_expanded_context(context)
 
     if cap > 0:
         for record in records:
@@ -112,7 +118,6 @@ def tabix_summary(records, context="CH", cap=0):
                     mc += int(record[4])
                     c += int(record[5])
     else:
-
         for record in records:
             if record[3] in contexts:
                 mc += int(record[4])
@@ -121,20 +126,40 @@ def tabix_summary(records, context="CH", cap=0):
     return mc, c
 
 
-def read_allc(fname, position_as_index=True, compressed=False):
-    if compressed:
-        os.system("bgzip -cd " + fname + ".gz > " + fname)
-
-    if position_as_index == True:
-        df = pd.read_csv(fname, sep="\t", index_col=1, skiprows=1,
-                         names=['chr','pos','strand','context','mc','c','methylated'])
+def read_allc_CEMBA(fname, pindex=True, compression='gzip'):
+    """
+    """
+    if pindex:
+        df = pd.read_table(fname, 
+            compression=compression,
+            header=None, 
+            index_col=['chr', 'pos'],
+            dtype={'chr': object, 'pos': np.int, 'mc': np.int, 'c': np.int, 'methylated': np.int},
+            names=['chr','pos','strand','context','mc','c','methylated'])
     else:
-        df = pd.read_csv(fname, sep="\t", skiprows=1,
-                         names=['chr','pos','strand','context','mc','c','methylated'])
-
-    if compressed:
-        os.remove(fname)
+        df = pd.read_table(fname, 
+            compression=compression,
+            header=None, 
+            # index_col=['chr', 'pos'],
+            dtype={'chr': object, 'pos': np.int, 'mc': np.int, 'c': np.int, 'methylated': np.int},
+            names=['chr','pos','strand','context','mc','c','methylated'])
     return df
+
+# def read_allc(fname, position_as_index=True, compressed=False):
+#     if compressed:
+#          os.system("bgzip -cd " + fname + ".gz > " + fname)
+
+#     if position_as_index == True:
+#         df = pd.read_csv(fname, sep="\t", index_col=1, skiprows=1,
+#                          names=['chr','pos','strand','context','mc','c','methylated'])
+#     else:
+#         df = pd.read_csv(fname, sep="\t", skiprows=1,
+#                          names=['chr','pos','strand','context','mc','c','methylated'])
+
+#     if compressed:
+#         os.remove(fname)
+#     return df
+
 
 # def read_gencode_human(version='v19', pc=False):
 # 	# pc = protein coding
@@ -145,18 +170,18 @@ def read_allc(fname, position_as_index=True, compressed=False):
 #         fname= prefix+'gencode.'+version+'.annotation_genes_mypy.tsv'
 #     return pd.read_csv(fname, sep="\t")
 
-def get_id_from_name(gene_name, 
-    f_gene_id_to_names='/cndd/fangming/snmcseq_dev/data/references/gene_id_to_names.tsv'):
-    """
-    get the first matching gene_id from gene_name
-    """
-    df_gene_id_to_names = pd.read_table(f_gene_id_to_names, index_col='geneID') 
-    gene_name = gene_name.upper()
-    try:
-        gene_id = df_gene_id_to_names[df_gene_id_to_names.geneName==gene_name].index.values[0]
-        return gene_id
-    except:
-        raise ValueError('No matching gene id is found for gene name: %s' % gene_name)
+# def get_id_from_name(gene_name, 
+#     f_gene_id_to_names='/cndd/fangming/snmcseq_dev/data/references/gene_id_to_names.tsv'):
+#     """
+#     get the first matching gene_id from gene_name
+#     """
+#     df_gene_id_to_names = pd.read_table(f_gene_id_to_names, index_col='geneID') 
+#     gene_name = gene_name.upper()
+#     try:
+#         gene_id = df_gene_id_to_names[df_gene_id_to_names.geneName==gene_name].index.values[0]
+#         return gene_id
+#     except:
+#         raise ValueError('No matching gene id is found for gene name: %s' % gene_name)
 
 
 def set_value_by_percentile(this, lo, hi):
