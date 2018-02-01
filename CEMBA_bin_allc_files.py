@@ -48,16 +48,26 @@ def bin_allc_worker(allc_file, output_file,
         mc_c_allc[context] = np.array([])
 
     for chromosome, df in df_allc.groupby('chr'):
+        # if chromosome == 'X':
+        #     if species == 'human':
+        #         bins = np.arange(0, snmcseq_utils.get_chrom_lengths_human()[chromosome], 2*bin_size)
+        #     elif species == 'mouse':
+        #         bins = np.arange(0, snmcseq_utils.get_chrom_lengths_mouse()[chromosome], 2*bin_size)
+        #     else:
+        #         raise ValueError("No such species available: {}".format(species))
+        # else:
+
+        # last bin (incomplete) is discarded
         if species == 'human':
             bins = np.arange(0, snmcseq_utils.get_chrom_lengths_human()[chromosome], bin_size)
         elif species == 'mouse':
             bins = np.arange(0, snmcseq_utils.get_chrom_lengths_mouse()[chromosome], bin_size)
         else:
             raise ValueError("No such species available: {}".format(species))
-        # remove the last bin
-        chrs = np.asarray([chromosome]*(len(bins)-1))
 
-        bins_allc = np.concatenate([bins_allc, bins[:len(bins)-1]])
+        # number of intervals is number of bin points -1 
+        chrs = np.asarray([chromosome]*(len(bins)-1))
+        bins_allc = np.concatenate([bins_allc, bins[:-1]])
         chr_allc = np.concatenate([chr_allc, chrs])
 
         # mCG, mCH, mCA
@@ -75,7 +85,7 @@ def bin_allc_worker(allc_file, output_file,
         binc[key] = value.astype(int) 
 
     binc.to_csv(output_file, na_rep='NA', sep="\t", header=True, index=False)
-    logger.info("Done with binc processing: {} {}".format(allc_file, contexts))
+    logger.info("Done with binc processing: {} {}\nSaving results to: {}".format(allc_file, contexts, output_file))
 
 def bin_allc(allc_file, 
     convention='CEMBA',

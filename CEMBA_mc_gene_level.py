@@ -51,7 +51,7 @@ def mc_gene_level_worker(allc_file, output_file,
         outfile.write('\t'.join(row_out)+'\n')
 
     outfile.close()
-    logger.info("Done with mc_gene_level processing: {} {}".format(allc_file, contexts))
+    logger.info("Done with mc_gene_level processing: {} {}\n Saving results to {}".format(allc_file, contexts, output_file))
 
     return 0
 

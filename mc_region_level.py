@@ -15,13 +15,13 @@ from collections import OrderedDict
 
 import snmcseq_utils
 
-def mc_region_level(allc_file_dict,
+def mc_region_level_worker(allc_file_dict,
     bed_file,
     output_file,
     contexts=['CH']):
 
     """
-    allc_files is a dictionary of {'chorom': allc_chrom_file_name, ...}
+    allc_files is a dictionary of {'chrom': allc_chrom_file_name, ...} for one sample 
     """
     chromosomes = snmcseq_utils.get_human_chromosomes()
 
@@ -62,37 +62,49 @@ def mc_region_level(allc_file_dict,
     outfile.close()
     return 0
 
-# def create_parser():
-#     """
 
-#     """
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument("-i", "--input_sample", help="full path of the sample directory of allc files", required=True)
-#     parser.add_argument("--genebody", help="file of gene body", default='/cndd/projects/Public_Datasets/references/hg19/transcriptome/gencode.v19.annotation_genes_mypy.tsv')
-#     parser.add_argument("-o", "--outdir", help="output directory", default='./genebody')
-#     parser.add_argument("-c", "--context", help="context: CH/CG/...", required=True)
-#     return parser
+def mc_region_level(allc_dir,
+    bed_file,
+    output_file,
+    contexts=['CH'],
+    convention='classical'):
+    """
+    given allc_dir (containing just one sample), create allc_file_dict
 
+    """
+    if convention == 'classical':
+        allc_files = glob.glob('{}/*.tsv.gz'.format(allc_dir))
+        allc_file_dict = OrderedDict({f.split('.')[0].split('_')[-1]: f for f in allc_files})
+
+        mc_region_level_worker(allc_file_dict, bed_file, output_file, contexts=contexts)
+
+        return
+
+def create_parser():
+    """
+
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--input_allc_dir", help="Path of the allc directory that contain allc tables (from different chromosomes) for one sample", required=True)
+    parser.add_argument("-b", "--bed_file", help="--bed_file", required=True)
+    parser.add_argument("-o", "--output_file", help="output file", required=True)
+    parser.add_argument("-c", "--contexts", nargs="+", help="list of contexts: CH/CG/...", default=['CH', 'CG'])
+    return parser
 
 if __name__ == '__main__':
     # parser = create_parser()
     # args = parser.parse_args()
 
     ti = time.time()
+    parser = create_parser()
+    args = parser.parse_args()
 
-    allc_dir = '/cndd/Public_Datasets/single_cell_methylome/allc_combined/human'
-    # hL2/3 - 13, hPv1 - 4
+    allc_dir = args.input_allc_dir
+    bed_file = args.bed_file 
+    output_file = args.output_file 
+    contexts = args.contexts
 
-    allc_files = glob.glob(os.path.join(allc_dir, 'allc_human_cluster13_*.tsv.gz'))
-    allc_files = [os.path.join(allc_dir, allc_file) for allc_file in allc_files]
-    allc_file_dict = OrderedDict({f.split('.')[0].split('_')[-1]: f for f in allc_files})
-    # print(allc_file_dict)
-
-    bed_file = '/cndd/junhao/genomes/hg19/genomicRegions/UCSC_repeatMasker_LINE.bed'
-    output_file = './hL2-3_LINE.tsv'
-    contexts = ['CH', 'CG']
-
-    mc_region_level(allc_file_dict, bed_file, output_file, contexts=contexts)
+    mc_region_level(allc_dir, bed_file, output_file, contexts=contexts)
 
     tf = time.time()
     print("time: %s sec" % (tf-ti))

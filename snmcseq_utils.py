@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 import logging
 import seaborn as sns
 
+from __init__ import *
+
 def create_logger(name='log'):
     """
     args: logger name
@@ -145,6 +147,50 @@ def read_allc_CEMBA(fname, pindex=True, compression='gzip'):
             names=['chr','pos','strand','context','mc','c','methylated'])
     return df
 
+def read_genebody(fname, index=True, compression='infer', contexts=CONTEXTS):
+    """
+    """
+    dtype = {'gene_id': object}
+    for context in contexts:
+        dtype[context] = np.int
+        dtype['m'+context] = np.int
+
+    if index:
+        df = pd.read_table(fname, 
+            compression=compression,
+            index_col=['gene_id'],
+            dtype=dtype,
+            )
+    else:
+        df = pd.read_table(fname, 
+            compression=compression,
+            # index_col=['gene_id'],
+            dtype=dtype,
+            )
+    return df
+
+def read_binc(fname, index=True, compression='infer', contexts=CONTEXTS):
+    """
+    """
+    dtype = {'chr': object, 'bin': np.int}
+    for context in contexts:
+        dtype[context] = np.int
+        dtype['m'+context] = np.int
+
+    if index:
+        df = pd.read_table(fname, 
+            compression=compression,
+            index_col=['chr', 'bin'],
+            dtype=dtype,
+            )
+    else:
+        df = pd.read_table(fname, 
+            compression=compression,
+            # index_col=['gene_id'],
+            dtype=dtype,
+            )
+    return df
+
 # def read_allc(fname, position_as_index=True, compressed=False):
 #     if compressed:
 #          os.system("bgzip -cd " + fname + ".gz > " + fname)
@@ -218,6 +264,7 @@ def mcc_percentile_norm(mcc, low_p=5, hi_p=95):
     return mcc_norm
 
 def plot_tsne_values(df, tx='tsne_x', ty='tsne_y', tc='mCH',
+                    low_p=5, hi_p=95,
                     s=2,
                     cbar_label=None,
                     output=None, show=True, close=False, 
@@ -231,7 +278,7 @@ def plot_tsne_values(df, tx='tsne_x', ty='tsne_y', tc='mCH',
     fig, ax = plt.subplots(figsize=figsize)
 
     im = ax.scatter(df[tx], df[ty], s=s, 
-        c=mcc_percentile_norm(df[tc].values))
+        c=mcc_percentile_norm(df[tc].values, low_p=low_p, hi_p=hi_p))
     if title:
         ax.set_title(title)
     ax.set_xlabel(tx)

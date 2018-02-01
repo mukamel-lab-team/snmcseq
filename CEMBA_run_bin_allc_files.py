@@ -7,7 +7,7 @@ import multiprocessing as mp
 
 
 from __init__ import *
-from bin_allc_files import bin_allc
+from CEMBA_bin_allc_files import bin_allc
 from snmcseq_utils import create_logger
 
 # def bin_allc(allc_file, 

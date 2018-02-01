@@ -8,7 +8,7 @@ import glob
 import multiprocessing as mp
 
 from __init__ import *
-from mc_gene_level import mc_gene_level 
+from CEMBA_mc_gene_level import mc_gene_level 
 from snmcseq_utils import create_logger
 
 
