@@ -62,7 +62,7 @@ def initial_setup(ens_path, readme_f, ens_description,
     return cells, cells_allc, cells_genebody, cells_binc 
 
 def pull_genebody_info(ens, ens_genelevel_path, cells_genebody, genebody_paths, 
-                contexts=CONTEXTS, to_file=True):
+                contexts=CONTEXTS, to_file=False):
     """
     Pull genebody information from dataset
 
@@ -278,8 +278,8 @@ def main_setup(dataset, ens, ens_description):
         ens_path, readme_f, ens_description, meta_fin, meta_fout, 
         allc_paths, genebody_paths, binc_paths, bin_size=bin_size)
 
-    # # pull genebody info
-    pull_genebody_info(ens, ens_genelevel_path, cells_genebody, genebody_paths, contexts=CONTEXTS)
+    # # # pull genebody info
+    # pull_genebody_info(ens, ens_genelevel_path, cells_genebody, genebody_paths, contexts=CONTEXTS)
 
     # pull binc info
     dfs_binc, contexts = pull_binc_info(ens, ens_binc_path, cells_binc, binc_paths, 
