@@ -17,7 +17,8 @@ import igraph as ig
 from sklearn.decomposition import PCA
 from sklearn.neighbors import NearestNeighbors
 
-import time
+from time import time
+from collections import OrderedDict
 import argparse
 import logging
 
@@ -113,6 +114,57 @@ def louvain_clustering(adj_mtx, index, option='DIRECTED'):
     df_res = df_res.rename_axis('sample', inplace=True)
     return df_res
 
+def louvain_jaccard(df, n_pc=50, k=30, sub_ncells=None, output_file=None):
+    """
+    df is a (n_obs/cells, n_features/bins or genes)
+    
+    """
+    ti = time()
+    df = df.T
+
+    # subsample cells
+    if sub_ncells:
+        df = df.sample(n=sub_ncells, random_state=1)
+    print('Input shape (n_obs, n_features): {}'.format(df.shape))
+
+    # pca
+    pca = PCA(n_components=n_pc).fit(df.values)
+    pcs = pca.transform(df.values)
+
+    # build a jaccard-index weighted k nearest neighbor graph
+    adj_mtx = gen_knn_graph(pcs, k, option='DIRECTED')
+
+    # run louvain jaccard clustering
+    tii = time()
+    df_res = louvain_clustering(adj_mtx, df.index, option='DIRECTED')
+
+    # number of clusters
+    nclst = np.unique(df_res.cluster_ID.values).shape[0]
+
+    # total time
+    tf = time()
+    
+    # summary 
+    summary = OrderedDict({'time': tf-ti, 'time_clst': tf-tii, 'nclst': nclst, 'n_cells': df.shape[0],
+                           'n_pc': n_pc, 'k': k})
+
+    # output
+    if output_file:
+        print('Outputing clustering results to: {}'.format(output_file))
+        df_res.to_csv(output_file,
+                     sep='\t', na_rep='NA', header=True, index=True)
+        # summary
+        keys = list(summary.keys()) 
+        values = [str(value) for value in list(summary.values())] 
+        with open(output_file+'.summary', 'w') as file:
+            file.write('\t'.join(keys)+'\n')
+            file.write('\t'.join(values)+'\n') 
+
+    print('Done with clustering!')
+
+    return df_res, summary
+
+
 # argparser
 def create_parser():
     """
@@ -133,7 +185,7 @@ def create_parser():
 
 if __name__ == '__main__':
 
-    ti = time.time()
+    ti = time()
     log = create_logger()
     parser = create_parser()
     args = parser.parse_args()
@@ -169,7 +221,7 @@ if __name__ == '__main__':
     df_res.to_csv(output_f,
                  sep='\t', na_rep='NA', header=True, index=True)
 
-    tf = time.time()
+    tf = time()
     log.info("Running time: %.2f second s" % (tf-ti))
 
 
