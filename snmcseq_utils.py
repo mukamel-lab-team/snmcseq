@@ -274,7 +274,7 @@ def plot_tsne_values(df, tx='tsne_x', ty='tsne_y', tc='mCH',
         clb.set_label(cbar_label, rotation=270, labelpad=10)
 
     if t_xlim == 'auto':
-        t_xlim = [np.nanpercentile(df['tsne_x'].values, 0.1), np.nanpercentile(df['tsne_x'].values, 99.9)]
+        t_xlim = [np.nanpercentile(df[tx].values, 0.1), np.nanpercentile(df[tx].values, 99.9)]
         t_xlim[0] = t_xlim[0] - 0.1*(t_xlim[1] - t_xlim[0])
         t_xlim[1] = t_xlim[1] + 0.1*(t_xlim[1] - t_xlim[0])
         ax.set_xlim(t_xlim)
@@ -284,7 +284,7 @@ def plot_tsne_values(df, tx='tsne_x', ty='tsne_y', tc='mCH',
         pass  
 
     if t_ylim == 'auto':
-        t_ylim = [np.nanpercentile(df['tsne_y'].values, 0.1), np.nanpercentile(df['tsne_y'].values, 99.9)]
+        t_ylim = [np.nanpercentile(df[ty].values, 0.1), np.nanpercentile(df[ty].values, 99.9)]
         t_ylim[0] = t_ylim[0] - 0.1*(t_ylim[1] - t_ylim[0])
         t_ylim[1] = t_ylim[1] + 0.1*(t_ylim[1] - t_ylim[0])
         ax.set_ylim(t_ylim)
@@ -330,7 +330,7 @@ def tsne_and_boxplot(df, tx='tsne_x', ty='tsne_y', tc='mCH', bx='cluster_ID', by
     clb.set_label(tc, rotation=270, labelpad=10)
 
     if t_xlim == 'auto':
-        t_xlim = [np.nanpercentile(df['tsne_x'].values, 0.1), np.nanpercentile(df['tsne_x'].values, 99.9)]
+        t_xlim = [np.nanpercentile(df[tx].values, 0.1), np.nanpercentile(df[tx].values, 99.9)]
         t_xlim[0] = t_xlim[0] - 0.1*(t_xlim[1] - t_xlim[0])
         t_xlim[1] = t_xlim[1] + 0.1*(t_xlim[1] - t_xlim[0])
         ax.set_xlim(t_xlim)
@@ -339,7 +339,7 @@ def tsne_and_boxplot(df, tx='tsne_x', ty='tsne_y', tc='mCH', bx='cluster_ID', by
     else:
         pass  
     if t_ylim == 'auto':
-        t_ylim = [np.nanpercentile(df['tsne_y'].values, 0.1), np.nanpercentile(df['tsne_y'].values, 99.9)]
+        t_ylim = [np.nanpercentile(df[ty].values, 0.1), np.nanpercentile(df[ty].values, 99.9)]
         t_ylim[0] = t_ylim[0] - 0.1*(t_ylim[1] - t_ylim[0])
         t_ylim[1] = t_ylim[1] + 0.1*(t_ylim[1] - t_ylim[0])
         ax.set_ylim(t_ylim)
@@ -373,9 +373,10 @@ def tsne_and_boxplot(df, tx='tsne_x', ty='tsne_y', tc='mCH', bx='cluster_ID', by
 
 def myScatter(ax, df, x, y, l, 
               s=20,
+              grey_label='unlabeled',
               random_state=None,
               legend_mode=0,
-              colors=['C0', 'C1', 'C2', 'C0', 'C1', 'C2', 'C0', 'C1', 'C2', 'C9'], **kwargs):
+              colors=['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C8', 'C9'], **kwargs):
     """
     take an axis object and make a scatter plot
     """
@@ -383,13 +384,13 @@ def myScatter(ax, df, x, y, l,
     df = df.sample(frac=1, random_state=random_state)
     # add a color column
     inds, catgs = pd.factorize(df[l])
-    df['c'] = [colors[i%len(colors)] if i!=-1 else 'grey' for i in inds]
+    df['c'] = [colors[i%len(colors)] if catgs[i]!=grey_label else 'grey' for i in inds]
     # modify label column
-    df[l] = df[l].fillna('unlabelled') 
+    df[l] = df[l].fillna(grey_label) 
     
     # take care of legend
     for ind, row in df.groupby(l).first().iterrows():
-        ax.scatter(row.tsne_x, row.tsne_y, c=row.c, label=ind, s=s, **kwargs)
+        ax.scatter(row[x], row[y], c=row['c'], label=ind, s=s, **kwargs)
         
     if legend_mode == 0:
         ax.legend()
@@ -404,12 +405,13 @@ def myScatter(ax, df, x, y, l,
               ncol=6, fancybox=False, shadow=False) 
     
     # actual plot
-    ax.scatter(df.tsne_x, df.tsne_y, c=df['c'], s=s, **kwargs)
+    ax.scatter(df[x], df[y], c=df['c'], s=s, **kwargs)
     
     return
 
 
 def plot_tsne_labels(df, tx='tsne_x', ty='tsne_y', tc='cluster_ID', 
+                    grey_label='unlabeled',
                     legend_mode=0,
                     s=1,
                     random_state=None,
@@ -429,6 +431,7 @@ def plot_tsne_labels(df, tx='tsne_x', ty='tsne_y', tc='cluster_ID',
 
     myScatter(ax, df, tx, ty, tc,
              s=s,
+             grey_label=grey_label,
              random_state=random_state, 
              legend_mode=legend_mode, 
              colors=colors, **kwargs)
@@ -442,7 +445,7 @@ def plot_tsne_labels(df, tx='tsne_x', ty='tsne_y', tc='cluster_ID',
     ax.set_aspect('auto')
 
     if t_xlim == 'auto':
-        t_xlim = [np.nanpercentile(df['tsne_x'].values, 0.1), np.nanpercentile(df['tsne_x'].values, 99.9)]
+        t_xlim = [np.nanpercentile(df[tx].values, 0.1), np.nanpercentile(df[tx].values, 99.9)]
         t_xlim[0] = t_xlim[0] - 0.1*(t_xlim[1] - t_xlim[0])
         t_xlim[1] = t_xlim[1] + 0.1*(t_xlim[1] - t_xlim[0])
         ax.set_xlim(t_xlim)
@@ -452,7 +455,7 @@ def plot_tsne_labels(df, tx='tsne_x', ty='tsne_y', tc='cluster_ID',
         pass  
 
     if t_ylim == 'auto':
-        t_ylim = [np.nanpercentile(df['tsne_y'].values, 0.1), np.nanpercentile(df['tsne_y'].values, 99.9)]
+        t_ylim = [np.nanpercentile(df[ty].values, 0.1), np.nanpercentile(df[ty].values, 99.9)]
         t_ylim[0] = t_ylim[0] - 0.1*(t_ylim[1] - t_ylim[0])
         t_ylim[1] = t_ylim[1] + 0.1*(t_ylim[1] - t_ylim[0])
         ax.set_ylim(t_ylim)
@@ -485,3 +488,57 @@ def compress(file, suffix='bgz'):
         sp.call("bgzip -f {}".format(file), shell=True)
         sp.call("mv {}.gz {}.bgz".format(file, file), shell=True)
     return
+
+def get_cluster_mc_c(ens, context, genome_regions='bin', 
+                     cluster_type='mCHmCG_lv_npc50_k30', database='CEMBA'):
+    """Example arguments:
+    - ens: 'Ens1'
+    - context: 'CG'
+    - genome_regions: 'bin' or 'genebody'
+    - cluster_type: 'mCHmCG_lv_npc50_k30'
+    - database: 'CEMBA'
+    """
+    from CEMBA_update_mysql import connect_sql
+    from CEMBA_init_ensemble_v2 import pull_genebody_info
+    from CEMBA_init_ensemble_v2 import pull_binc_info
+    
+    engine = connect_sql(database) 
+    ens_path = os.path.join(PATH_ENSEMBLES, ens)
+    sql = """SELECT * FROM {}
+            JOIN cells
+            ON {}.cell_id = cells.cell_id""".format(ens, ens)
+    df_cells = pd.read_sql(sql, engine) 
+    cells = df_cells.cell_name.values
+    
+    if genome_regions == 'bin':
+        ens_binc_path = os.path.join(ens_path, 'binc')
+        binc_paths = [os.path.join(PATH_DATASETS, dataset, 'binc', 'binc_{}_{}.tsv.bgz'.format(cell, BIN_SIZE)) 
+                  for (cell, dataset) in zip(df_cells.cell_name, df_cells.dataset)]
+        # binc
+        input_f = os.path.join(ens_path, 'binc/binc_m{}_100000_{}.tsv.bgz'.format(context, ens)) 
+        df_input = pd.read_table(input_f, 
+            index_col=['chr', 'bin'], dtype={'chr': object}, compression='gzip')
+        
+    elif genome_regions == 'genebody':
+        ens_genelevel_path = os.path.join(ens_path, 'gene_level')
+        genebody_paths = [os.path.join(PATH_DATASETS, dataset, 'gene_level', 'genebody_{}.tsv.bgz'.format(cell)) 
+                  for (cell, dataset) in zip(df_cells.cell_name, df_cells.dataset)]
+        # genebody
+        dfs_gb, contexts = pull_genebody_info(ens, ens_genelevel_path, cells, genebody_paths, 
+                        contexts=CONTEXTS, to_file=False)
+        df_input = dfs_gb[contexts.index(context)]
+    else: 
+        raise ValueError("Invalid input genome_regions, choose from 'bin' or 'genebody'")
+
+    # cluster mc_c
+    df_c = df_input.filter(regex='_c$')
+    df_mc = df_input.filter(regex='_mc$')
+
+    df_mc_c = pd.DataFrame() 
+    for label, df_sub in df_cells.groupby('cluster_{}'.format(cluster_type)):
+        samples = df_sub['cell_name'].values
+        df_mc_c['cluster_{}_mc'.format(label)] = df_mc[samples+'_mc'].sum(axis=1)
+        df_mc_c['cluster_{}_c'.format(label)] = df_c[samples+'_c'].sum(axis=1)
+
+    logging.info("Output shape: {}".format(df_mc_c.shape))
+    return df_mc_c

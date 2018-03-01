@@ -159,7 +159,7 @@ def pull_genebody_info(ens, ens_genelevel_path, cells_genebody, genebody_paths,
         if i == 0:
             dfs = []
             for context in contexts:
-                dfs.append(pd.DataFrame(index=df_bin.index))
+                dfs.append(pd.DataFrame(index=df_gnb.index))
             
         for j, context in enumerate(contexts):
         
