@@ -14,12 +14,11 @@ from collections import OrderedDict
 import argparse
 import logging
 
+from __init__ import *
 import snmcseq_utils
 from snmcseq_utils import create_logger
 from snmcseq_utils import chunks 
 from snmcseq_utils import compress 
-from __init__ import *
-from __init__ import *
 import CEMBA_preprocess_bins 
 import CEMBA_run_tsne
 import CEMBA_clustering_louvain_jaccard

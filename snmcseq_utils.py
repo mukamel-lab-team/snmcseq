@@ -4,8 +4,6 @@ library from Chris's mypy
 Fangming edited
 """
 
-import matplotlib.pyplot as plt
-import seaborn as sns
 import subprocess as sp
 
 from __init__ import *
@@ -258,6 +256,9 @@ def plot_tsne_values(df, tx='tsne_x', ty='tsne_y', tc='mCH',
     xlim, ylim is set to facilitate displaying glial clusters only
 
     """
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
     fig, ax = plt.subplots(figsize=figsize)
 
     im = ax.scatter(df[tx], df[ty], s=s, 
@@ -312,6 +313,9 @@ def tsne_and_boxplot(df, tx='tsne_x', ty='tsne_y', tc='mCH', bx='cluster_ID', by
     xlim, ylim is set to facilitate displaying glial clusters only
 
     """
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    
     fig, axs = plt.subplots(2,1,figsize=figsize)
 
     ax = axs[0]
@@ -380,6 +384,8 @@ def myScatter(ax, df, x, y, l,
     """
     take an axis object and make a scatter plot
     """
+    import matplotlib.pyplot as plt
+    import seaborn as sns
     # shuffle (and copy) data
     df = df.sample(frac=1, random_state=random_state)
     # add a color column
@@ -427,6 +433,8 @@ def plot_tsne_labels(df, tx='tsne_x', ty='tsne_y', tc='cluster_ID',
     # avoid gray-like 'C7' in colors
     # color orders are arranged for exci-inhi-glia plot 11/1/2017
     """
+    import matplotlib.pyplot as plt
+    import seaborn as sns
     fig, ax = plt.subplots(figsize=figsize)
 
     myScatter(ax, df, tx, ty, tc,

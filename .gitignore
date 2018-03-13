@@ -6,6 +6,7 @@
 *.pdf
 data/
 results/
+browsers/
 __pycache__/
 logs/
 *.log*
