@@ -67,7 +67,7 @@ def mc_gene_level(allc_file,
     """
 
     if convention=='CEMBA':
-        CEMBA_DATASETS = '/cndd/Public_Datasets/CEMBA/Datasets'
+        CEMBA_DATASETS = PATH_DATASETS 
         allc_file = os.path.abspath(allc_file)
         assert allc_file[:len(CEMBA_DATASETS)] == CEMBA_DATASETS
 
@@ -90,8 +90,12 @@ def mc_gene_level(allc_file,
         mc_gene_level_worker(allc_file, output_file, genebody=genebody, contexts=contexts)
 
         # compress and name them .bgz
-        sp.run("bgzip -f {}".format(output_file), shell=True)
-        sp.run("mv {}.gz {}.bgz".format(output_file, output_file), shell=True)
+        try:
+            sp.run("bgzip -f {}".format(output_file), shell=True)
+            sp.run("mv {}.gz {}.bgz".format(output_file, output_file), shell=True)
+        except:
+            sp.call("bgzip -f {}".format(output_file), shell=True)
+            sp.call("mv {}.gz {}.bgz".format(output_file, output_file), shell=True)
 
     else: 
         raise ValueError('Invalid convention! choose from ["CEMBA"]!')
