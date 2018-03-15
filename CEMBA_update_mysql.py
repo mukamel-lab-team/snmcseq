@@ -17,6 +17,7 @@ from itertools import product
 from __init__ import *
 from snmcseq_utils import create_logger
 from snmcseq_utils import get_mouse_chromosomes
+from snmcseq_utils import compute_global_mC 
 
 
 def gene_id_to_table_name(gene_id):
@@ -65,7 +66,7 @@ def upload_to_cells(dataset, database=DATABASE,
 					update_mapping_summary=True):
 	"""
 	"""
-	logging.info("Uploading cells from dataset {} to database {}".format(dataset, databse))
+	logging.info("Uploading cells from dataset {} to database {}".format(dataset, database))
 	engine = connect_sql(database)
 
 	dataset_path = os.path.join(PATH_DATASETS, dataset)
@@ -119,7 +120,12 @@ def upload_to_genes(dataset, database=DATABASE):
     # read in table by cell (100 at a time)
 	logging.info("Reading genebody info from cells... ({})".format(dataset))
 	n_max = 100
+	genebody_paths = sorted(glob.glob(os.path.join(PATH_DATASETS, dataset, 'gene_level', 'genebody_*.tsv.bgz')))
+	if not genebody_paths: 
+		raise ValueError("Unable to get genebody files")
+
 	for i, chunk_paths in enumerate(chunks(genebody_paths, n_max)):
+		logging.info("Progress: {}-{}/{}".format(i*n_max+1, (i+1)*n_max, len(genebody_paths)))
 		dfs = []
 		for genebody_path in chunk_paths:
 			sample = os.path.basename(genebody_path)[len('genebody_'):-len('.tsv.bgz')]

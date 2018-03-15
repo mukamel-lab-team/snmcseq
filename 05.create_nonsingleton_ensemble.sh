@@ -27,16 +27,25 @@
 # ./CEMBA_init_ensemble.py -ei $ens_id -en $ens_name -m $message \
 # 						 --ensemble_datasets $ens_datasets
 
-# ens_id=72
-# ens_name='CEMBA_MOp_v2'
-# message="A combined ensemble with 4 datasets in CEMBA 3C and 4B"
-# ens_datasets="CEMBA_3C_171206\
-# 			CEMBA_3C_171207\
-# 			CEMBA_4B_171212\
-# 			CEMBA_4B_171213"
+# ens_id=9
+# ens_name='CEMBA_4B_v2'
+# message="A combined ensemble with 3 datasets in CEMBA 4B"
+# ens_datasets="CEMBA_4B_171212\
+# 			CEMBA_4B_171213\
+# 			CEMBA_4B_180104"
+
 # ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
 # 						 --ensemble_datasets $ens_datasets
 
 
-# ./CEMBA_init_ensemble.py -ei $ens_id -en $ens_name -m $message \
-# 						 --ensemble_cells $ens_cells
+# ens_id=10
+# ens_name='CEMBA_MOp_v2'
+# message="A combined ensemble with 5 datasets in CEMBA 3C and 4B"
+# ens_datasets="CEMBA_3C_171206\
+# 			CEMBA_3C_171207\
+# 			CEMBA_4B_171212\
+# 			CEMBA_4B_171213\
+# 			CEMBA_4B_180104"
+			
+# ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
+# 						 --ensemble_datasets $ens_datasets

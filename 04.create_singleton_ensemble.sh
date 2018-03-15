@@ -16,8 +16,8 @@
 # ens_id=4
 # message="Singleton ensemble of $dataset dataset."
 
-dataset='CEMBA_4B_171212'
-ens_id=0
+dataset='CEMBA_4B_180104'
+ens_id=8
 message="Singleton ensemble of $dataset dataset."
-ens_name="CEMBA_test_ensemble"
+ens_name="CEMBA_4B_180104"
 ./CEMBA_init_ensemble_v2.py --singleton -d $dataset -ei $ens_id -m $message -en $ens_name
