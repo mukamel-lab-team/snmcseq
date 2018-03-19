@@ -317,7 +317,7 @@ def plot_tsne_values(df, tx='tsne_x', ty='tsne_y', tc='mCH',
 
 def tsne_and_boxplot(df, tx='tsne_x', ty='tsne_y', tc='mCH', bx='cluster_ID', by='mCH',
                     output=None, show=True, close=False, title=None, figsize=(6,8),
-                    t_xlim='auto', t_ylim='auto', b_xlim=None, b_ylim=None, 
+                    t_xlim='auto', t_ylim='auto', b_xlim=None, b_ylim='auto', 
                     low_p=5, hi_p=95):
     """
     boxplot and tSNE plot
@@ -368,10 +368,15 @@ def tsne_and_boxplot(df, tx='tsne_x', ty='tsne_y', tc='mCH', bx='cluster_ID', by
     ax = axs[1]
     sns.boxplot(x=bx, y=by, data=df, ax=ax)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
-    if b_ylim:
+    if b_ylim == 'auto':
+        b_ylim = [np.nanpercentile(df[by].values, 1), np.nanpercentile(df[by].values, 99)]
+        b_ylim[0] = b_ylim[0] - 0.1*(b_ylim[1] - b_ylim[0])
+        b_ylim[1] = b_ylim[1] + 0.1*(b_ylim[1] - b_ylim[0])
         ax.set_ylim(b_ylim)
-    if b_xlim:
-        ax.set_xlim(b_xlim)
+    elif t_ylim:
+        ax.set_ylim(b_ylim)
+    else:
+        pass
 
     fig.tight_layout()
     if output:
@@ -522,8 +527,8 @@ def get_cluster_mc_c(ens, context, genome_regions='bin',
     from CEMBA_init_ensemble_v2 import pull_genebody_info
     from CEMBA_init_ensemble_v2 import pull_binc_info
     
-    engine = connect_sql(database) 
     ens_path = os.path.join(PATH_ENSEMBLES, ens)
+    engine = connect_sql(database) 
     sql = """SELECT * FROM {}
             JOIN cells
             ON {}.cell_id = cells.cell_id""".format(ens, ens)
@@ -531,22 +536,41 @@ def get_cluster_mc_c(ens, context, genome_regions='bin',
     cells = df_cells.cell_name.values
     
     if genome_regions == 'bin':
-        ens_binc_path = os.path.join(ens_path, 'binc')
-        binc_paths = [os.path.join(PATH_DATASETS, dataset, 'binc', 'binc_{}_{}.tsv.bgz'.format(cell, BIN_SIZE)) 
-                  for (cell, dataset) in zip(df_cells.cell_name, df_cells.dataset)]
-        # binc
+
         input_f = os.path.join(ens_path, 'binc/binc_m{}_100000_{}.tsv.bgz'.format(context, ens)) 
-        df_input = pd.read_table(input_f, 
-            index_col=['chr', 'bin'], dtype={'chr': object}, compression='gzip')
+        if not os.path.isfile(input_f):
+            ###!!! This part of code is not tested and subject to errors!
+            logging.info("Unable to find bin*cell matrix in {}, pulling info from datasets".format(input_f))
+
+            ens_binc_path = os.path.join(ens_path, 'binc')
+            binc_paths = [os.path.join(PATH_DATASETS, dataset, 'binc', 'binc_{}_{}.tsv.bgz'.format(cell, BIN_SIZE)) 
+                      for (cell, dataset) in zip(df_cells.cell_name, df_cells.dataset)]
+
+            dfs_gb, contexts = pull_binc_info(ens, ens_binc_path, cells, binc_paths, 
+                            contexts=CONTEXTS, to_file=False)
+            df_input = dfs_gb[contexts.index(context)]
+        else:
+            # binc
+            df_input = pd.read_table(input_f, 
+                index_col=['chr', 'bin'], dtype={'chr': object}, compression='gzip')
         
     elif genome_regions == 'genebody':
-        ens_genelevel_path = os.path.join(ens_path, 'gene_level')
-        genebody_paths = [os.path.join(PATH_DATASETS, dataset, 'gene_level', 'genebody_{}.tsv.bgz'.format(cell)) 
-                  for (cell, dataset) in zip(df_cells.cell_name, df_cells.dataset)]
-        # genebody
-        dfs_gb, contexts = pull_genebody_info(ens, ens_genelevel_path, cells, genebody_paths, 
-                        contexts=CONTEXTS, to_file=False)
-        df_input = dfs_gb[contexts.index(context)]
+
+        input_f = os.path.join(ens_path, 'gene_level/genebody_m{}_{}.tsv.bgz'.format(context, ens)) 
+        if not os.path.isfile(input_f):
+            logging.info("Unable to find gene*cell matrix in {}, pulling info from datasets".format(input_f))
+
+            ens_genelevel_path = os.path.join(ens_path, 'gene_level')
+            genebody_paths = [os.path.join(PATH_DATASETS, dataset, 'gene_level', 'genebody_{}.tsv.bgz'.format(cell)) 
+                      for (cell, dataset) in zip(df_cells.cell_name, df_cells.dataset)]
+
+            dfs_gb, contexts = pull_genebody_info(ens, ens_genelevel_path, cells, genebody_paths, 
+                            contexts=CONTEXTS, to_file=False)
+            df_input = dfs_gb[contexts.index(context)]
+        else:
+            df_input = pd.read_table(input_f, 
+                index_col=['gene_id'], compression='gzip')
+
     else: 
         raise ValueError("Invalid input genome_regions, choose from 'bin' or 'genebody'")
 

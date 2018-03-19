@@ -317,6 +317,7 @@ def setup_annoj_main(ens):
         sp.call(cmd, shell=True)
 
     ### dmr to bed
+    num_dms = 2
     logging.info("DMR to bed files...")
     cluster_type = 'cluster_mCHmCG_lv_npc50_k30'
     annotation_type = 'annotation' + cluster_type[len('cluster'):]
@@ -332,9 +333,8 @@ def setup_annoj_main(ens):
     input_f = os.path.join(ens_path, 'dmr/dmr_allc_merged_mCG_{}_rms_results_collapsed.tsv'.format(cluster_type))
     df = pd.read_table(input_f, index_col=['#chr', 'start', 'end'], dtype={'#chr': object})
     # df_hypo
-    df_hypo = df.loc[(df['number_of_dms']>=3) & (~df['hypomethylated_samples'].isnull()), 'hypomethylated_samples'].apply(
+    df_hypo = df.loc[(df['number_of_dms']>=num_dms) & (~df['hypomethylated_samples'].isnull()), 'hypomethylated_samples'].apply(
             lambda x: x.split(','))
-    # df_hyper = df.loc[(df['number_of_dms']>=3) & (~df['hypermethylated_samples'].isnull()), 'hypermethylated_samples'].apply(lambda x: x.split(','))
     try:
         os.makedirs(output_folder_dmr)
         logging.info('Created directory: {}'.format(output_folder_dmr))

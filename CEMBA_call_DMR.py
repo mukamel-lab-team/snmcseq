@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
 	# ens = 'Ens1'
 	cluster_type = 'cluster_mCHmCG_lv_npc50_k30'
-	enss = ['Ens2', 'Ens3', 'Ens4', 'Ens5', 'Ens6']
+	enss = ['Ens8', 'Ens9', 'Ens10']
 	for ens in enss: 
 		ens_path = os.path.join(PATH_ENSEMBLES, ens)
 		allc_paths = sorted(glob.glob(os.path.join(ens_path, 'allc_merged/allc_merged_mCG_{}_*_{}.tsv'.format(cluster_type, ens))))
