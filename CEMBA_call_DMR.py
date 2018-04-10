@@ -36,8 +36,8 @@ if __name__ == '__main__':
 	log = create_logger()
 
 	# ens = 'Ens1'
-	cluster_type = 'cluster_mCHmCG_lv_npc50_k30'
-	enss = ['Ens8', 'Ens9', 'Ens10']
+	cluster_type = 'cluster_mCHmCG_lv_npc50_k5'
+	enss = ['Ens10']
 	for ens in enss: 
 		ens_path = os.path.join(PATH_ENSEMBLES, ens)
 		allc_paths = sorted(glob.glob(os.path.join(ens_path, 'allc_merged/allc_merged_mCG_{}_*_{}.tsv'.format(cluster_type, ens))))

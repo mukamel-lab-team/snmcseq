@@ -30,7 +30,8 @@ def run_mc_gene_level(allc_dirs,
 	logger = create_logger()
 
 	for allc_dir in allc_dirs:
-		assert os.path.isdir(allc_dir)
+		if not os.path.isdir(allc_dir):
+			raise ValueError("{} is not a valid directory!".format(allc_dir))
 
 	allc_files = []
 	for allc_dir in allc_dirs:

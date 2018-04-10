@@ -69,7 +69,7 @@ def gen_knn_graph(X, k, option='DIRECTED'):
     return gw_knn
 
 # louvain clustering
-def louvain_clustering(adj_mtx, index, option='DIRECTED'):
+def louvain_clustering(adj_mtx, index, option='DIRECTED', sample_column_suffix=None):
     """
     a wrap-up function for louvain clustering given a (weighted) adjacency matrix
     """
@@ -81,13 +81,16 @@ def louvain_clustering(adj_mtx, index, option='DIRECTED'):
     for i, cluster in enumerate(partition1):
         for element in cluster:
             labels[element] = 'cluster_' + str(i+1)
-        
-    df_res = pd.DataFrame(index=[idx[:-len('_mcc')] for idx in index])
+
+    if sample_column_suffix: 
+        df_res = pd.DataFrame(index=[idx[:-len(sample_column_suffix)] for idx in index])
+    else:
+        df_res = pd.DataFrame(index=index)
     df_res['cluster_ID'] = labels 
     df_res = df_res.rename_axis('sample', inplace=True)
     return df_res
 
-def louvain_jaccard(df, n_pc=50, k=30, sub_ncells=None, output_file=None):
+def louvain_jaccard(df, n_pc=50, k=30, sub_ncells=None, output_file=None, sample_column_suffix='_mcc'):
     """louvain jaccard clustering from feature matrix
     df is a gene-by-cell or bin-by-cell matrix 
     cells column has the pattern of "_mcc$"
@@ -111,7 +114,7 @@ def louvain_jaccard(df, n_pc=50, k=30, sub_ncells=None, output_file=None):
 
     # run louvain jaccard clustering
     tii = time.time()
-    df_res = louvain_clustering(adj_mtx, df.index, option='DIRECTED')
+    df_res = louvain_clustering(adj_mtx, df.index, option='DIRECTED', sample_column_suffix=sample_column_suffix)
 
     # number of clusters
     nclst = np.unique(df_res.cluster_ID.values).shape[0]

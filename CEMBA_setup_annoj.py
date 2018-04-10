@@ -8,21 +8,11 @@ from natsort import natsorted
 # import os
 
 from __init__ import *
+from snmcseq_utils import cd
 import snmcseq_utils
 from snmcseq_utils import create_logger
 from CEMBA_update_mysql import connect_sql
 
-class cd:
-    """Context manager for changing the current working directory"""
-    def __init__(self, newPath):
-        self.newPath = os.path.expanduser(newPath)
-
-    def __enter__(self):
-        self.savedPath = os.getcwd()
-        os.chdir(self.newPath)
-
-    def __exit__(self, etype, value, traceback):
-        os.chdir(self.savedPath)
 
 TEMPLATE_MC_PHP = (
 """<?php
@@ -36,7 +26,7 @@ require_once '../includes/common_wgta.php';
 """
 )
 
-TEMPLATE_DMR_PHP = (
+TEMPLATE_BED_PHP = (
 """<?php
 $append_assembly = true;
 $table = 'CEMBA_annoj.{}_';
@@ -47,6 +37,8 @@ require_once '../includes/common_masks.php';
 ?>
 """
 )
+TEMPLATE_DMR_PHP = TEMPLATE_BED_PHP
+TEMPLATE_ATAC_PHP = TEMPLATE_BED_PHP
 
 TEMPLATE_INDEX_MC = (
 """
@@ -81,6 +73,23 @@ TEMPLATE_INDEX_DMR = (
     }},
 """
 )
+
+TEMPLATE_INDEX_ATAC = (
+"""
+      {{
+        id : '{}',
+        name : '{}',
+        type : 'PairedEndTrack',
+        path : 'ATAC-Seq',
+        data : './browser/fetchers/atac/{}.php',
+        iconCls : 'silk_bricks',
+        height : 20,
+        scale : 2,
+        single : true,
+      }},
+"""
+)
+
 
 def gen_annoj_config(track_name, track_vis_name, template_string):
     """
@@ -216,6 +225,9 @@ TEMPLATE_INDEX_HTML=(
     </tr></table>
   </noscript>
 
+  <!-- Enable URL queries -->
+  <script type='text/javascript'> var queryPost; </script>
+  <script type='text/javascript' src='./browser/js/urlinit.js'></script>
   <!-- Google Analytics -->
   <script type="text/javascript">
   var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
@@ -317,7 +329,7 @@ def setup_annoj_main(ens):
         sp.call(cmd, shell=True)
 
     ### dmr to bed
-    num_dms = 2
+    num_dms = NUM_DMS
     logging.info("DMR to bed files...")
     cluster_type = 'cluster_mCHmCG_lv_npc50_k30'
     annotation_type = 'annotation' + cluster_type[len('cluster'):]
@@ -417,6 +429,6 @@ def setup_annoj_main(ens):
 
 if __name__ == '__main__':
 
-    enss = ['Ens5', 'Ens3']
+    enss = ['Ens8', 'Ens9', 'Ens10']
     for ens in enss:
         setup_annoj_main(ens)

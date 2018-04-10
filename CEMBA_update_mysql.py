@@ -15,6 +15,7 @@ from collections import OrderedDict
 from itertools import product
 
 from __init__ import *
+import snmcseq_utils
 from snmcseq_utils import create_logger
 from snmcseq_utils import get_mouse_chromosomes
 from snmcseq_utils import compute_global_mC 
@@ -61,6 +62,48 @@ def chunks(l, n):
     """Yield successive n-sized chunks from l."""
     for i in range(0, len(l), n):
         yield l[i:i + n]
+
+
+def upload_to_datasets(dataset, database=DATABASE, strict=True):
+    """Add a entry (row) to datasets table
+    """
+    logging.info("Update dataset: {} to datasets table in {} database".format(dataset, database))
+    import datetime
+
+    datasets_table_content = []
+    date = datetime.datetime.now().date()
+
+    if not snmcseq_utils.isdataset(dataset):
+        if strict:
+        	raise ValueError("May not be a valid dataset: {} (not found in snmCSeq datasets directory)".format(dataset))
+        else:
+	        logging.warning("May not be a valid dataset: {} (not found in snmCSeq datasets directory)".format(dataset))
+	        
+    if snmcseq_utils.isrs2(dataset): # rs2 dataset
+        info = dataset.split('_')[2]
+        injcode = info[0] 
+        sex = info[1].upper()  
+        slicecode = info[2:] 
+        brain_region = snmcseq_utils.slicecode_to_region(slicecode)
+        target_region = snmcseq_utils.injcode_to_region(injcode)
+    else: # rs1 dataset
+        sex = 'M'
+        slicecode = dataset.split('_')[1] 
+        brain_region = snmcseq_utils.slicecode_to_region(slicecode)
+        target_region = None
+        
+    datasets_table_content.append(
+        {'dataset': dataset,
+         'date_online': date,
+        'brain_region': brain_region,
+        'target_region': target_region,
+        'sex': sex, 
+        })
+    # insert
+    engine = connect_sql(database)
+    insert_into_worker(engine, 'datasets', datasets_table_content) 
+
+    return
 
 def upload_to_cells(dataset, database=DATABASE, 
 					update_mapping_summary=True):
@@ -294,6 +337,7 @@ def create_and_upload_to_ens(ens, database=DATABASE):
 def upload_database_level(dataset, database=DATABASE):
 	"""
 	"""
+	upload_to_datasets(dataset, database=database)
 	upload_to_cells(dataset, database=database)
 	upload_to_genes(dataset, database=database)	
 	return

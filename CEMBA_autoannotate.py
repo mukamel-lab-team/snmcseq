@@ -55,7 +55,7 @@ def auto_annotate_worker(cluster_f, input_f,
         df_mc_c[label+'_c'] = df_c[samples+'_c'].sum(axis=1)
 
     # cluster mcc
-    cov = (df_mc_c.filter(regex='_c$').apply(np.log10)>3)*1
+    cov = (df_mc_c.filter(regex='_c$')>1000)*1
     gene_cov = cov.apply(np.all, axis=1)
     df_filtered = df_mc_c.loc[gene_cov, :]
 
@@ -70,7 +70,7 @@ def auto_annotate_worker(cluster_f, input_f,
     # compare with ground truth
     df = pd.read_table(input_fgt, 
         index_col=['chr', 'bin'], dtype={'chr': object})
-    df2 = df_mcc 
+    df2 = df_mcc.reset_index().astype(dtype={'chr': str}).set_index(['chr', 'bin']) # changed 18-04-04 to correct for datatype! 
     df_gt = pd.read_table(input_gt, index_col='Sample')['Neuron type'].to_frame()
 
     # combine gt clusters and clusters
@@ -157,6 +157,6 @@ def run_autoannotate_CEMBA(ens):
 if __name__ == '__main__':
 
     log = create_logger()
-    enss = ['Ens1', 'Ens2', 'Ens3', 'Ens4']
+    enss = ['Ens13']
     for ens in enss:
-        autoannotate_CEMBA(ens)
+        run_autoannotate_CEMBA(ens)

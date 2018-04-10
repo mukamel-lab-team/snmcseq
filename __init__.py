@@ -20,7 +20,8 @@ PATH_CEMBA = '/cndd/Public_Datasets/CEMBA/snmCSeq'
 PATH_DATASETS = PATH_CEMBA + '/Datasets'
 PATH_ENSEMBLES = PATH_CEMBA + '/Ensembles'
 PATH_REFERENCES = PATH_CEMBA + '/References'
-GENEBODY = PATH_REFERENCES + '/Annotation/gencode.vM16.annotation_genes.tsv'
+PATH_GENEBODY_ANNOTATION = PATH_REFERENCES + '/Annotation/gencode.vM16.annotation_genes.tsv'
+GENEBODY = PATH_GENEBODY_ANNOTATION # for back-compatibility
 GENOME_SIZE_FILE = PATH_REFERENCES + '/Genome/mm10.chrom.sizes'
 
 # tSNE
@@ -30,6 +31,9 @@ N_DIM = 2
 
 # louvain
 K_NN = [5, 10, 15, 20, 30, 50, 100] 
+
+# dmr
+NUM_DMS = 3
 
 # mysql
 DATABASE = 'CEMBA'
@@ -53,8 +57,30 @@ CELLS_TABLE_COLS = ['cell_id',
                      'filtered_rate',
                      'lambda_mC']
 
+DATABASE_ATAC = 'CEMBA_snATAC'
+CELLS_TABLE_COLS_ATAC = ['cell_id', 
+                     'cell_name', 
+                     'dataset', 
+                     # 'cell_type',
+                     # 'global_mCH', 
+                     # 'global_mCG',
+                     # 'global_mCA',
+                     # 'global_mCCC', 
+                     # 'estimated_mCH', 
+                     # 'estimated_mCG',
+                     # 'percent_genome_covered', 
+                     # 'total_reads',
+                     # 'mapped_reads', 
+                     # 'mapping_rate', 
+                     # 'nonclonal_reads', 
+                     # 'percent_nonclonal_rate',
+                     # 'filtered_reads',
+                     # 'filtered_rate',
+                     # 'lambda_mC',
+                     ]
+
 def rename_ms_cols(column_names):
-    """
+    """Rename headers in mapping summary files (from Chongyuan) to header names used in mySQL cells table
     """
     dict_rename = {'Sample': 'cell_name', 
                    'Total reads': 'total_reads', 

@@ -384,6 +384,10 @@ def main_setup(dataset, ens, ens_description, ens_name=None, ens_datasets=None):
     dfs_merged_binc = []
     for df_binc, context in zip(dfs_binc, contexts):
         df_binc = df_binc.reset_index()
+        # added 18-04-04
+        if snmcseq_utils.isrs2(dataset):
+            df_binc = df_binc[df_binc['chr'].isin(snmcseq_utils.get_mouse_chromosomes(include_x=False))]
+        # added 18-04-04
         output_binc = os.path.join(ens_path, 'binc/binc_m{}_{}_{}.tsv'.format(context, BIN_SIZE_FEATURE, ens))
         merged_binc = merge_bins(df_binc, bin_size=10*bin_size, double_xsize=True, output_file=output_binc)
         dfs_merged_binc.append(merged_binc)
@@ -419,7 +423,13 @@ def main_setup(dataset, ens, ens_description, ens_name=None, ens_datasets=None):
     CEMBA_run_tsne.run_tsne_CEMBA(ens, perps=PERPLEXITIES, n_pc=N_PC, n_dim=N_DIM)
     # louvain clustering
     logging.info("Running clustering...")
-    CEMBA_clustering_louvain_jaccard.run_louvain_CEMBA(ens, ks=K_NN, n_pc=N_PC)
+    # added 18-04-04
+    ks = []
+    for k in K_NN:
+        if k < (len(cells)/2):
+            ks.append(k)
+    # added 18-04-04
+    CEMBA_clustering_louvain_jaccard.run_louvain_CEMBA(ens, ks=ks, n_pc=N_PC)
     # annotation
     logging.info("Running cluster annotation...")
     CEMBA_autoannotate.run_autoannotate_CEMBA(ens)
@@ -538,8 +548,18 @@ def main_setup_nonsingleton(ens, ens_name, ens_description, ens_datasets=None, e
     for i, context in enumerate(contexts):
         dfs_tmp = [dfs_binc_chunk[i] for dfs_binc_chunk in dfs_binc]
         df_binc = pd.concat(dfs_tmp, axis=1)
+        # added 18-04-04
+        include_RS2 = False
+        for dataset in ens_datasets:
+            if snmcseq_utils.isrs2(dataset):
+                include_RS2 = True
+        if include_RS2:
+            df_binc = df_binc.reset_index()
+            df_binc = df_binc[df_binc['chr'].isin(snmcseq_utils.get_mouse_chromosomes(include_x=False))]
+            df_binc = df_binc.set_index(['chr', 'bin'])
+        # added 18-04-04
+        # use for further analysis
         dfs_merged_binc.append(df_binc)
-
         # save output
         output_binc = os.path.join(ens_path, 'binc/binc_m{}_{}_{}.tsv'.format(context, BIN_SIZE_FEATURE, ens))
         df_binc.to_csv(output_binc, sep="\t", na_rep="NA", header=True, index=True)
@@ -573,7 +593,13 @@ def main_setup_nonsingleton(ens, ens_name, ens_description, ens_datasets=None, e
     CEMBA_run_tsne.run_tsne_CEMBA(ens, perps=PERPLEXITIES, n_pc=N_PC, n_dim=N_DIM)
     # louvain clustering
     logging.info("Running clustering...")
-    CEMBA_clustering_louvain_jaccard.run_louvain_CEMBA(ens, ks=K_NN, n_pc=N_PC)
+    # added 18-04-04
+    ks = []
+    for k in K_NN:
+        if k < (len(cells)/2):
+            ks.append(k)
+    # added 18-04-04
+    CEMBA_clustering_louvain_jaccard.run_louvain_CEMBA(ens, ks=ks, n_pc=N_PC)
     # annotation
     logging.info("Running cluster annotation...")
     CEMBA_autoannotate.run_autoannotate_CEMBA(ens)

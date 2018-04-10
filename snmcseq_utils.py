@@ -1,13 +1,26 @@
 """
-library from Chris's mypy
-
-Fangming edited
+Fangming Xie, Chris Keown
+Many functions are adopted from Chris's mypy
 """
 
 import subprocess as sp
 
 from __init__ import *
 
+
+def isdataset(dataset):
+    """check if a dataset exists
+    """
+    return os.path.isdir(os.path.join(PATH_DATASETS, dataset))
+
+def isrs2(dataset):
+    """check if a dataset is a rs2 dataset
+    """
+    if dataset.split('_')[1] == 'RS2':
+        return True
+    else: 
+        return False
+        
 class cd:
     """Context manager for changing the current working directory"""
     def __init__(self, newPath):
@@ -31,6 +44,52 @@ def create_logger(name='log'):
         datefmt='%m/%d/%Y %I:%M:%S %p',
         level=logging.INFO)
     return logging.getLogger(name)
+
+def get_sex_from_dataset(dataset):
+    """Infer sex info from the name of a dataset
+    CEMBA_3C_171206
+    CEMA_RS2_Bm3C
+    """
+    if dataset.split('_')[1] != 'RS2':
+        sex = 'M'
+    else:
+        sex = dataset.split('_')[2][1].upper() 
+        if sex not in ['M', 'F']:
+            raise ValueError("Sex cannot be infered from dataset name")
+    return sex
+
+def slicecode_to_region(slicecode, 
+    slicecode_col='code',
+    brain_region_col='ABA_acronym',
+    reference_table=os.path.join(PATH_REFERENCES, 'Brain_regions', 'RS1_disection_regions.tsv')):
+    """Given a slice code, return a brain region (ABA acronym)
+    3C -> MOp
+    """
+    assert len(slicecode) < 3
+    slicecode = slicecode.upper()
+    df = pd.read_table(reference_table, index_col=slicecode_col)
+    try:
+        brain_region = df.loc[slicecode, brain_region_col]
+    except:
+        raise ValueError("Brain region not found!")
+    return brain_region
+    
+def injcode_to_region(injcode, 
+    injcode_col='Code',
+    brain_region_col='Region name',
+    reference_table=os.path.join(PATH_REFERENCES, 'Brain_regions', 'RS2_injection_regions.tsv')):
+    """Given a injection code, return a brain region 
+    3C -> MOp
+    """
+    assert len(injcode) == 1 
+    injcode = injcode.upper()
+    df = pd.read_table(reference_table, index_col=injcode_col)
+    try:
+        brain_region = df.loc[injcode, brain_region_col]
+    except:
+        raise ValueError("Brain region not found!")
+    return brain_region
+
 
 
 def get_mCH_contexts():
@@ -515,12 +574,12 @@ def compress(file, suffix='bgz'):
     return
 
 def get_cluster_mc_c(ens, context, genome_regions='bin', 
-                     cluster_type='mCHmCG_lv_npc50_k30', database='CEMBA'):
+                     cluster_col='cluster_mCHmCG_lv_npc50_k30', database='CEMBA'):
     """Example arguments:
     - ens: 'Ens1'
     - context: 'CG'
     - genome_regions: 'bin' or 'genebody'
-    - cluster_type: 'mCHmCG_lv_npc50_k30'
+    - cluster_col: 'cluster_mCHmCG_lv_npc50_k30'
     - database: 'CEMBA'
     """
     from CEMBA_update_mysql import connect_sql
@@ -547,9 +606,10 @@ def get_cluster_mc_c(ens, context, genome_regions='bin',
                       for (cell, dataset) in zip(df_cells.cell_name, df_cells.dataset)]
 
             dfs_gb, contexts = pull_binc_info(ens, ens_binc_path, cells, binc_paths, 
-                            contexts=CONTEXTS, to_file=False)
+                            contexts=CONTEXTS, to_file=True)
             df_input = dfs_gb[contexts.index(context)]
         else:
+            logging.info("Found bin*cell matrix in {}".format(input_f))
             # binc
             df_input = pd.read_table(input_f, 
                 index_col=['chr', 'bin'], dtype={'chr': object}, compression='gzip')
@@ -565,9 +625,10 @@ def get_cluster_mc_c(ens, context, genome_regions='bin',
                       for (cell, dataset) in zip(df_cells.cell_name, df_cells.dataset)]
 
             dfs_gb, contexts = pull_genebody_info(ens, ens_genelevel_path, cells, genebody_paths, 
-                            contexts=CONTEXTS, to_file=False)
+                            contexts=CONTEXTS, to_file=True)
             df_input = dfs_gb[contexts.index(context)]
         else:
+            logging.info("Found gene*cell matrix in {}".format(input_f))
             df_input = pd.read_table(input_f, 
                 index_col=['gene_id'], compression='gzip')
 
@@ -579,7 +640,7 @@ def get_cluster_mc_c(ens, context, genome_regions='bin',
     df_mc = df_input.filter(regex='_mc$')
 
     df_mc_c = pd.DataFrame() 
-    for label, df_sub in df_cells.groupby('cluster_{}'.format(cluster_type)):
+    for label, df_sub in df_cells.groupby('{}'.format(cluster_col)):
         samples = df_sub['cell_name'].values
         df_mc_c['cluster_{}_mc'.format(label)] = df_mc[samples+'_mc'].sum(axis=1)
         df_mc_c['cluster_{}_c'.format(label)] = df_c[samples+'_c'].sum(axis=1)
