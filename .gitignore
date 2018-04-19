@@ -10,3 +10,4 @@ browsers/
 __pycache__/
 logs/
 *.log*
+*.ipynb

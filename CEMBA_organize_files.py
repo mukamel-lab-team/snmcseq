@@ -3,6 +3,8 @@
 """
 
 from __init__ import *
+import multiprocessing as mp
+
 from snmcseq_utils import create_logger
 from snmcseq_utils import cd
 from snmcseq_utils import isdataset 
@@ -11,6 +13,7 @@ from snmcseq_utils import isdataset
 def gzip_to_bgzip(src, dst):
 	"""src is a gzip file, make it bgzip at dst
 	"""
+	logging.info("Begin gzip to bgzip: {} -> {}".format(src, dst))
 
 	# .tsv.gz to .tsv 
 	cmd = 'gzip -cd {} > {}'.format(src, os.path.splitext(src)[0]) 
@@ -22,10 +25,12 @@ def gzip_to_bgzip(src, dst):
 
 	# rm tmp files
 	os.remove(os.path.splitext(src)[0])
+	logging.info("Done gzip to bgzip: {} -> {}".format(src, dst))
+
 
 	return
 
-def CEMBA_gzip_to_bgzip(dataset):
+def CEMBA_gzip_to_bgzip(dataset, nprocs=1):
 	"""Given a dataset, get paired allc src (under from_ecker_lab folder) 
 	and dst (under allc folder) list, and send it to gzip_to_bgzip
 	"""
@@ -54,10 +59,28 @@ def CEMBA_gzip_to_bgzip(dataset):
 		n_files = len(srcs)
 
 		# do gzip to bgzip
-		for i, (src, dst) in enumerate(zip(srcs, dsts)): # can be parallelized
-			logging.info("Begin Gzip to bgzip: {} -> {} ({}/{})".format(src, dst, i+1, n_files))
-			gzip_to_bgzip(src, dst)
-			logging.info("Done Gzip to bgzip: {} -> {} ({}/{})".format(src, dst, i+1, n_files))
+		# for i, (src, dst) in enumerate(zip(srcs, dsts)): # can be parallelized
+		# 	logging.info("Begin Gzip to bgzip: {} -> {} ({}/{})".format(src, dst, i+1, n_files))
+		# 	gzip_to_bgzip(src, dst)
+		# 	logging.info("Done Gzip to bgzip: {} -> {} ({}/{})".format(src, dst, i+1, n_files))
+
+		# do gzip to bgzip (parallelized)
+		nprocs = min(nprocs, len(srcs))
+		logging.info("""Begin organize gzip to bgzip\n
+					Number of processes:{}\n
+					Number of allc_files:{}\n
+					""".format(nprocs, len(srcs)))
+		
+		pool = mp.Pool(processes=nprocs)
+		pool_results = [pool.apply_async(gzip_to_bgzip, 
+										args=(src, dst), 
+										) 
+						for (src, dst) in zip(srcs, dsts)]
+						
+		pool.close()
+		pool.join()
+
+		logging.info('Done!')
 	return
 
 def tabix_index_allc(src, skip_lines=0):
@@ -66,13 +89,13 @@ def tabix_index_allc(src, skip_lines=0):
 	os.system('tabix -f -s 1 -b 2 -e 2 -S {} {}'.format(skip_lines, src)) 
 	return 
 
-def main(dataset):
+def main(dataset, nprocs=1):
 	# make allc folder and get files from_ecker_lab
 	if not os.path.isdir(os.path.join(PATH_DATASETS, dataset, 'allc')):
 		os.makedirs(os.path.join(PATH_DATASETS, dataset, 'allc'))
 
 	# gzip to bgzip and have files in place
-	CEMBA_gzip_to_bgzip(dataset)
+	CEMBA_gzip_to_bgzip(dataset, nprocs=nprocs)
 
 	# tabix index
 	with cd(os.path.join(PATH_DATASETS, dataset, 'allc')):
@@ -85,7 +108,8 @@ def main(dataset):
 if __name__ == '__main__':
 
 	log = create_logger()
-	datasets = ['CEMBA_3F_180109']
+	datasets = ['3F']
+	nprocs = 8
 
 	# check if dataset exists 
 	for dataset in datasets:
@@ -95,7 +119,7 @@ if __name__ == '__main__':
 	# process the dataset (organize files, gzip to bgzip, and tabix index)
 	for dataset in datasets:
 		logging.info("Begin organizing files for dataset: {}".format(dataset))
-		main(dataset)
+		main(dataset, nprocs)
 		logging.info("Done organizing files for dataset: {}".format(dataset))
 
 

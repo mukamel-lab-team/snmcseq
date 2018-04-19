@@ -328,6 +328,10 @@ def setup_annoj_main(ens):
         cmd = '/cndd/fangming/lab_scripts/load_mysql_mc CEMBA_annoj > /cndd/fangming/CEMBA/snmcseq_dev/logs/annoj_1.log'
         sp.call(cmd, shell=True)
 
+    # remove mc tmp files
+    cmd = 'rm -r {}'.format(output_folder_mc)
+    sp.call(cmd, shell=True)
+
     ### dmr to bed
     num_dms = NUM_DMS
     logging.info("DMR to bed files...")
@@ -335,10 +339,12 @@ def setup_annoj_main(ens):
     annotation_type = 'annotation' + cluster_type[len('cluster'):]
     engine = connect_sql('CEMBA')
     output_folder_dmr = '/scratch/tmp_dmr_{}'.format(time_stamp)
+
     # cluster annotation
     sql = """SELECT {}, {} FROM {}""".format(cluster_type, annotation_type, ens)
     df_info = pd.read_sql(sql, engine)
     df_info = df_info.sort_values(cluster_type).drop_duplicates().set_index(cluster_type)
+
     ens_path = os.path.join(PATH_ENSEMBLES, ens)
     n_clusters = len(glob.glob(os.path.join(ens_path, 'allc_merged/allc_merged_mCG_{}_*_{}.tsv'.format(cluster_type, ens))))
     # dmr results
@@ -378,6 +384,10 @@ def setup_annoj_main(ens):
                                                                                  'CEMBA_annoj', 
                                                                                  os.path.basename(bed_file)[:-len('.bed')])
             sp.call(cmd, shell=True)
+
+    # remove mc tmp files
+    cmd = 'rm -r {}'.format(output_folder_dmr)
+    sp.call(cmd, shell=True)
 
 
     ### create php file

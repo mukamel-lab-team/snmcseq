@@ -26,45 +26,53 @@
 # ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
 # 						 --ensemble_datasets $ens_datasets
 
-
-ens_id=31
-ens_name='CEMBA_RS2_MOp'
-message="This is an ensemble including all current RS2 datasets in MOp. (12 in total)"
-ens_datasets="CEMBA_RS2_Bm3C_rep1 \
-	CEMBA_RS2_Bm3C_rep2 \
-	CEMBA_RS2_Bm4B_rep1 \
-	CEMBA_RS2_Bm4B_rep2 \
-	CEMBA_RS2_Pf3C \
-	CEMBA_RS2_Pf4B \
-	CEMBA_RS2_Pm3C \
-	CEMBA_RS2_Pm4B \
-	CEMBA_RS2_Tf3C \
-	CEMBA_RS2_Tf4B \
-	CEMBA_RS2_Tm3C \
-	CEMBA_RS2_Tm4B" 
-./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
-						 --ensemble_datasets $ens_datasets
-
-ens_id=32
-ens_name='CEMBA_MOp_with_RS2'
-message="This is an ensemble including all current datasets in MOp area, including RS2 datasets. (5+12=17 in total)"
-ens_datasets="CEMBA_3C_171206 \
-	CEMBA_3C_171207 \
-	CEMBA_4B_171212 \
-	CEMBA_4B_171213 \
-	CEMBA_4B_180104 \
-	CEMBA_RS2_Bm3C_rep1 \
-	CEMBA_RS2_Bm3C_rep2 \
-	CEMBA_RS2_Bm4B_rep1 \
-	CEMBA_RS2_Bm4B_rep2 \
-	CEMBA_RS2_Pf3C \
-	CEMBA_RS2_Pf4B \
-	CEMBA_RS2_Pm3C \
-	CEMBA_RS2_Pm4B \
-	CEMBA_RS2_Tf3C \
-	CEMBA_RS2_Tf4B \
-	CEMBA_RS2_Tm3C \
-	CEMBA_RS2_Tm4B" 
+ens_id=35
+ens_name='CEMBA_3A'
+message="A combined ensemble with 2 datasets in CEMBA 3A"
+ens_datasets="CEMBA_3A_180129 \
+	CEMBA_3A_180130" 
 			
 ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
 						 --ensemble_datasets $ens_datasets
+
+# ens_id=31
+# ens_name='CEMBA_RS2_MOp'
+# message="This is an ensemble including all current RS2 datasets in MOp. (12 in total)"
+# ens_datasets="CEMBA_RS2_Bm3C_rep1 \
+# 	CEMBA_RS2_Bm3C_rep2 \
+# 	CEMBA_RS2_Bm4B_rep1 \
+# 	CEMBA_RS2_Bm4B_rep2 \
+# 	CEMBA_RS2_Pf3C \
+# 	CEMBA_RS2_Pf4B \
+# 	CEMBA_RS2_Pm3C \
+# 	CEMBA_RS2_Pm4B \
+# 	CEMBA_RS2_Tf3C \
+# 	CEMBA_RS2_Tf4B \
+# 	CEMBA_RS2_Tm3C \
+# 	CEMBA_RS2_Tm4B" 
+# ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
+# 						 --ensemble_datasets $ens_datasets
+
+# ens_id=32
+# ens_name='CEMBA_MOp_with_RS2'
+# message="This is an ensemble including all current datasets in MOp area, including RS2 datasets. (5+12=17 in total)"
+# ens_datasets="CEMBA_3C_171206 \
+# 	CEMBA_3C_171207 \
+# 	CEMBA_4B_171212 \
+# 	CEMBA_4B_171213 \
+# 	CEMBA_4B_180104 \
+# 	CEMBA_RS2_Bm3C_rep1 \
+# 	CEMBA_RS2_Bm3C_rep2 \
+# 	CEMBA_RS2_Bm4B_rep1 \
+# 	CEMBA_RS2_Bm4B_rep2 \
+# 	CEMBA_RS2_Pf3C \
+# 	CEMBA_RS2_Pf4B \
+# 	CEMBA_RS2_Pm3C \
+# 	CEMBA_RS2_Pm4B \
+# 	CEMBA_RS2_Tf3C \
+# 	CEMBA_RS2_Tf4B \
+# 	CEMBA_RS2_Tm3C \
+# 	CEMBA_RS2_Tm4B" 
+			
+# ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
+# 						 --ensemble_datasets $ens_datasets

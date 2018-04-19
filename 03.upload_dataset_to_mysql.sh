@@ -19,5 +19,6 @@ database='CEMBA'
 # 	CEMBA_RS2_Tm4B \
 # 	CEMBA_RS2_Tm6B \
 # 	CEMBA_RS2_Tm7B"
-datasets="CEMBA_3F_180109"
+datasets="CEMBA_3A_180130"
+
 ./CEMBA_update_mysql.py -db $database -d $datasets

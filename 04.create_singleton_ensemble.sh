@@ -28,8 +28,11 @@
 # 	CEMBA_RS2_Tm6B \
 # 	CEMBA_RS2_Tm7B"
 
-datasets="CEMBA_3F_180109"
-ens_id=29 # LAST ensemble id!!! 
+datasets="CEMBA_3A_180129 \
+		CEMBA_3A_180130
+"
+
+ens_id=32 # LAST ensemble id!!! 
 for dataset in $datasets
 do
 	ens_id=$((ens_id+1))
