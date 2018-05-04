@@ -567,10 +567,10 @@ def compress(file, suffix='bgz'):
     # compress and name them .bgz
     try:
         sp.run("bgzip -f {}".format(file), shell=True)
-        sp.run("mv {}.gz {}.bgz".format(file, file), shell=True)
+        sp.run("mv {}.gz {}.{}".format(file, file, suffix), shell=True)
     except:
         sp.call("bgzip -f {}".format(file), shell=True)
-        sp.call("mv {}.gz {}.bgz".format(file, file), shell=True)
+        sp.call("mv {}.gz {}.{}".format(file, file, suffix), shell=True)
     return
 
 def get_cluster_mc_c(ens, context, genome_regions='bin', 
@@ -647,3 +647,51 @@ def get_cluster_mc_c(ens, context, genome_regions='bin',
 
     logging.info("Output shape: {}".format(df_mc_c.shape))
     return df_mc_c
+
+
+def plot_tsne_values_ax(df, ax, tx='tsne_x', ty='tsne_y', tc='mCH',
+                    low_p=5, hi_p=95,
+                    s=2,
+                    cbar_label=None,
+                    t_xlim='auto', t_ylim='auto', title=None, **kwargs):
+    """
+    tSNE plot
+
+    xlim, ylim is set to facilitate displaying glial clusters only
+
+    """
+    import matplotlib.pyplot as plt
+
+
+    im = ax.scatter(df[tx], df[ty], s=s, 
+        c=mcc_percentile_norm(df[tc].values, low_p=low_p, hi_p=hi_p), **kwargs)
+    if title:
+        ax.set_title(title)
+    else:
+        ax.set_title(tc)
+    ax.set_aspect('auto')
+    clb = plt.colorbar(im, ax=ax)
+    if cbar_label:
+        clb.set_label(cbar_label, rotation=270, labelpad=10)
+
+    if t_xlim == 'auto':
+        t_xlim = [np.nanpercentile(df[tx].values, 0.1), np.nanpercentile(df[tx].values, 99.9)]
+        t_xlim[0] = t_xlim[0] - 0.1*(t_xlim[1] - t_xlim[0])
+        t_xlim[1] = t_xlim[1] + 0.1*(t_xlim[1] - t_xlim[0])
+        ax.set_xlim(t_xlim)
+    elif t_xlim:
+        ax.set_xlim(t_xlim)
+    else:
+        pass  
+
+    if t_ylim == 'auto':
+        t_ylim = [np.nanpercentile(df[ty].values, 0.1), np.nanpercentile(df[ty].values, 99.9)]
+        t_ylim[0] = t_ylim[0] - 0.1*(t_ylim[1] - t_ylim[0])
+        t_ylim[1] = t_ylim[1] + 0.1*(t_ylim[1] - t_ylim[0])
+        ax.set_ylim(t_ylim)
+    elif t_ylim:
+        ax.set_ylim(t_ylim)
+    else:
+        pass
+
+    return 

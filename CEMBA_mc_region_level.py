@@ -3,33 +3,34 @@
 # Read in allc tables (with tabix open) and generate summarized mc levels within gene bodies
 """
 
-import pandas as pd
+from __init__ import *
+# import pandas as pd
+# import numpy as np
+# import os
+# import time
 import tabix
-import numpy as np
-import os
-import argparse
-import time
 import subprocess as sp
+import argparse
 
-# from __init__ import *
 import snmcseq_utils
 from snmcseq_utils import create_logger
 
 def mc_region_level_worker(allc_file, output_file, bed_file,
-    contexts=['CH', 'CG']):
+    contexts=CONTEXTS, compress=True):
     """
     allc_file 
     bed file:
     """
-    logger = create_logger()
+    # logger = create_logger()
 
-    chromosomes = snmcseq_utils.get_mouse_chromosomes()
+    chromosomes = snmcseq_utils.get_mouse_chromosomes() # specific to MOUSE 
 
-    df_gtf = pd.read_table(bed_file, header=None, names=['chr', 'start', 'end'], usecols=[0, 1, 2])
-    df_gtf.chr = df_gtf.chr.apply(lambda x: x[len('chr'):])
+    df_gtf = pd.read_table(bed_file, header=None, 
+            names=['chr', 'start', 'end'], usecols=[0, 1, 2], dtype={'chr': object})
+    df_gtf.chr = df_gtf.chr.apply(lambda x: x[len('chr'):] if x.startswith('chr') else x)
     df_gtf = df_gtf.loc[df_gtf.chr.isin(chromosomes)]
 
-    logger.info("mc_region_level processing: {} {}".format(allc_file, contexts))
+    logging.info("mc_region_level processing: {} {}".format(allc_file, contexts))
 
 
     outfile = open(output_file, "w")
@@ -50,7 +51,11 @@ def mc_region_level_worker(allc_file, output_file, bed_file,
         outfile.write('\t'.join(row_out)+'\n')
 
     outfile.close()
-    logger.info("Done with mc_region_level processing: {} {}\n Saving results to {}".format(allc_file, contexts, output_file))
+
+    logging.info("Done with mc_region_level processing: {} {}\n Saving results to {}".format(allc_file, contexts, output_file))
+
+    if compress:
+        snmcseq_utils.compress(output_file) 
 
     return 0
 
@@ -113,11 +118,19 @@ def create_parser():
 
 
 if __name__ == '__main__':
-    parser = create_parser()
-    args = parser.parse_args()
+    # parser = create_parser()
+    # args = parser.parse_args()
 
     ti = time.time()
-    mc_region_level_worker(args.input_allc, args.output_file, args.bed_file, contexts=['CH', 'CG'])
+
+    log = create_logger()
+
+    allc_file = '/cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_3C_171206/allc/allc_171213_CEMBA_mm_P56_P63_3C_MOp_CEMBA171206_3C_1_CEMBA171206_3C_3_H4_AD002_indexed.tsv.bgz'
+    output_file = 'test.tsv'
+    bed_file = '/cndd/Public_Datasets/CEMBA/snATACSeq/Datasets/CEMBA_3C_171206/CEMBA_3C_171206_merged.bed'
+
+    mc_region_level_worker(allc_file, output_file, bed_file, contexts=CONTEXTS)
+    # mc_region_level_worker(args.input_allc, args.output_file, args.bed_file, contexts=['CH', 'CG'])
     tf = time.time()
     print("time: %s sec" % (tf-ti))
 

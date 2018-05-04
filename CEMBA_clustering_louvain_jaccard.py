@@ -20,12 +20,29 @@ from sklearn.decomposition import PCA
 from sklearn.neighbors import NearestNeighbors
 import louvain
 import igraph as ig
+from scipy import sparse
 
 from __init__ import *
 from snmcseq_utils import create_logger
 from snmcseq_utils import plot_tsne_labels
 
 
+def compute_jaccard_weights_v2(X, k):
+    """compute jaccard index on a knn graph
+    Arguments: 
+        X (unweighted) kNN ajacency matrix (each row Xi* gives the kNNs of cell i) 
+        X has to be 0-1 valued 
+        k (number of nearest neighbors) 
+        
+    output: numpy matrix Y
+    """
+    X = sparse.csr_matrix(X)
+    ni, nj = X.shape
+    assert ni == nj
+    
+    tmp = X.dot(X.T)
+    Y = X.multiply(tmp/(2*k - tmp.todense()))    
+    return Y
 
 def compute_jaccard_weights(X, option='DIRECTED'):
     """

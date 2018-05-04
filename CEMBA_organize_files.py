@@ -108,8 +108,8 @@ def main(dataset, nprocs=1):
 if __name__ == '__main__':
 
 	log = create_logger()
-	datasets = ['3F']
-	nprocs = 8
+	datasets = ['CEMBA_4A_180205', 'CEMBA_4A_180206']
+	nprocs = 16 
 
 	# check if dataset exists 
 	for dataset in datasets:

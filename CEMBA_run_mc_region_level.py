@@ -2,12 +2,11 @@
 """
 """
 
-import argparse
-import os
-import glob
+from __init__ import *
 import multiprocessing as mp
+import argparse
 
-# from __init__ import *
+import snmcseq_utils
 from CEMBA_mc_region_level import mc_region_level_worker 
 from snmcseq_utils import create_logger
 
@@ -18,7 +17,8 @@ from snmcseq_utils import create_logger
 
 def run_mc_region_level(allc_files, output_files, 
 	bed_file, 
-	contexts=['CH', 'CG'], 
+	contexts=CONTEXTS,
+	compress=True, 
 	# overwrite=False,
 	nprocs=1):
 	"""
@@ -38,24 +38,52 @@ def run_mc_region_level(allc_files, output_files,
 	logger.info("""Begin run_mc_region_level.\n
 				Number of processes:{}\n
 				Number of allc_files:{}\n
-				""".format(nprocs, len(allc_files)))
+				Bed file: {}\n
+				""".format(nprocs, len(allc_files), bed_file))
 	
 	pool = mp.Pool(processes=nprocs)
 	pool_results = [pool.apply_async(mc_region_level_worker, 
 									args=(allc_file, output_file, bed_file), 
 									kwds={'contexts': contexts, 
-										# 'genebody': genebody,
-										# 'convention': convention,
-										# 'overwrite': overwrite,
+										'compress': compress,
 										}) 
 					for allc_file, output_file in zip(allc_files, output_files)]
 					
+
 	pool.close()
 	pool.join()
+	# mc_region_level_worker(allc_files[0], output_files[0], bed_file, contexts=contexts, compress=compress)	
 
-	logger.info('Done!')
 
 	return pool_results
+
+
+def run_mc_region_level_CEMBA(dataset, bed_file, output_dirname, contexts=CONTEXTS, compress=True, nprocs=1):
+	"""Generate bed_file and 
+	"""
+	assert snmcseq_utils.isdataset(dataset)
+
+	if not os.path.isdir(os.path.join(PATH_DATASETS, dataset, output_dirname)):
+		logging.info("Creating directory: {}".format(os.path.join(PATH_DATASETS, dataset, output_dirname)))
+		os.makedirs(os.path.join(PATH_DATASETS, dataset, output_dirname))
+
+
+	allc_files = sorted(glob.glob(os.path.join(PATH_DATASETS, dataset, 'allc', 'allc_*.tsv.bgz')))
+	cells = [os.path.basename(allc_file)[len('allc_'):-len('.tsv.bgz')] for allc_file in allc_files]
+	output_files = [os.path.join(PATH_DATASETS, dataset, output_dirname, cell+'.tsv') for cell in cells]
+
+	logging.info("mc region level counts: {}".format(dataset))
+
+
+
+	run_mc_region_level(allc_files, output_files, 
+		bed_file, 
+		contexts=CONTEXTS,
+		compress=compress, 
+		nprocs=nprocs)
+
+	return
+
 
 
 def create_parser():
@@ -63,28 +91,33 @@ def create_parser():
 
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input_allc_files", 
+    # parser.add_argument("-i", "--input_allc_files", 
+    # 	required=True,
+    # 	nargs='+', 
+    # 	help="list of allc files")
+    # parser.add_argument("-o", "--output_files", 
+    # 	required=True,
+    # 	nargs='+', 
+    # 	help="list of output_files")
+    parser.add_argument("-d", "--datasets", 
     	required=True,
     	nargs='+', 
-    	help="list of allc files")
-    parser.add_argument("-o", "--output_files", 
+    	help="list of datasets")
+    parser.add_argument("-o", "--output_dirname", 
     	required=True,
-    	nargs='+', 
-    	help="list of output_files")
+    	help="output dirname UNDER dataset folders (example: gene_level, binc, atac_peaks, ...)")
     parser.add_argument("-b", "--bed_file", 
     	required=True,
     	help="bed file")
     parser.add_argument("-c", "--contexts", 
     	nargs='+', 
-    	default=['CH', 'CG'], 
-    	help="list of contexts: CH/CG/...")
-    # parser.add_argument("-f", "--overwrite", 
-    # 	action='store_true',
-    # 	help="overwrites a file if it exists")
+    	default=CONTEXTS, 
+    	help="list of contexts: CH/CG/... default: CH CG CA")
+
     parser.add_argument("-n", "--nprocs", 
     	type=int, 
     	default=1,
-    	help="number of processes")
+    	help="number of processes (default 1)")
 
     return parser
 
@@ -92,11 +125,45 @@ def create_parser():
 
 if __name__ == '__main__':
 
+	log = create_logger()
 	parser = create_parser()
 	args = parser.parse_args()
 
-	run_mc_region_level(args.input_allc_files, args.output_files, args.bed_file,
-		contexts=args.contexts,
-		# overwrite=args.overwrite,
-		nprocs=args.nprocs)
+	datasets = args.datasets
+	bed_file = args.bed_file
+	output_dirname = args.output_dirname
+	contexts = args.contexts
+	nprocs = args.nprocs
 
+
+	if '/' in output_dirname:
+		raise ValueError("'/' is not allowed in a directory name, choose names such as: atac_peak, dmr, etc...")
+	elif 'binc' in output_dirname:
+		raise ValueError("'binc' is not allowed as a directory name!")
+	elif 'gene_level' in output_dirname:
+		raise ValueError("'gene_level' is not allowed as a directory name!")
+
+	# datasets = ['CEMBA_3C_171206', 'CEMBA_3C_171207', 'CEMBA_4B_171212', 'CEMBA_4B_171213', 'CEMBA_4B_180104']	
+	# bed_files = ['/cndd/Public_Datasets/CEMBA/snATACSeq/Datasets/{}/{}_merged.bed'.format(dataset, dataset) for dataset in datasets]
+	# output_dirname = 'atac_peak_regions'
+	# nprocs = 16
+
+	logging.info(""" CEMBA mc region level counting:
+			Datasets: {}
+			Bed file: {}
+			Output dirname: {}
+			Number of processes: {}
+		""".format(datasets, bed_file, output_dirname, nprocs))
+
+	for dataset in datasets:
+		assert snmcseq_utils.isdataset(dataset)
+	assert os.path.isfile(bed_file)
+
+	for dataset in datasets:
+		res = run_mc_region_level_CEMBA(dataset, bed_file, output_dirname, 
+			contexts=CONTEXTS, compress=True, nprocs=nprocs)
+
+	# run_mc_region_level(args.input_allc_files, args.output_files, args.bed_file,
+	# 	contexts=args.contexts,
+	# 	# overwrite=args.overwrite,
+	# 	nprocs=args.nprocs)
