@@ -26,25 +26,20 @@
 # ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
 # 						 --ensemble_datasets $ens_datasets
 
-ens_id=43
-ens_name='CEMBA_1B'
-message="A combined ensemble with 2 datasets in CEMBA 1B"
-ens_datasets="CEMBA_1B_180119 \
-	CEMBA_1B_180213 \
-	" 
+ens_id=51
+ens_name='CEMBA_striatum'
+message="A combined ensemble with all datasets in CEMBA 3F, 4D, and 4E"
+ens_datasets="CEMBA_3F_180105 \
+CEMBA_3F_180109 \
+CEMBA_3F_180109_v2 \
+CEMBA_4D_171214 \
+CEMBA_4D_171219 \
+CEMBA_4E_180110 \
+CEMBA_4E_180111"
 			
 ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
 						 --ensemble_datasets $ens_datasets
 
-ens_id=44
-ens_name='CEMBA_2E'
-message="A combined ensemble with 2 datasets in CEMBA 2E"
-ens_datasets="CEMBA_2E_180220 \
-	CEMBA_2E_180222 \
-	" 
-			
-./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
-						 --ensemble_datasets $ens_datasets
 # ens_id=31
 # ens_name='CEMBA_RS2_MOp'
 # message="This is an ensemble including all current RS2 datasets in MOp. (12 in total)"

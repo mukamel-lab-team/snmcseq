@@ -50,7 +50,7 @@ def compute_jaccard_weights(X, option='DIRECTED'):
     
     X has to be 0-1 valued 
     """
-    X = np.asarray(X)
+    X = np.asarray(X).astype(float)
     ni, nj = X.shape
     assert ni == nj
     
@@ -76,12 +76,15 @@ def gen_knn_graph(X, k, option='DIRECTED'):
     """
 
     # get 0-1 adjacency matrix of kNN 
+    # get weights 
+
     knn = NearestNeighbors(n_neighbors=k, metric='euclidean').fit(X)
     g_knn = knn.kneighbors_graph(X, mode='connectivity')
     g_knn = g_knn.toarray()
-
-    # get weights 
     gw_knn = compute_jaccard_weights(g_knn, option=option)
+    
+    # updated 05/15/2018 Fangming
+    # gw_knn = compute_jaccard_weights_v2(g_knn, k=k).todense()
 
     return gw_knn
 
@@ -107,7 +110,7 @@ def louvain_clustering(adj_mtx, index, option='DIRECTED', sample_column_suffix=N
     df_res = df_res.rename_axis('sample', inplace=True)
     return df_res
 
-def louvain_jaccard(df, n_pc=50, k=30, sub_ncells=None, output_file=None, sample_column_suffix='_mcc'):
+def louvain_jaccard(df, n_pc=50, k=30, sub_ncells=None, output_file=None, sample_column_suffix='_mcc', whiten=False):
     """louvain jaccard clustering from feature matrix
     df is a gene-by-cell or bin-by-cell matrix 
     cells column has the pattern of "_mcc$"
@@ -123,7 +126,7 @@ def louvain_jaccard(df, n_pc=50, k=30, sub_ncells=None, output_file=None, sample
     logging.info('Begin louvain jaccard clustering\nInput shape (n_obs, n_features): {}'.format(df.shape))
 
     # pca
-    pca = PCA(n_components=n_pc).fit(df.values)
+    pca = PCA(n_components=n_pc, whiten=whiten).fit(df.values)
     pcs = pca.transform(df.values)
 
     # build a jaccard-index weighted k nearest neighbor graph

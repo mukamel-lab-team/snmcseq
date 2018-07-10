@@ -451,24 +451,52 @@ def tsne_and_boxplot(df, tx='tsne_x', ty='tsne_y', tc='mCH', bx='cluster_ID', by
     if close:
         plt.close(fig)
 
+
+def get_kwcolors(labels, colors):
+    """Generate a dictinary of {label: color} using unique labels and a list of availabel colors
+    """
+    nc = len(colors)
+    nl = len(labels)
+    n_repeats = int((nl + nc - 1)/nc)
+    colors = list(colors)*n_repeats
+    
+    kw_colors = {l:c for (l,c) in zip(labels, colors)}
+    return kw_colors
+
+def gen_colors(n, l=0.6, s=0.6):
+    """Generate maximumly distinct rgb colors
+    """
+    import colorsys
+    hs = np.linspace(0, 1, n, endpoint=False)
+    rgbs = [colorsys.hls_to_rgb(h, l, s) for h in hs]
+    return rgbs
+
 def myScatter(ax, df, x, y, l, 
               s=20,
               grey_label='unlabeled',
+              shuffle=True,
               random_state=None,
               legend_mode=0,
+              kw_colors=False,
               colors=['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C8', 'C9'], **kwargs):
     """
     take an axis object and make a scatter plot
+
+    - kw_colors is a dictinary {label: color}
     """
     import matplotlib.pyplot as plt
     import seaborn as sns
+    df = df.copy()
     # shuffle (and copy) data
-    df = df.sample(frac=1, random_state=random_state)
-    # add a color column
-    inds, catgs = pd.factorize(df[l])
-    df['c'] = [colors[i%len(colors)] if catgs[i]!=grey_label else 'grey' for i in inds]
-    # modify label column
-    df[l] = df[l].fillna(grey_label) 
+    if shuffle:
+        df = df.sample(frac=1, random_state=random_state)
+
+    if not kw_colors:
+        # add a color column
+        inds, catgs = pd.factorize(df[l])
+        df['c'] = [colors[i%len(colors)] if catgs[i]!=grey_label else 'grey' for i in inds]
+    else:
+        df['c'] = [kw_colors[i] if i!=grey_label else 'grey' for i in df[l]]
     
     # take care of legend
     for ind, row in df.groupby(l).first().iterrows():
@@ -489,6 +517,63 @@ def myScatter(ax, df, x, y, l,
     # actual plot
     ax.scatter(df[x], df[y], c=df['c'], s=s, **kwargs)
     
+    return
+
+def plot_tsne_labels_ax(df, ax, tx='tsne_x', ty='tsne_y', tc='cluster_ID', 
+                    grey_label='unlabeled',
+                    legend_mode=0,
+                    s=1,
+                    shuffle=True,
+                    random_state=None,
+                    t_xlim='auto', t_ylim='auto', title=None, 
+                    legend_loc='lower right',
+                    colors=['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C8', 'C9'], **kwargs):
+    """
+    tSNE plot
+
+    xlim, ylim is set to facilitate displaying glial clusters only
+
+    # avoid gray-like 'C7' in colors
+    # color orders are arranged for exci-inhi-glia plot 11/1/2017
+    """
+    import matplotlib.pyplot as plt
+
+    myScatter(ax, df, tx, ty, tc,
+             s=s,
+             shuffle=shuffle,
+             grey_label=grey_label,
+             random_state=random_state, 
+             legend_mode=legend_mode, 
+             colors=colors, **kwargs)
+
+    if title:
+        ax.set_title(title)
+    else:
+        ax.set_title(tc)
+    ax.set_xlabel(tx)
+    ax.set_ylabel(ty)
+    ax.set_aspect('auto')
+
+    if t_xlim == 'auto':
+        t_xlim = [np.nanpercentile(df[tx].values, 0.1), np.nanpercentile(df[tx].values, 99.9)]
+        t_xlim[0] = t_xlim[0] - 0.1*(t_xlim[1] - t_xlim[0])
+        t_xlim[1] = t_xlim[1] + 0.1*(t_xlim[1] - t_xlim[0])
+        ax.set_xlim(t_xlim)
+    elif t_xlim:
+        ax.set_xlim(t_xlim)
+    else:
+        pass  
+
+    if t_ylim == 'auto':
+        t_ylim = [np.nanpercentile(df[ty].values, 0.1), np.nanpercentile(df[ty].values, 99.9)]
+        t_ylim[0] = t_ylim[0] - 0.1*(t_ylim[1] - t_ylim[0])
+        t_ylim[1] = t_ylim[1] + 0.1*(t_ylim[1] - t_ylim[0])
+        ax.set_ylim(t_ylim)
+    elif t_ylim:
+        ax.set_ylim(t_ylim)
+    else:
+        pass
+
     return
 
 
@@ -670,7 +755,7 @@ def plot_tsne_values_ax(df, ax, tx='tsne_x', ty='tsne_y', tc='mCH',
     else:
         ax.set_title(tc)
     ax.set_aspect('auto')
-    clb = plt.colorbar(im, ax=ax)
+    clb = plt.colorbar(im, ax=ax, shrink=0.4)
     if cbar_label:
         clb.set_label(cbar_label, rotation=270, labelpad=10)
 
@@ -695,3 +780,98 @@ def plot_tsne_values_ax(df, ax, tx='tsne_x', ty='tsne_y', tc='mCH',
         pass
 
     return 
+
+
+def get_mcc(df, base_call_cutoff=100, sufficient_coverage_fraction=1, suffix=True):
+    """Get mcc matrix from mc_c matrix (filtering out low coverage gene or bins)
+    """
+    logging.info('Getting mcc matrix from mc and c') 
+    logging.info('base_call_cutoff={}, sufficient_coverage_fraction={}'.format(
+                base_call_cutoff, sufficient_coverage_fraction))
+    
+    df_c = df.filter(regex="_c$")
+    df_c.columns = [col[:-len('_c')] for col in df_c.columns] 
+    df_mc = df.filter(regex="_mc$")
+    df_mc.columns = [col[:-len('_mc')] for col in df_mc.columns] 
+    # a gene is sufficiently covered in % of cells 
+    condition = (df_c > base_call_cutoff).sum(axis=1) >= sufficient_coverage_fraction*(df.shape[1])/2.0 
+
+    logging.info("Matrix size before pruning... "+ str(df.shape))
+    logging.info("Matrix size after pruning... "+ str(df.loc[condition].shape))
+    
+    # get mcc matrix with kept bins and nan values for low coverage sites
+    df_c_nan = df_c.copy()
+    df_c_nan[df_c < base_call_cutoff] = np.nan
+    df_mcc = df_mc.loc[condition]/df_c_nan.loc[condition]
+    logging.info(df_mcc.shape)
+
+    # imputation (missing value -> mean value of all cells)
+    logging.info('Imputing data... (No effect if sufficient_coverage_fraction=1)')
+    means = df_mcc.mean(axis=1)
+    fill_value = pd.DataFrame({col: means for col in df_mcc.columns})
+    df_mcc.fillna(fill_value, inplace=True)
+    
+    # add suffix
+    if suffix:
+        df_mcc.columns = df_mcc.columns.values + '_mcc'
+    
+    return df_mcc
+
+
+def get_clusters_mc_c_worker(df_cells, df_input, cluster_col):
+    """reduce gene*cell or bin*cell matrix to a gene*cluster or bin*cluster matrix
+    Arguments:
+        - df_cells: a dataframe indexed by 'cell_name', and have '$cluster_col' as column
+        - df_input: a dataframe with 'sample_mc', 'sample_c' ... as columns
+        sample names are cell names
+    """
+    # cluster mc_c
+    df_c = df_input.filter(regex='_c$')
+    df_mc = df_input.filter(regex='_mc$')
+
+    df_mc_c = pd.DataFrame() 
+    for label, df_sub in df_cells.groupby(cluster_col):
+        samples = df_sub.index.values
+        df_mc_c['{}_mc'.format(label)] = df_mc[samples+'_mc'].sum(axis=1)
+        df_mc_c['{}_c'.format(label)] = df_c[samples+'_c'].sum(axis=1)
+
+    logging.info("Output shape: {}".format(df_mc_c.shape))
+    return df_mc_c
+
+
+def pull_genebody_mc_c(ens, context, database='CEMBA'):
+    """Example arguments:
+    - ens: 'Ens1'
+    - context: 'CG'
+    - database: 'CEMBA'
+    """
+    from CEMBA_update_mysql import connect_sql
+    from CEMBA_init_ensemble_v2 import pull_genebody_info
+    from CEMBA_init_ensemble_v2 import pull_binc_info
+    
+    ens_path = os.path.join(PATH_ENSEMBLES, ens)
+    engine = connect_sql(database) 
+    sql = """SELECT * FROM {}
+            JOIN cells
+            ON {}.cell_id = cells.cell_id""".format(ens, ens)
+    df_cells = pd.read_sql(sql, engine) 
+    cells = df_cells.cell_name.values
+    
+    input_f = os.path.join(ens_path, 'gene_level/genebody_m{}_{}.tsv.bgz'.format(context, ens)) 
+    if not os.path.isfile(input_f):
+        logging.info("Unable to find gene*cell matrix in {}, pulling info from datasets".format(input_f))
+
+        ens_genelevel_path = os.path.join(ens_path, 'gene_level')
+        genebody_paths = [os.path.join(PATH_DATASETS, dataset, 'gene_level', 'genebody_{}.tsv.bgz'.format(cell)) 
+                  for (cell, dataset) in zip(df_cells.cell_name, df_cells.dataset)]
+
+        dfs_gb, contexts = pull_genebody_info(ens, ens_genelevel_path, cells, genebody_paths, 
+                        contexts=CONTEXTS, to_file=True)
+        df_input = dfs_gb[contexts.index(context)]
+    else:
+        logging.info("Found gene*cell matrix in {}".format(input_f))
+        df_input = pd.read_table(input_f, 
+            index_col=['gene_id'], compression='gzip')
+
+    logging.info("Output shape: {}".format(df_input.shape))
+    return df_input

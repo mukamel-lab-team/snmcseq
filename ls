@@ -2,7 +2,7 @@
  "cells": [
   {
    "cell_type": "code",
-   "execution_count": 12,
+   "execution_count": 1,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -25,7 +25,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 13,
+   "execution_count": 2,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -34,13 +34,12 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 14,
+   "execution_count": 3,
    "metadata": {},
    "outputs": [],
    "source": [
     "# An engine connects to a mysql database\n",
-    "# engine = sa.create_engine('mysql://f7xie:3405040212@localhost/CEMBA_annoj')\n",
-    "engine = sa.create_engine('mysql://f7xie:3405040212@ocarina/CEMBA')"
+    "engine = sa.create_engine('mysql://f7xie:3405040212@localhost/CEMBA_annoj')"
    ]
   },
   {
@@ -129,7 +128,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 4,
+   "execution_count": 6,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -160,23 +159,10 @@
     "                     'filtered_rate',\n",
     "                     'lambda_mC']\n",
     "\n",
-    "def define_marker_gene_table(metadata, ens):\n",
-    "    \"\"\"\n",
-    "    \"\"\"\n",
-    "    from sqlalchemy.dialects.mysql import TINYINT\n",
-    "    \n",
-    "    table = sa.Table('{}_cluster_marker_genes'.format(ens), metadata, \n",
-    "                    sa.Column('clustering', sa.String(255)),\n",
-    "                    sa.Column('cluster', TINYINT),\n",
-    "                    sa.Column('rank', TINYINT),\n",
-    "                    sa.Column('gene_id', sa.String(255)),\n",
-    "                    )\n",
-    "    return table\n",
-    "    \n",
-    "\n",
     "def define_datasets_table(metadata):\n",
     "    \"\"\"\n",
     "    \"\"\"\n",
+    "        \n",
     "    table = sa.Table('datasets', metadata, \n",
     "                    sa.Column('dataset', sa.String(100), primary_key=True, autoincrement=False),\n",
     "                    sa.Column('date_online', sa.Date, nullable=False),\n",
@@ -734,7 +720,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 15,
+   "execution_count": 17,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -751,7 +737,7 @@
     "# enss_table = define_enss_table(metadata)\n",
     "\n",
     "# define datasets table\n",
-    "# datasets_table = define_datasets_table(metadata)\n",
+    "datasets_table = define_datasets_table(metadata)\n",
     "\n",
     "\n",
     "# define genes table\n",
@@ -766,9 +752,6 @@
     "# # define gene table\n",
     "# gene_id = 'ENSG1111.1'\n",
     "# gene_table = define_gene_table(metadata, gene_id)\n",
-    "\n",
-    "ens = 'Ens3'\n",
-    "marker_gene_table = define_marker_gene_table(metadata, ens)\n",
     "\n",
     "metadata.create_all()"
    ]
@@ -2840,7 +2823,7 @@
    "name": "python",
    "nbconvert_exporter": "python",
    "pygments_lexer": "ipython3",
-   "version": "3.6.3"
+   "version": "3.4.3"
   }
  },
  "nbformat": 4,

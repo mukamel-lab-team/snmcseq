@@ -264,6 +264,46 @@ def merge_allc_CEMBA(ens, context='CG', cluster_type='cluster_mCHmCG_lv_npc50_k3
 
 	return pool_results
 
+def merge_allc_parallel(allc_paths_all, output_fname_all, context='CG', nprocs=2,
+	chunksize=1000000, n_chunk1=50, n_chunk2=20):
+	"""Merge allc tables in parallel 
+	Arguments: 
+		- allc_paths_all: a list of list of allc paths
+		- output_fname_all: a list of output files
+		- nprocs: number of processes
+	returns: 
+		- save merged allc files to PATH_ENSEMBLES/$ens/allc_merged
+	"""
+
+	n_clusters = len(allc_paths_all)
+	assert n_clusters == len(output_fname_all) 
+
+	# set up parallel merging 
+	nprocs = min(nprocs, n_clusters)
+	logging.info("""Begin merging allc files. 
+				Number of processes:{}
+				Number of output files to merge:{}
+				""".format(nprocs, n_clusters))
+	
+	pool = mp.Pool(processes=nprocs)
+	pool_results = [pool.apply_async(merge_allc, 
+									args=(allc_paths, output_fname), 
+									kwds={'context': context, 
+										'chunksize': chunksize,
+										'n_chunk1': n_chunk1,
+										'n_chunk2': n_chunk2,
+										}) 
+					for allc_paths, output_fname in zip(allc_paths_all, output_fname_all)]
+					
+	pool.close()
+	pool.join()
+
+	logging.info('Done!')
+
+	return pool_results
+
+
+
 def create_parser():
 	"""
 	"""

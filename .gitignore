@@ -5,6 +5,7 @@
 *.mat
 *.pdf
 data/
+from_wayne/
 results/
 browsers/
 __pycache__/

@@ -439,6 +439,6 @@ def setup_annoj_main(ens):
 
 if __name__ == '__main__':
 
-    enss = ['Ens8', 'Ens9', 'Ens10']
+    enss = ['Ens51']
     for ens in enss:
         setup_annoj_main(ens)

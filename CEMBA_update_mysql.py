@@ -27,7 +27,7 @@ def gene_id_to_table_name(gene_id):
     table_name = 'gene_' + gene_id.replace('.', '_')
     return table_name
 
-def connect_sql(database, user='f7xie', host='localhost', pwd='3405040212'):
+def connect_sql(database, user=USER, host=HOST, pwd=PWD):
 	"""
 	"""
 	connect_string = 'mysql://{}:{}@{}/{}'.format(user, pwd, host, database)	

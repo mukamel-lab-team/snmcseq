@@ -10,8 +10,10 @@
 #        /cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_4D_171219/allc
 # "
 
-input="/cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_4A_180205/allc \
-       /cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_4A_180206/allc
+input="/cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_1A_180226/allc \
+       /cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_1A_180227/allc \
+       /cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_1C_180208/allc \
+       /cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_1C_180212/allc 
 "
 
 

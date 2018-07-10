@@ -62,6 +62,48 @@ def run_tsne(df, perp=30, n_pc=50, n_tsne=2,
     
     return df_tsne
 
+def run_tsne_v2(df, perp=30, n_pc=50, n_tsne=2, 
+             random_state=1, output_file=None, sample_column_suffix=None, nthreads=1, **kwargs):
+    """run tsne on "_mcc$" columns
+    """
+    from sklearn.decomposition import PCA
+    # from sklearn.manifold import TSNE 
+    import fitsne
+
+
+    ti = time.time()
+
+    if sample_column_suffix: 
+        df = df.filter(regex='{}$'.format(sample_column_suffix))
+    logging.info("Running tsne: {} PC, {} perp, {} dim.\nInput shape: {}".format(n_pc, perp, n_tsne, df.shape))
+    
+    pca = PCA(n_components=n_pc)
+    pcs = pca.fit_transform(df.T)
+
+    # tsne = TSNE(n_components=n_tsne, init='pca', random_state=random_state, perplexity=perp, **kwargs)
+    #   ts = tsne.fit_transform(pcs)
+    pcs = pcs.copy(order='C')
+    ts = fitsne.FItSNE(pcs, perplexity=perp, rand_seed=random_state, nthreads=nthreads, **kwargs)
+ 
+    if n_tsne == 2: 
+        df_tsne = pd.DataFrame(ts, columns=['tsne_x','tsne_y'])
+    elif n_tsne == 3:
+        df_tsne = pd.DataFrame(ts, columns=['tsne_x','tsne_y', 'tsne_z'])
+
+    if sample_column_suffix:
+        df_tsne['sample'] = [sample[:-len(sample_column_suffix)] for sample in df.columns.tolist()]
+    else:
+        df_tsne['sample'] = df.columns.tolist()
+    df_tsne = df_tsne.set_index('sample')
+    
+    if output_file:
+        df_tsne.to_csv(output_file, sep="\t", na_rep='NA', header=True, index=True)
+        logging.info("Saved tsne coordinates to file. {}".format(output_file))
+
+    tf = time.time()
+    logging.info("Done with tSNE. running time: {} seconds.".format(tf - ti))
+    
+    return df_tsne
     
 # def run_umap(df, n_pc=50, n_neighbors=50, min_dist=0.3, n_dim=2, 
 #              output_file=None, sample_column_suffix=None, **kwargs): 

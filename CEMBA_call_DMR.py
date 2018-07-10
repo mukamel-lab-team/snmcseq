@@ -36,8 +36,9 @@ if __name__ == '__main__':
 	log = create_logger()
 
 	# ens = 'Ens1'
-	cluster_type = 'cluster_mCHmCG_lv_npc50_k5'
-	enss = ['Ens10']
+	cluster_type = 'cluster_mCHmCG_lv_npc50_k30'
+	enss = ['Ens51']
+	nprocs = 4
 	for ens in enss: 
 		ens_path = os.path.join(PATH_ENSEMBLES, ens)
 		allc_paths = sorted(glob.glob(os.path.join(ens_path, 'allc_merged/allc_merged_mCG_{}_*_{}.tsv'.format(cluster_type, ens))))
@@ -48,6 +49,6 @@ if __name__ == '__main__':
 			os.makedirs(output_path)
 			logging.info("Created path: {}".format(output_path))
 
-		call_DMR_wrapper(allc_paths, output_prefix, nprocs=8)
+		call_DMR_wrapper(allc_paths, output_prefix, nprocs=nprocs)
 
 

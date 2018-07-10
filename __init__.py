@@ -36,6 +36,9 @@ K_NN = [5, 10, 15, 20, 30, 50, 100]
 NUM_DMS = 3
 
 # mysql
+USER = 'f7xie'
+HOST = 'ocarina'
+PWD = '3405040212'
 DATABASE = 'CEMBA'
 CELLS_TABLE_COLS = ['cell_id', 
                      'cell_name', 
