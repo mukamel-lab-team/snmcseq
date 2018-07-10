@@ -9,6 +9,7 @@ from_wayne/
 results/
 browsers/
 __pycache__/
+old*/
 logs/
 *.log*
 *.ipynb
