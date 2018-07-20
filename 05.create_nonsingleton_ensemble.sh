@@ -26,16 +26,20 @@
 # ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
 # 						 --ensemble_datasets $ens_datasets
 
-ens_id=51
-ens_name='CEMBA_striatum'
-message="A combined ensemble with all datasets in CEMBA 3F, 4D, and 4E"
-ens_datasets="CEMBA_3F_180105 \
-CEMBA_3F_180109 \
-CEMBA_3F_180109_v2 \
-CEMBA_4D_171214 \
-CEMBA_4D_171219 \
-CEMBA_4E_180110 \
-CEMBA_4E_180111"
+ens_id=56
+ens_name='CEMBA_1A'
+message="A combined ensemble with 2 datasets in CEMBA 1A"
+ens_datasets="CEMBA_1A_180226 \
+CEMBA_1A_180227"
+			
+./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
+						 --ensemble_datasets $ens_datasets
+
+ens_id=57
+ens_name='CEMBA_1C'
+message="A combined ensemble with 2 datasets in CEMBA 1C"
+ens_datasets="CEMBA_1C_180208 \
+CEMBA_1C_180212"
 			
 ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
 						 --ensemble_datasets $ens_datasets

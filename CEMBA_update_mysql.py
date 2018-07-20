@@ -19,7 +19,7 @@ import snmcseq_utils
 from snmcseq_utils import create_logger
 from snmcseq_utils import get_mouse_chromosomes
 from snmcseq_utils import compute_global_mC 
-
+# import CEMBA_marker_genes_mysql
 
 def gene_id_to_table_name(gene_id):
     """

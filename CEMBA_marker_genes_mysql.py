@@ -23,13 +23,13 @@ def define_marker_gene_table(metadata, ens):
     return table
 
 
-def upload_marker_genes(ens, context):
+def upload_marker_genes(ens, context, database=DATABASE):
     """
     """
     logging.info("Upload marker genes: {} {}".format(ens, context))
 
     table_name = '{}_cluster_marker_genes'.format(ens)
-    engine = CEMBA_update_mysql.connect_sql(DATABASE)
+    engine = CEMBA_update_mysql.connect_sql(database)
     f_gene = os.path.join(PATH_REFERENCES, 'Annotation', 'gencode.vM16.annotation_genes.tsv')
     
     # create the mysql table
@@ -69,14 +69,16 @@ def upload_marker_genes(ens, context):
 
 
 if __name__ == '__main__':
-    log = snmcseq_utils.create_logger()
-    # enss = ['Ens3', 'Ens10', 'Ens51']
-    enss = ['Ens{}'.format(i+1) for i in range(51)]
+
+    # enss = ['Ens{}'.format(i) for i in np.arange(1, 51, 1)]
+    enss = ['Ens52']
     context = 'CH'
+
+    log = snmcseq_utils.create_logger()
     for ens in enss:
         try:
-            upload_marker_genes(ens, context)
-            logging.info('{} uploaded!'.format(ens))
+            upload_marker_genes(ens, context, database=DATABASE)
+            log.info('{} done!'.format(ens))
         except:
-            logging.info('{} skipped!'.format(ens))
-            pass
+            log.info('{} skipped!'.format(ens))
+

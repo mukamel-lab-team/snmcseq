@@ -128,7 +128,7 @@ def find_marker_genes(cells_nmcc, clusters_nmcc, df_cells, df_genes,
     data_pct = clusters_nmcc.apply(lambda x: zscore(x, ddof=1), axis=1).rank(pct=True, axis=0)
 
     for col in clusters_nmcc.columns:
-        print(col, end=',')
+        # print(col, end=',')
 
         # putative markers (initial filtering)
         marker_ids = (1 - data_pct[(data_pct[col] < p_putative)]).index
@@ -182,7 +182,7 @@ def find_marker_genes(cells_nmcc, clusters_nmcc, df_cells, df_genes,
 	        res = np.hstack((res, np.repeat(np.nan, (ntop-len(res)))))
         markers_all[col] = res  
 
-    print('\nDone.')
+    # print('\nDone.')
     return markers_all
 
 
@@ -216,7 +216,7 @@ def find_marker_genes_CEMBA(ens, context='CH', clsts='auto',
     ens_path = os.path.join(PATH_ENSEMBLES, ens)
     sql = """SELECT cell_name, dataset, global_m{1}, {0}.* FROM cells
             JOIN {0} ON cells.cell_id = {0}.cell_id""".format(ens, context)
-    df_cells = pd.read_sql(sql, engine, index_col='cell_name')
+    df_cells = pd.read_sql(sql, engine, index_col='cell_name').dropna(axis=1)
     
     # get gene annotation
     sql = '''SELECT * FROM genes'''
@@ -270,10 +270,14 @@ def find_marker_genes_CEMBA(ens, context='CH', clsts='auto',
 
 if __name__ == '__main__':
 
-	enss = ['Ens{}'.format(i) for i in np.arange(11, 51, 1)]
-	# enss = ['Ens10', 'Ens51']
+	# enss = ['Ens{}'.format(i) for i in np.arange(15, 51, 1)]
+	enss = ['Ens100']
 	context = 'CH'
 
 	log = snmcseq_utils.create_logger()
 	for ens in enss:
-		find_marker_genes_CEMBA(ens, context=context, clsts='auto', p_putative=0.10) 
+		try:
+			find_marker_genes_CEMBA(ens, context=context, clsts='auto', p_putative=0.10) 
+			log.info('{} done!'.format(ens))
+		except:
+			log.info('{} skipped!'.format(ens))

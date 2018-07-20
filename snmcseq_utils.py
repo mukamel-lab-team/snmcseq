@@ -3,9 +3,10 @@ Fangming Xie, Chris Keown
 Many functions are adopted from Chris's mypy
 """
 
-import subprocess as sp
-
 from __init__ import *
+
+import subprocess as sp
+import os
 
 
 def isdataset(dataset):

@@ -20,7 +20,7 @@ $append_assembly = true;
 $table = 'CEMBA_annoj.{}_';
 $title = '{}';
 $info = '{}';
-$link = mysql_connect("banjo.ucsd.edu", "cndd_annoj", "jonna_ddnc") or die("failed");
+$link = mysql_connect("localhost", "cndd_annoj", "jonna_ddnc") or die("failed");
 require_once '../includes/common_wgta.php';
 ?>
 """
@@ -32,7 +32,7 @@ $append_assembly = true;
 $table = 'CEMBA_annoj.{}_';
 $title = '{}';
 $info = '{}';
-$link = mysql_connect("banjo.ucsd.edu", "cndd_annoj", "jonna_ddnc") or die("failed");
+$link = mysql_connect("localhost", "cndd_annoj", "jonna_ddnc") or die("failed");
 require_once '../includes/common_masks.php';
 ?>
 """

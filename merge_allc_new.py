@@ -8,9 +8,9 @@ import CEMBA_update_mysql
 
 log = snmcseq_utils.create_logger()
 
-f = '/cndd/widoyle/presentations/jamboree_20180615/multimod.mch_space.cluster.tsv'
-ens = 'Ens10'
-threshold = 10 
+f = '/cndd/kkolodzi/CEMBA/striatum/genebody/clustering/clustering_integrate_all_v8-5.tsv'
+ens = 'Ens51'
+threshold = 2 
 nprocs = 4
 
 # get cluster assignment
@@ -20,14 +20,14 @@ df_clst['count'] = 1
 
 mcc_cells_all = []
 output_files_all = []
-# get allc_files and output_files
+# specify output_files
 for clst, df_sub in df_clst.groupby('cluster_ID'):
     cells = df_sub.index
     mcc_cells = [cell for cell in cells if cell.endswith('_indexed')]
     if len(mcc_cells) >= threshold:
         mcc_cells_all.append(mcc_cells)
         output_files_all.append(os.path.join(PATH_ENSEMBLES, ens, 
-                                             'allc_merged', 'multimodal_v1_clst{}.tsv'.format(clst))) 
+                                             'allc_merged', 'allc_multimodal_v1_clst{}.tsv'.format(clst))) 
 
 # get allc file location of each cell
 sql = """SELECT cell_name, dataset FROM {}

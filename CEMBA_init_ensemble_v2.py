@@ -24,6 +24,8 @@ import CEMBA_run_tsne
 import CEMBA_clustering_louvain_jaccard
 import CEMBA_autoannotate
 import CEMBA_update_mysql
+import CEMBA_marker_genes
+import CEMBA_marker_genes_mysql
 
 
 # setup ensemble
@@ -438,6 +440,14 @@ def main_setup(dataset, ens, ens_description, ens_name=None, ens_datasets=None):
     logging.info("Upload info to mySQL database...")
     CEMBA_update_mysql.upload_ensemble_level(ens, ens_name, ens_datasets, database=DATABASE)
 
+    # added 18-07-10
+    # need ensemble level mysql set up
+    logging.info("Running cluster marker genes...")
+    CEMBA_marker_genes.find_marker_genes_CEMBA(ens, 
+        context='CH', clsts='auto', p_putative=0.10)
+    # upload mysql 
+    CEMBA_marker_genes_mysql.upload_marker_genes(ens, context='CH', database=DATABASE)
+
     tft = time.time()
     log.info("Ensemble initiation complete: {}".format(ens)) 
     log.info("Total time spent: {} sec".format(tft - tit))
@@ -608,10 +618,17 @@ def main_setup_nonsingleton(ens, ens_name, ens_description, ens_datasets=None, e
     logging.info("Upload info to mySQL database...")
     CEMBA_update_mysql.upload_ensemble_level(ens, ens_name, ens_datasets, database=DATABASE)
 
+    # added 18-07-10
+    # need ensemble level mysql set up
+    logging.info("Running cluster marker genes...")
+    CEMBA_marker_genes.find_marker_genes_CEMBA(ens, 
+        context='CH', clsts='auto', p_putative=0.10)
+    # upload mysql 
+    CEMBA_marker_genes_mysql.upload_marker_genes(ens, context='CH', database=DATABASE)
+
     tft = time.time()
     log.info("Ensemble initiation complete: {}".format(ens)) 
     log.info("Total time spent: {} sec".format(tft - tit))
-
     return
 
 
