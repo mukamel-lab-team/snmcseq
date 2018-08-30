@@ -38,7 +38,7 @@ NUM_DMS = 3
 # mysql
 USER = 'f7xie'
 HOST = 'ocarina'
-PWD = '3405040212'
+PWD = ''
 DATABASE = 'CEMBA'
 CELLS_TABLE_COLS = ['cell_id', 
                      'cell_name', 
