@@ -11,34 +11,69 @@ from snmcseq_utils import create_logger
 from CEMBA_update_mysql import connect_sql
 
 
-def encode_allc_chrom(chrom):
+def encode_allc_chrom(chrom, convention=CONVENTION):
     """give every chromosome an integer name to facilitate sorting (as CEMBA order)
     """
-    trans_dict={'L': -4,
-                'M': -3, 
-                'X': -2, 
-                'Y': -1, 
-                }
-    try:
-        chrom = int(chrom)
-    except:
-        chrom = trans_dict[chrom]
-    return chrom
+    if convention == 'CEMBA':
+        trans_dict={'L': -4,
+                    'M': -3, 
+                    'X': -2, 
+                    'Y': -1, 
+                    }
+        try:
+            chrom = int(chrom)
+        except:
+            chrom = trans_dict[chrom]
+        return chrom
 
-def decode_allc_chrom(chrom_code):
+    elif convention == 'human':
+        trans_dict={'L': 50,
+                    'M': 51, 
+                    'X': 52, 
+                    'Y': 53, 
+                    }
+        try:
+            chrom = int(chrom)
+        except:
+            chrom = trans_dict[chrom]
+        return chrom
+
+    else:
+        raise ValueError("Unknown convention: {}".format(convention))
+
+
+def decode_allc_chrom(chrom_code, convention=CONVENTION):
     """give every chromosome code back to chrom (as CEMBA order)
     """
-    if chrom_code == -4:
-        chrom = 'L' 
-    elif chrom_code == -3:
-        chrom = 'M' 
-    elif chrom_code == -2:
-        chrom = 'X' 
-    elif chrom_code == -1:
-        chrom = 'Y' 
+    if convention == 'CEMBA':
+        if chrom_code == -4:
+            chrom = 'L' 
+        elif chrom_code == -3:
+            chrom = 'M' 
+        elif chrom_code == -2:
+            chrom = 'X' 
+        elif chrom_code == -1:
+            chrom = 'Y' 
+        else:
+            chrom = int(chrom_code)
+        return chrom
+
+    elif convention == 'human':
+        if chrom_code == 50:
+            chrom = 'L' 
+        elif chrom_code == 51:
+            chrom = 'M' 
+        elif chrom_code == 52:
+            chrom = 'X' 
+        elif chrom_code == 53:
+            chrom = 'Y' 
+        else:
+            chrom = int(chrom_code)
+        return chrom
+
     else:
-        chrom = int(chrom_code)
-    return chrom
+        raise ValueError("Unknown convention: {}".format(convention))
+
 
 def merge_allc_in_chunks(allc_paths, context='CG', chunksize=100000, n_chunk1=50, n_chunk2=20):
     """Merge allc tables given the allc_files
@@ -135,7 +170,7 @@ def queue_merge(q, n_chunk):
     return df_final
 
 def merge_allc(allc_paths, output_fname, 
-	context='CG', chunksize=100000, n_chunk1=50, n_chunk2=20, compression=True):
+	context='CG', chunksize=100000, n_chunk1=50, n_chunk2=20, species=SPECIES, path_allcg=GENOME_ALLCG_FILE, compression=True):
 	"""
 	merge allc tables with CEMBA convention (no header)
 
@@ -170,15 +205,15 @@ def merge_allc(allc_paths, output_fname,
 	# organize results after phase 2
 	logging.info("({}) Organizing results...".format(len(allc_paths)))
 	# read allcg
-	path_allcg = os.path.join(PATH_REFERENCES, 'Genome/mm10_all_cg.tsv')
 	allcg = pd.read_table(path_allcg, dtype={'chr': object})
 	allcg['chr_code'] = allcg['chr'].apply(encode_allc_chrom)
 	# merge on chr and pos
 	df_final = df_final.reset_index()
 	df_final = pd.merge(df_final, allcg, on=['chr_code', 'pos'], how='left')
 	# select columns
-	df_final = df_final.loc[df_final['chr'].isin(snmcseq_utils.get_mouse_chromosomes()+['Y', 'M']), 
+	df_final = df_final.loc[df_final['chr'].isin(snmcseq_utils.get_chromosomes(species)+['Y', 'M']), 
 	             ['chr', 'pos', 'strand', 'context', 'mc', 'c']]
+
 	df_final['methylated'] = 1
 
 	# saving results
@@ -238,6 +273,89 @@ def merge_allc_CEMBA(ens, context='CG', cluster_type='cluster_mCHmCG_lv_npc50_k3
 		allc_paths = [os.path.join(PATH_DATASETS, '{}/allc/allc_{}.tsv.bgz').format(dataset, cell) 
                       for (dataset, cell) in zip(df_sub.dataset, df_sub.index)]
 		output_fname = os.path.join(ens_path, 'allc_merged/allc_merged_m{}_{}_{}_{}.tsv'.format(context, cluster_type, cluster_id, ens))
+
+		cluster_id_all.append(cluster_id)
+		output_fname_all.append(output_fname)
+		allc_paths_all.append(allc_paths)
+
+
+	# set up parallel merging 
+	nprocs = min(nprocs, n_clusters)
+	logging.info("""Begin merging allc files:{}, {}\n
+				Number of processes:{}\n
+				Number of clusters to merge:{}\n
+				""".format(ens, cluster_type, nprocs, n_clusters))
+	
+	pool = mp.Pool(processes=nprocs)
+	pool_results = [pool.apply_async(merge_allc, 
+									args=(allc_paths, output_fname), 
+									kwds={'context': context, 
+										'chunksize': chunksize,
+										'n_chunk1': n_chunk1,
+										'n_chunk2': n_chunk2,
+										}) 
+					for allc_paths, output_fname in zip(allc_paths_all, output_fname_all)]
+					
+	pool.close()
+	pool.join()
+
+	logging.info('Done!')
+
+	return pool_results
+
+def merge_allc_human(ens, cluster_type, cluster_file, context='CG',  
+	# cluster_type='cluster_mCHmCG_lv_npc50_k30', database=DATABASE, 
+	nprocs=2,
+	chunksize=1000000, n_chunk1=50, n_chunk2=20):
+	"""Merge allc tables from the same cluster for a specific ensemble
+	Arguments: 
+		- ens: ensemble name, eg: Ens7
+		- cluster_file: [cell_name, dataset, cluster]	
+	returns: 
+		- save merged allc files to PATH_ENSEMBLES/$ens/allc_merged
+	"""
+
+	ens_path = os.path.join(PATH_ENSEMBLES, ens)
+	# engine = connect_sql(database)
+	# create folder 
+	directory = os.path.join(ens_path, 'allc_merged')
+	if not os.path.isdir(directory):
+		os.makedirs(directory)
+		logging.info("Created dir: {}".format(directory))
+
+	directory = os.path.join(ens_path, 'allc_merged', cluster_type)
+	if not os.path.isdir(directory):
+		os.makedirs(directory)
+		logging.info("Created dir: {}".format(directory))
+
+	# get a clustering result
+	# annot_type = 'annotation_' + cluster_type[len('cluster_'):]
+	# sql = '''SELECT cell_name, dataset, {}, {} 
+	# 		FROM cells 
+	# 		RIGHT JOIN {} 
+	# 		ON cells.cell_id = {}.cell_id'''.format(cluster_type, annot_type, ens, ens)
+	# df_cluster = pd.read_sql(sql, engine, index_col='cell_name')
+	# df_cluster.columns = ['dataset', 'cluster', 'annotation'] 
+
+	df_cluster = pd.read_table(cluster_file, index_col='cell_name')
+	output_summary = os.path.join(directory, 'summary_allc_merged_m{}_{}_{}.tsv'.format(context, cluster_type, ens))
+	df_cluster.to_csv(output_summary, sep='\t', na_rep='NA', header=True, index=True)
+	logging.info("Saved summary file to {}".format(output_summary))
+
+
+	n_clusters = len(np.unique(df_cluster['cluster'].values))
+	# parallelize 
+	# more info
+	# group allcs for each cluster_id
+	allc_paths_all = []
+	cluster_id_all = []
+	output_fname_all = []
+	# get all information
+	for cluster_id, df_sub in df_cluster.groupby('cluster'): 
+		cluster_id = int(str(cluster_id).strip('cluster_'))
+		allc_paths = [os.path.join(PATH_DATASETS, '{}/allc/allc_{}.tsv.bgz').format(dataset, cell) 
+                      for (dataset, cell) in zip(df_sub.dataset, df_sub.index)]
+		output_fname = os.path.join(directory, 'allc_merged_m{}_{}_{}_{}.tsv'.format(context, cluster_type, cluster_id, ens))
 
 		cluster_id_all.append(cluster_id)
 		output_fname_all.append(output_fname)
@@ -332,6 +450,7 @@ if __name__ == '__main__':
 
 	log = create_logger()
 
+	# mouse
 	parser = create_parser()
 	args = parser.parse_args() 
 
@@ -340,3 +459,13 @@ if __name__ == '__main__':
 	merge_allc_CEMBA(ens, context=args.context, 
 		cluster_type=args.cluster_type, database=DATABASE, nprocs=args.nprocs)
 
+
+	# # human
+	# # run
+	# ens = 'Ens0'
+	# cluster_type = 'mCH_npc50_k30_merged_subsampled'
+	# cluster_file = os.path.join(PATH_ENSEMBLES, ens, '{}_merged_subsampled.tsv'.format(ens))
+
+	# merge_allc_human(ens, cluster_type, cluster_file, context='CG',  
+	# 	nprocs=4,
+	# 	chunksize=1000000, n_chunk1=50, n_chunk2=20)

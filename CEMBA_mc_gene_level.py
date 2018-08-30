@@ -17,6 +17,7 @@ from snmcseq_utils import create_logger
 
 def mc_gene_level_worker(allc_file, output_file,
     genebody=GENEBODY,
+    species=SPECIES,
     contexts=CONTEXTS):
     """
     allc_file 
@@ -24,7 +25,7 @@ def mc_gene_level_worker(allc_file, output_file,
     """
     logger = create_logger()
 
-    chromosomes = snmcseq_utils.get_mouse_chromosomes()
+    chromosomes = snmcseq_utils.get_chromosomes(species)
 
     df_gtf = pd.read_table(genebody)
     df_gtf.chr = df_gtf.chr.apply(lambda x: x[len('chr'):])
@@ -65,46 +66,41 @@ def mc_gene_level_worker(allc_file, output_file,
 def mc_gene_level(allc_file,
     contexts=CONTEXTS, 
     genebody=GENEBODY,
-    convention='CEMBA', 
     overwrite=False):
 
     """
     set up conventions for output_file
     """
 
-    if convention=='CEMBA':
-        CEMBA_DATASETS = PATH_DATASETS 
-        allc_file = os.path.abspath(allc_file)
-        assert allc_file[:len(CEMBA_DATASETS)] == CEMBA_DATASETS
+    CEMBA_DATASETS = PATH_DATASETS 
+    allc_file = os.path.abspath(allc_file)
+    assert allc_file[:len(CEMBA_DATASETS)] == CEMBA_DATASETS
 
-        dataset, *dis, allc_basename = allc_file[len(CEMBA_DATASETS)+1:].split('/')
+    dataset, *dis, allc_basename = allc_file[len(CEMBA_DATASETS)+1:].split('/')
 
 
-        sample = allc_basename[len('allc_'):-len('.tsv.bgz')] 
+    sample = allc_basename[len('allc_'):-len('.tsv.bgz')] 
 
-        output_dir = "{}/{}/gene_level".format(CEMBA_DATASETS, dataset)
-        output_file = "{}/genebody_{}.tsv".format(output_dir, sample) 
+    output_dir = "{}/{}/gene_level".format(CEMBA_DATASETS, dataset)
+    output_file = "{}/genebody_{}.tsv".format(output_dir, sample) 
 
-        if not overwrite:
-            if os.path.isfile(output_file) or os.path.isfile(output_file+'.gz') or os.path.isfile(output_file+'.bgz'):
-                logging.info("File exists "+output_file+", skipping...")
-                return 0
+    if not overwrite:
+        if os.path.isfile(output_file) or os.path.isfile(output_file+'.gz') or os.path.isfile(output_file+'.bgz'):
+            logging.info("File exists "+output_file+", skipping...")
+            return 0
 
-        if not os.path.isdir(output_dir):
-            os.makedirs(output_dir)
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
 
-        mc_gene_level_worker(allc_file, output_file, genebody=genebody, contexts=contexts)
+    mc_gene_level_worker(allc_file, output_file, genebody=genebody, contexts=contexts)
 
-        # compress and name them .bgz
-        try:
-            sp.run("bgzip -f {}".format(output_file), shell=True)
-            sp.run("mv {}.gz {}.bgz".format(output_file, output_file), shell=True)
-        except:
-            sp.call("bgzip -f {}".format(output_file), shell=True)
-            sp.call("mv {}.gz {}.bgz".format(output_file, output_file), shell=True)
-
-    else: 
-        raise ValueError('Invalid convention! choose from ["CEMBA"]!')
+    # compress and name them .bgz
+    try:
+        sp.run("bgzip -f {}".format(output_file), shell=True)
+        sp.run("mv {}.gz {}.bgz".format(output_file, output_file), shell=True)
+    except:
+        sp.call("bgzip -f {}".format(output_file), shell=True)
+        sp.call("mv {}.gz {}.bgz".format(output_file, output_file), shell=True)
     
     return 0
 

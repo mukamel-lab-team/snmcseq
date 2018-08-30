@@ -9,6 +9,11 @@ import subprocess as sp
 import os
 
 
+def gene_id_to_name(gene_id, df_genes):
+    """df_genes: gene_id as index, gene_name is one column
+    """
+    return df_genes.loc[gene_id, 'gene_name']
+
 def isdataset(dataset):
     """check if a dataset exists
     """
@@ -119,6 +124,16 @@ def get_expanded_context(context):
         raise ValueError('Invalid context.')
     return contexts
 
+def get_chromosomes(species, include_x=True, include_chr=False):
+    """
+    """
+    if species == 'mouse':
+        return get_mouse_chromosomes(include_x=include_x, include_chr=include_chr)
+    elif species == 'human':
+        return get_human_chromosomes(include_x=include_x, include_chr=include_chr)
+    else:
+        raise ValueError("No such species: {}".format(species))
+
 
 def get_mouse_chromosomes(include_x=True, include_chr=False):
     chromosomes = [str(x) for x in range(1,20)]
@@ -140,7 +155,7 @@ def get_human_chromosomes(include_x=True, include_chr=False):
 
 # mm10 
 def get_chrom_lengths_mouse(
-    genome_size_fname=GENOME_SIZE_FILE):  
+    genome_size_fname=GENOME_SIZE_FILE_MOUSE):  
     """
     """
     srs_gsize = pd.read_table(genome_size_fname, header=None, index_col=0, squeeze=True)
@@ -151,7 +166,7 @@ def get_chrom_lengths_mouse(
 
 # hg19
 def get_chrom_lengths_human(
-    genome_size_fname='/cndd/fangming/iGenome/hg19/hg19.chrom.sizes'):  
+    genome_size_fname=GENOME_SIZE_FILE_HUMAN):  
     """
     """
     srs_gsize = pd.read_table(genome_size_fname, header=None, index_col=0, squeeze=True)
@@ -249,7 +264,7 @@ def read_binc(fname, index=True, compression='infer', contexts=CONTEXTS, **kwarg
             )
     return df
 
-def compute_global_mC(dataset, contexts=CONTEXTS):
+def compute_global_mC(dataset, contexts=CONTEXTS, species=SPECIES):
     """return global methylation level as a dataframe indexed by sample
     """
 
@@ -266,7 +281,7 @@ def compute_global_mC(dataset, contexts=CONTEXTS):
 
         df = read_binc(binc_file, compression='gzip')
         # filter chromosomes
-        df = df[df.index.get_level_values(level=0).isin(get_mouse_chromosomes())]
+        df = df[df.index.get_level_values(level=0).isin(get_chromosomes(species))]
 
         res = {}
         res['sample'] = os.path.basename(binc_file)[len('binc_'):-len('_10000.tsv.bgz')]

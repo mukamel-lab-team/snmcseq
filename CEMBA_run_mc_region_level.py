@@ -20,7 +20,6 @@ def run_mc_region_level(allc_files, output_files,
 	contexts=CONTEXTS,
 	compress=True, 
 	cap=2,
-	# overwrite=False,
 	nprocs=1):
 	"""
 	run mc_gene_level in parallel
@@ -28,13 +27,6 @@ def run_mc_region_level(allc_files, output_files,
 	cap: remove totalC>cap
 	"""
 	logger = create_logger()
-
-	# for allc_dir in allc_dirs:
-	# 	assert os.path.isdir(allc_dir)
-
-	# allc_files = []
-	# for allc_dir in allc_dirs:
-	# 	allc_files += glob.glob(os.path.join(allc_dir, 'allc_*.tsv.bgz')) 
 
 	nprocs = min(nprocs, len(allc_files))
 
@@ -56,8 +48,6 @@ def run_mc_region_level(allc_files, output_files,
 
 	pool.close()
 	pool.join()
-	# mc_region_level_worker(allc_files[0], output_files[0], bed_file, contexts=contexts, compress=compress)	
-
 
 	return pool_results
 

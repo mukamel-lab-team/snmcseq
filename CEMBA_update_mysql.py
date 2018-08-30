@@ -17,7 +17,8 @@ from itertools import product
 from __init__ import *
 import snmcseq_utils
 from snmcseq_utils import create_logger
-from snmcseq_utils import get_mouse_chromosomes
+from snmcseq_utils import get_chromosomes
+
 from snmcseq_utils import compute_global_mC 
 # import CEMBA_marker_genes_mysql
 
@@ -141,7 +142,7 @@ def upload_to_cells(dataset, database=DATABASE,
         df_meta.to_csv(meta_path, sep='\t', na_rep='NA', header=True, index=False)
     return  
 
-def upload_to_genes(dataset, database=DATABASE):
+def upload_to_genes(dataset, database=DATABASE, species=SPECIES):
     """upload to gene tables
     """
 
@@ -154,8 +155,8 @@ def upload_to_genes(dataset, database=DATABASE):
     df_cells = pd.read_sql(sql, engine) 
 
 
-    mouse_chromosomes = tuple(['chr'+i for i in get_mouse_chromosomes()])
-    sql = """SELECT * FROM genes WHERE chr IN {}""".format(mouse_chromosomes)
+    chromosomes = tuple(['chr'+i for i in get_chromosomes(species)])
+    sql = """SELECT * FROM genes WHERE chr IN {}""".format(chromosomes)
     df_genes = pd.read_sql(sql, engine, index_col='gene_id') 
 
     # info ordered by genes

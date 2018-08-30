@@ -15,7 +15,7 @@ from snmcseq_utils import create_logger
 #     bin_size=10000, 
 #     contexts=CONTEXTS,
 #     chromosomes=None, 
-#     species='mouse',
+#     species=SPECIES,
 #     compression='gzip',
 #     overwrite=False
 #     ):
@@ -24,7 +24,7 @@ def run_bin_allc(allc_dirs,
 	contexts=CONTEXTS, 
 	bin_size=BIN_SIZE,
 	chromosomes=None,
-	species='mouse',
+	species=SPECIES,
 	compression='gzip',
 	convention='CEMBA',
 	overwrite=False,
@@ -90,7 +90,7 @@ def create_parser():
     	default=None, 
     	help="list of chromosomes")
     parser.add_argument("-sp", "--species", 
-		default='mouse',
+		default=SPECIES,
     	help="species: mouse or human")
     parser.add_argument("-cp", "--compression", 
 		default='gzip',

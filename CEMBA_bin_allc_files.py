@@ -24,7 +24,7 @@ def bin_allc_worker(allc_file, output_file,
     bin_size=BIN_SIZE, 
     contexts=CONTEXTS,
     chromosomes=None, 
-    species='mouse',
+    species=SPECIES,
     compression='gzip'
     ):
 
@@ -88,11 +88,10 @@ def bin_allc_worker(allc_file, output_file,
     logger.info("Done with binc processing: {} {}\nSaving results to: {}".format(allc_file, contexts, output_file))
 
 def bin_allc(allc_file, 
-    convention='CEMBA',
     bin_size=BIN_SIZE, 
     contexts=CONTEXTS,
     chromosomes=None, 
-    species='mouse',
+    species=SPECIES,
     compression='gzip',
     overwrite=False
     ):
@@ -100,43 +99,40 @@ def bin_allc(allc_file,
     set up conventions for output_file
     """
 
-    if convention=='CEMBA':
-        CEMBA_DATASETS = PATH_DATASETS 
-        allc_file = os.path.abspath(allc_file)
-        assert allc_file[:len(CEMBA_DATASETS)] == CEMBA_DATASETS
+    CEMBA_DATASETS = PATH_DATASETS 
+    allc_file = os.path.abspath(allc_file)
+    assert allc_file[:len(CEMBA_DATASETS)] == CEMBA_DATASETS
 
-        dataset, *dis, allc_basename = allc_file[len(CEMBA_DATASETS)+1:].split('/')
+    dataset, *dis, allc_basename = allc_file[len(CEMBA_DATASETS)+1:].split('/')
 
-        sample = allc_basename[len('allc_'):-len('.tsv.bgz')] 
+    sample = allc_basename[len('allc_'):-len('.tsv.bgz')] 
 
-        output_dir = "{}/{}/binc".format(CEMBA_DATASETS, dataset)
-        output_file = "{}/binc_{}_{}.tsv".format(output_dir, sample, bin_size) 
+    output_dir = "{}/{}/binc".format(CEMBA_DATASETS, dataset)
+    output_file = "{}/binc_{}_{}.tsv".format(output_dir, sample, bin_size) 
 
-        if not overwrite:
-            if os.path.isfile(output_file) or os.path.isfile(output_file+'.gz') or os.path.isfile(output_file+'.bgz'):
-                logging.info("File exists "+output_file+", skipping...")
-                return 0
+    if not overwrite:
+        if os.path.isfile(output_file) or os.path.isfile(output_file+'.gz') or os.path.isfile(output_file+'.bgz'):
+            logging.info("File exists "+output_file+", skipping...")
+            return 0
 
-        if not os.path.isdir(output_dir):
-            os.makedirs(output_dir)
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
 
-        bin_allc_worker(allc_file, output_file,
-                bin_size=bin_size, 
-                contexts=CONTEXTS,
-                chromosomes=chromosomes, 
-                species=species,
-                compression=compression)
+    bin_allc_worker(allc_file, output_file,
+            bin_size=bin_size, 
+            contexts=CONTEXTS,
+            chromosomes=chromosomes, 
+            species=species,
+            compression=compression)
 
-        # compress and name them .bgz
-        try:
-            sp.run("bgzip -f {}".format(output_file), shell=True)
-            sp.run("mv {}.gz {}.bgz".format(output_file, output_file), shell=True)
-        except:
-            sp.call("bgzip -f {}".format(output_file), shell=True)
-            sp.call("mv {}.gz {}.bgz".format(output_file, output_file), shell=True)
+    # compress and name them .bgz
+    try:
+        sp.run("bgzip -f {}".format(output_file), shell=True)
+        sp.run("mv {}.gz {}.bgz".format(output_file, output_file), shell=True)
+    except:
+        sp.call("bgzip -f {}".format(output_file), shell=True)
+        sp.call("mv {}.gz {}.bgz".format(output_file, output_file), shell=True)
 
-    else: 
-        raise ValueError('Invalid convention! choose from ["CEMBA"]!')
     
     return 0
     
@@ -148,7 +144,7 @@ def create_parser():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input_allc", help="allc file path", required=True)
-    parser.add_argument('-s', '--species', help='mouse or human', default='mouse')
+    parser.add_argument('-s', '--species', help='mouse or human', default=SPECIES)
     parser.add_argument('-bz', '--bin_size', help='bin size', default=BIN_SIZE, type=int)
     parser.add_argument("-c", "--contexts", help="list of contexts: CH/CG/...", nargs='+', default=CONTEXTS)
     parser.add_argument('-cp', '--compression', help='compression type of allc file (bgz is gzip)', default='gzip') 
