@@ -52,6 +52,7 @@ from scipy import stats
 import csv
 import argparse
 import random
+import time
 
 
 
@@ -879,6 +880,8 @@ def spinit(df, num_genes, var_increase, min_cluster_size):
 df = pd.read_csv(infile, sep="\t")
 df = df.filter(regex='_mcc$')
 
+ti = time.time()
+
 # set the seed
 np.random.seed(seed)
 df = df[np.random.permutation(df.columns)]
@@ -955,3 +958,5 @@ for i, cells in enumerate(last_level):
 df_cluster = pd.DataFrame(cluster_list)
 df_cluster.to_csv(outfile, sep='\t', na_rep="NA", header=True, index=False)
 
+tf = time.time()
+print('Running time: %.2f seconds.' % (tf-ti))

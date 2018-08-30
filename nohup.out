@@ -1,0 +1,41 @@
+04/04/2018 11:54:59 PM Initiating an singleton ensemble Ens13 from CEMBA_RS2_Bm3C_rep1 
+Singleton ensemble of CEMBA_RS2_Bm3C_rep1 dataset.
+04/04/2018 11:54:59 PM Setting up paths and names...
+04/04/2018 11:54:59 PM /cndd/Public_Datasets/CEMBA/snmCSeq/Ensembles/Ens13 created!
+04/04/2018 11:54:59 PM /cndd/Public_Datasets/CEMBA/snmCSeq/Ensembles/Ens13/README_Ens13.txt created:
+Singleton ensemble of CEMBA_RS2_Bm3C_rep1 dataset.
+04/04/2018 11:54:59 PM /cndd/Public_Datasets/CEMBA/snmCSeq/Ensembles/Ens13/mapping_summary_Ens13.tsv created from /cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_RS2_Bm3C_rep1/mapping_summary_CEMBA_RS2_Bm3C_rep1.tsv
+04/04/2018 11:54:59 PM Mapping summary (cell metadata) matches allc, gene_level, and binc files!
+04/04/2018 11:54:59 PM Pulling binc info...
+04/04/2018 11:54:59 PM Pulling binc information (91 cells)...
+04/04/2018 11:54:59 PM /cndd/Public_Datasets/CEMBA/snmCSeq/Ensembles/Ens13/binc created!
+04/04/2018 11:55:00 PM Loaded cell: 180118_CEMBA_mm_P56_P63_RS2_180117_P3_180117_P4_A10_AD001 (1/91)
+04/04/2018 11:55:00 PM Loaded cell: 180118_CEMBA_mm_P56_P63_RS2_180117_P3_180117_P4_A12_AD001 (2/91)
+04/04/2018 11:55:01 PM Loaded cell: 180118_CEMBA_mm_P56_P63_RS2_180117_P3_180117_P4_A1_AD001 (3/91)
+04/04/2018 11:55:02 PM Loaded cell: 180118_CEMBA_mm_P56_P63_RS2_180117_P3_180117_P4_A2_AD001 (4/91)
+04/04/2018 11:55:03 PM Loaded cell: 180118_CEMBA_mm_P56_P63_RS2_180117_P3_180117_P4_A3_AD001 (5/91)
+04/04/2018 11:55:03 PM Loaded cell: 180118_CEMBA_mm_P56_P63_RS2_180117_P3_180117_P4_A4_AD001 (6/91)
+04/04/2018 11:55:04 PM Loaded cell: 180118_CEMBA_mm_P56_P63_RS2_180117_P3_180117_P4_A5_AD001 (7/91)
+04/04/2018 11:55:05 PM Loaded cell: 180118_CEMBA_mm_P56_P63_RS2_180117_P3_180117_P4_A6_AD001 (8/91)
+04/04/2018 11:55:06 PM Loaded cell: 180118_CEMBA_mm_P56_P63_RS2_180117_P3_180117_P4_A7_AD001 (9/91)
+04/04/2018 11:55:06 PM Loaded cell: 180118_CEMBA_mm_P56_P63_RS2_180117_P3_180117_P4_A8_AD001 (10/91)
+04/04/2018 11:55:07 PM Loaded cell: 180118_CEMBA_mm_P56_P63_RS2_180117_P3_180117_P4_A9_AD001 (11/91)
+Traceback (most recent call last):
+  File "./000.old_to_new_allcs.py", line 5, in <module>
+    from __init__ import *
+  File "/cndd/fangming/snmcseq_dev/__init__.py", line 7, in <module>
+    import numpy as np
+  File "/cndd/fangming/venvs/venv_dobro_snmcseq/lib/python3.5/site-packages/numpy/__init__.py", line 142, in <module>
+    from . import add_newdocs
+  File "/cndd/fangming/venvs/venv_dobro_snmcseq/lib/python3.5/site-packages/numpy/add_newdocs.py", line 13, in <module>
+    from numpy.lib import add_newdoc
+  File "/cndd/fangming/venvs/venv_dobro_snmcseq/lib/python3.5/site-packages/numpy/lib/__init__.py", line 8, in <module>
+    from .type_check import *
+  File "/cndd/fangming/venvs/venv_dobro_snmcseq/lib/python3.5/site-packages/numpy/lib/type_check.py", line 11, in <module>
+    import numpy.core.numeric as _nx
+  File "/cndd/fangming/venvs/venv_dobro_snmcseq/lib/python3.5/site-packages/numpy/core/__init__.py", line 16, in <module>
+    from . import multiarray
+SystemError: initialization of multiarray raised unreported exception
+Command exited with non-zero status 1
+0.28user 0.74system 0:01.86elapsed 54%CPU (0avgtext+0avgdata 13808maxresident)k
+21776inputs+8outputs (29major+1912minor)pagefaults 0swaps
