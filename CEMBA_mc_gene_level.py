@@ -43,7 +43,13 @@ def mc_gene_level_worker(allc_file, output_file,
     allc = tabix.open(allc_file)
     for i, row in df_gtf.iterrows():
         row_out = [row.gene_id]
+
+        # try:
         records = list(allc.query(row['chr'], row['start'], row['end']))
+        # except:
+        #     print(row)
+        #     raise ValueError
+
         for context in contexts:
             mc, c = snmcseq_utils.tabix_summary(records, context=context, cap=2) # remove sites with total_c > 2
             row_out += [str(mc), str(c)] 
@@ -81,7 +87,7 @@ def mc_gene_level(allc_file,
 
         if not overwrite:
             if os.path.isfile(output_file) or os.path.isfile(output_file+'.gz') or os.path.isfile(output_file+'.bgz'):
-                print("File exists "+output_file+", skipping...")
+                logging.info("File exists "+output_file+", skipping...")
                 return 0
 
         if not os.path.isdir(output_dir):

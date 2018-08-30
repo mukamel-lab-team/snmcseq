@@ -60,7 +60,7 @@ CELLS_TABLE_COLS = ['cell_id',
                      'filtered_rate',
                      'lambda_mC']
 
-DATABASE_ATAC = 'CEMBA_snATAC'
+DATABASE_ATAC = 'CEMBA_ATAC'
 CELLS_TABLE_COLS_ATAC = ['cell_id', 
                      'cell_name', 
                      'dataset', 

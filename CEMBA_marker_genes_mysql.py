@@ -71,7 +71,7 @@ def upload_marker_genes(ens, context, database=DATABASE):
 if __name__ == '__main__':
 
     # enss = ['Ens{}'.format(i) for i in np.arange(1, 51, 1)]
-    enss = ['Ens52']
+    enss = ['Ens101']
     context = 'CH'
 
     log = snmcseq_utils.create_logger()

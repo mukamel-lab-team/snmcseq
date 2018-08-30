@@ -1,15 +1,11 @@
 #!/bin/bash
 
-# dataset='CEMBA_4B_180104'
-# ens_id=8
-# message="Singleton ensemble of $dataset dataset."
-# ens_name="CEMBA_4B_180104"
 
-# dataset='CEMBA_4D_171214'
-# ens_id=11
-# message="Singleton ensemble of $dataset dataset."
-# ens_name=$dataset
-# ./CEMBA_init_ensemble_v2.py --singleton -d $dataset -ei $ens_id -m $message -en $ens_name
+dataset='CEMBA_SCI_2017'
+ens_id=0
+message="Singleton ensemble of $dataset dataset."
+ens_name=$dataset
+./CEMBA_init_ensemble_v2.py --singleton -d $dataset -ei $ens_id -m $message -en $ens_name
 
 # datasets="CEMBA_RS2_Bm3C_rep1 \
 # 	CEMBA_RS2_Bm3C_rep2 \
@@ -28,17 +24,17 @@
 # 	CEMBA_RS2_Tm6B \
 # 	CEMBA_RS2_Tm7B"
 
-datasets="CEMBA_1A_180227 \
-CEMBA_1C_180208 \
-CEMBA_1C_180212 
-"
-
-ens_id=52 # LAST ensemble id!!! 
-for dataset in $datasets
-do
-	ens_id=$((ens_id+1))
-	# echo $dataset $ens_id
-	message="Singleton ensemble of $dataset dataset."
-	ens_name=$dataset
-	./CEMBA_init_ensemble_v2.py --singleton -d $dataset -ei $ens_id -m $message -en $ens_name
-done
+# datasets="CEMBA_4C_180417 \
+# CEMBA_4C_180419
+# "
+# 
+# 
+# ens_id=0 # LAST ensemble id!!! 
+# for dataset in $datasets
+# do
+# 	ens_id=$((ens_id+1))
+# 	# echo $dataset $ens_id
+# 	message="Singleton ensemble of $dataset dataset."
+# 	ens_name=$dataset
+# 	./CEMBA_init_ensemble_v2.py --singleton -d $dataset -ei $ens_id -m $message -en $ens_name
+# done

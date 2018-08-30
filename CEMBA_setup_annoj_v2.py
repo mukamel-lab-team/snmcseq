@@ -79,7 +79,7 @@ if __name__ == '__main__':
 
     track_names = track_info[0].values
     scales = track_info[1].values
-    scales = scales/np.mean(scales)
+    scales = 3.0/(scales/np.mean(scales))
     track_vis_names = ['{}_{}'.format(
         track_name.replace('multimodal_v2_', '').upper(), 
         df_annot.loc[track_name.split('_')[3].replace('C', 'cluster_')], # get annot 
@@ -103,7 +103,7 @@ if __name__ == '__main__':
 
     track_names = track_info[0].values
     scales = track_info[1].values
-    scales = scales/np.mean(scales)
+    scales = 3.0/(scales/np.mean(scales))
     track_vis_names = ['{}_{}'.format(
         track_name.replace('multimodal_v2_', '').upper(), 
         df_annot.loc[track_name.split('_')[3].replace('C', 'cluster_')], # get annot 

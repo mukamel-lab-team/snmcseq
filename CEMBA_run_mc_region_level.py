@@ -19,10 +19,13 @@ def run_mc_region_level(allc_files, output_files,
 	bed_file, 
 	contexts=CONTEXTS,
 	compress=True, 
+	cap=2,
 	# overwrite=False,
 	nprocs=1):
 	"""
 	run mc_gene_level in parallel
+
+	cap: remove totalC>cap
 	"""
 	logger = create_logger()
 
@@ -46,6 +49,7 @@ def run_mc_region_level(allc_files, output_files,
 									args=(allc_file, output_file, bed_file), 
 									kwds={'contexts': contexts, 
 										'compress': compress,
+										'cap': cap,
 										}) 
 					for allc_file, output_file in zip(allc_files, output_files)]
 					
@@ -58,7 +62,7 @@ def run_mc_region_level(allc_files, output_files,
 	return pool_results
 
 
-def run_mc_region_level_CEMBA(dataset, bed_file, output_dirname, contexts=CONTEXTS, compress=True, nprocs=1):
+def run_mc_region_level_CEMBA(dataset, bed_file, output_dirname, contexts=CONTEXTS, compress=True, nprocs=1, cap=2):
 	"""Generate bed_file and 
 	"""
 	assert snmcseq_utils.isdataset(dataset)
@@ -80,7 +84,9 @@ def run_mc_region_level_CEMBA(dataset, bed_file, output_dirname, contexts=CONTEX
 		bed_file, 
 		contexts=CONTEXTS,
 		compress=compress, 
-		nprocs=nprocs)
+		nprocs=nprocs, 
+		cap=cap,
+	)
 
 	return
 
@@ -114,6 +120,11 @@ def create_parser():
     	default=CONTEXTS, 
     	help="list of contexts: CH/CG/... default: CH CG CA")
 
+    parser.add_argument("-cp", "--cap", 
+    	type=int, 
+    	default=2,
+    	help="Exclude totalC greater than this values (default 2)")
+
     parser.add_argument("-n", "--nprocs", 
     	type=int, 
     	default=1,
@@ -134,6 +145,7 @@ if __name__ == '__main__':
 	output_dirname = args.output_dirname
 	contexts = args.contexts
 	nprocs = args.nprocs
+	cap = args.cap
 
 
 	if '/' in output_dirname:
@@ -152,8 +164,9 @@ if __name__ == '__main__':
 			Datasets: {}
 			Bed file: {}
 			Output dirname: {}
+			Cap: {}
 			Number of processes: {}
-		""".format(datasets, bed_file, output_dirname, nprocs))
+		""".format(datasets, bed_file, output_dirname, cap, nprocs))
 
 	for dataset in datasets:
 		assert snmcseq_utils.isdataset(dataset)
@@ -161,7 +174,7 @@ if __name__ == '__main__':
 
 	for dataset in datasets:
 		res = run_mc_region_level_CEMBA(dataset, bed_file, output_dirname, 
-			contexts=CONTEXTS, compress=True, nprocs=nprocs)
+			contexts=CONTEXTS, compress=True, cap=cap, nprocs=nprocs)
 
 	# run_mc_region_level(args.input_allc_files, args.output_files, args.bed_file,
 	# 	contexts=args.contexts,

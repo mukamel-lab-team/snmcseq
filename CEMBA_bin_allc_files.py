@@ -114,7 +114,7 @@ def bin_allc(allc_file,
 
         if not overwrite:
             if os.path.isfile(output_file) or os.path.isfile(output_file+'.gz') or os.path.isfile(output_file+'.bgz'):
-                print("File exists "+output_file+", skipping...")
+                logging.info("File exists "+output_file+", skipping...")
                 return 0
 
         if not os.path.isdir(output_dir):

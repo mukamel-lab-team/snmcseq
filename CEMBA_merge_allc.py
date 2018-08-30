@@ -135,7 +135,7 @@ def queue_merge(q, n_chunk):
     return df_final
 
 def merge_allc(allc_paths, output_fname, 
-	context='CG', chunksize=100000, n_chunk1=50, n_chunk2=20):
+	context='CG', chunksize=100000, n_chunk1=50, n_chunk2=20, compression=True):
 	"""
 	merge allc tables with CEMBA convention (no header)
 
@@ -186,6 +186,10 @@ def merge_allc(allc_paths, output_fname,
 	# save to file
 	logging.info("({}) Saving results to {}".format(len(allc_paths), output_fname))
 	df_final.to_csv(output_fname, sep='\t', header=False, index=False, na_rep='NA')
+
+	# added 07/20/2018
+	if compression:
+		snmcseq_utils.compress(output_fname, suffix='gz')
 
 	logging.info("({}) Total time spent: {} seconds".format(len(allc_paths), time.time()-ti))
 	return

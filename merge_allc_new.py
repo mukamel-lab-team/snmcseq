@@ -18,6 +18,8 @@ df_clst = pd.read_table(f, index_col=0)
 df_clst['cluster_ID'] = [int(clst[len('cluster_'):]) for clst in df_clst['cluster_ID']]
 df_clst['count'] = 1
 
+
+
 mcc_cells_all = []
 output_files_all = []
 # specify output_files
@@ -28,6 +30,10 @@ for clst, df_sub in df_clst.groupby('cluster_ID'):
         mcc_cells_all.append(mcc_cells)
         output_files_all.append(os.path.join(PATH_ENSEMBLES, ens, 
                                              'allc_merged', 'allc_multimodal_v1_clst{}.tsv'.format(clst))) 
+# summary table
+output_summary = os.path.join(PATH_ENSEMBLES, ens,
+                              'allc_merged', 'summary_allc_multimodal_v1.tsv')
+df_clst.to_csv(output_summary, sep='\t', na_rep='NA', header=True, index=True)
 
 # get allc file location of each cell
 sql = """SELECT cell_name, dataset FROM {}
@@ -46,3 +52,4 @@ for mcc_cells in mcc_cells_all:
 
 # do merging
 CEMBA_merge_allc.merge_allc_parallel(allc_files_all, output_files_all, nprocs=nprocs)
+

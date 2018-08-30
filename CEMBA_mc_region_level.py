@@ -16,7 +16,7 @@ import snmcseq_utils
 from snmcseq_utils import create_logger
 
 def mc_region_level_worker(allc_file, output_file, bed_file,
-    contexts=CONTEXTS, compress=True):
+    contexts=CONTEXTS, compress=True, cap=2):
     """
     allc_file 
     bed file:
@@ -45,7 +45,7 @@ def mc_region_level_worker(allc_file, output_file, bed_file,
         row_out = [str(row.chr), str(row.start), str(row.end)]
         records = list(allc.query(row.chr, row.start, row.end))
         for context in contexts:
-            mc, c = snmcseq_utils.tabix_summary(records, context=context, cap=2) # remove sites with total_c > 2
+            mc, c = snmcseq_utils.tabix_summary(records, context=context, cap=cap) # remove sites with total_c > 2
             row_out += [str(mc), str(c)] 
 
         outfile.write('\t'.join(row_out)+'\n')

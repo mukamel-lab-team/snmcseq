@@ -271,7 +271,7 @@ def find_marker_genes_CEMBA(ens, context='CH', clsts='auto',
 if __name__ == '__main__':
 
 	# enss = ['Ens{}'.format(i) for i in np.arange(15, 51, 1)]
-	enss = ['Ens100']
+	enss = ['Ens101']
 	context = 'CH'
 
 	log = snmcseq_utils.create_logger()

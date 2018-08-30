@@ -27,7 +27,6 @@ def gzip_to_bgzip(src, dst):
 	os.remove(os.path.splitext(src)[0])
 	logging.info("Done gzip to bgzip: {} -> {}".format(src, dst))
 
-
 	return
 
 def CEMBA_gzip_to_bgzip(dataset, nprocs=1):
@@ -108,7 +107,11 @@ def main(dataset, nprocs=1):
 if __name__ == '__main__':
 
 	log = create_logger()
-	datasets = ['CEMBA_1A_180226', 'CEMBA_1A_180227', 'CEMBA_1C_180208', 'CEMBA_1C_180212']
+	datasets = [
+		'CEMBA_4C_180417', 
+		'CEMBA_4C_180419', 
+	]
+
 	nprocs = 8 
 
 	# check if dataset exists 
