@@ -7,12 +7,85 @@ from __init__ import *
 
 import subprocess as sp
 import os
+from scipy import sparse
+    
 
+def logcpm(counts):
+    """
+    Args:
+        - gene-cell matrix
+    """
+    cov = counts.sum(axis=0)
+    logcpm = np.log10(counts.divide(cov, axis=1)*1000000 + 1)
+    return logcpm
+
+def logtpm(counts, gene_lengths):
+    """
+    Args:
+        - gene-cell matrix
+        - gene_lengths: a series indexed by gene_id
+    """
+    tpm = counts.divide(gene_lengths.loc[counts.index], axis=0)
+    cov = tpm.sum(axis=0)
+    logtpm = np.log10((tpm.divide(cov, axis=1))*1000000 + 1)
+    return logtpm
+
+def sparse_logcpm(gc_matrix):
+    """
+    """
+    lib_size_inv = sparse.diags(np.ravel(1.0/gc_matrix.data.sum(axis=0)))
+    logcpm = (gc_matrix.data).dot(lib_size_inv*1e6).tocoo()
+    logcpm.data = np.log10(logcpm.data + 1)
+
+    gc_logcpm = GC_matrix(
+        gc_matrix.gene, 
+        gc_matrix.cell, 
+        logcpm,
+    )
+    
+    return gc_logcpm
+
+def sparse_logtpm(gc_matrix, gene_lengths):
+    """
+    gene_lengths: array like 
+    
+    """
+    gene_lengths = np.array(gene_lengths)
+    gene_length_inv = sparse.diags(np.ravel(1.0/gene_lengths))
+    tmp = (gene_length_inv).dot(gc_matrix.data).tocoo()
+    lib_size_inv = sparse.diags(np.ravel(1.0/tmp.sum(axis=0)))
+    
+    logtpm = tmp.dot(lib_size_inv*1e6).tocoo()
+    logtpm.data = np.log10(logtpm.data + 1)
+
+    gc_logtpm = GC_matrix(
+        gc_matrix.gene, 
+        gc_matrix.cell, 
+        logtpm,
+    )
+    
+    return gc_logtpm
+
+def clean_gene_id(gene_id):
+    """Remove extra
+    """
+    return gene_id.split('.')[0]
 
 def gene_id_to_name(gene_id, df_genes):
     """df_genes: gene_id as index, gene_name is one column
     """
-    return df_genes.loc[gene_id, 'gene_name']
+    try:
+        return df_genes.loc[gene_id, 'gene_name']
+    except:
+        None
+
+def gene_name_to_id(gene_name, df_genes_v2):
+    """df_genes: gene_name as index, gene_id is one column
+    """
+    try:
+        return df_genes_v2.loc[gene_name, 'gene_id'] 
+    except:
+        return None
 
 def isdataset(dataset):
     """check if a dataset exists
@@ -479,13 +552,17 @@ def get_kwcolors(labels, colors):
     kw_colors = {l:c for (l,c) in zip(labels, colors)}
     return kw_colors
 
-def gen_colors(n, l=0.6, s=0.6):
+def gen_colors(n, l=0.6, s=0.6, colors=None):
     """Generate maximumly distinct rgb colors
     """
-    import colorsys
-    hs = np.linspace(0, 1, n, endpoint=False)
-    rgbs = [colorsys.hls_to_rgb(h, l, s) for h in hs]
-    return rgbs
+    if not colors:
+        import colorsys
+        hs = np.linspace(0, 1, n, endpoint=False)
+        rgbs = [colorsys.hls_to_rgb(h, l, s) for h in hs]
+        return rgbs
+    else:
+        clrs = [colors[i%len(colors)] for i in range(n)] 
+        return clrs 
 
 def myScatter(ax, df, x, y, l, 
               s=20,

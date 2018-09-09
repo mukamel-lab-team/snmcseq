@@ -6,6 +6,7 @@ import glob
 import os
 import numpy as np
 import pandas as pd
+from collections import namedtuple
 
 
 # define constant variables
@@ -92,6 +93,29 @@ CELLS_TABLE_COLS_ATAC = ['cell_id',
                      # 'lambda_mC',
                      ]
 
+DATABASE_RNA = 'CEMBA_RNA'
+CELLS_TABLE_COLS_RNA = ['cell_id', 
+                     'cell_name', 
+                     'dataset', 
+                     # 'cell_type',
+                     # 'global_mCH', 
+                     # 'global_mCG',
+                     # 'global_mCA',
+                     # 'global_mCCC', 
+                     # 'estimated_mCH', 
+                     # 'estimated_mCG',
+                     # 'percent_genome_covered', 
+                     # 'total_reads',
+                     # 'mapped_reads', 
+                     # 'mapping_rate', 
+                     # 'nonclonal_reads', 
+                     # 'percent_nonclonal_rate',
+                     # 'filtered_reads',
+                     # 'filtered_rate',
+                     # 'lambda_mC',
+                     ]
+
+
 def rename_ms_cols(column_names):
     """Rename headers in mapping summary files (from Chongyuan) to header names used in mySQL cells table
     """
@@ -111,3 +135,6 @@ def rename_ms_cols(column_names):
                    'Estimated mCH/CH': 'estimated_mCH', 
                    '% Genome covered': 'percent_genome_covered'}
     return [dict_rename[col] for col in column_names] 
+
+# define data structures
+GC_matrix = namedtuple('GC_matrix', ['gene', 'cell', 'data'])

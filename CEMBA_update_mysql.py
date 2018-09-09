@@ -65,7 +65,9 @@ def chunks(l, n):
         yield l[i:i + n]
 
 
-def upload_to_datasets(dataset, database=DATABASE, strict=True):
+def upload_to_datasets(dataset, database=DATABASE, strict=True, 
+    convention=CONVENTION, 
+    sex='N', brain_region='brain', target_region=None):
     """Add a entry (row) to datasets table
     """
     logging.info("Update dataset: {} to datasets table in {} database".format(dataset, database))
@@ -80,7 +82,7 @@ def upload_to_datasets(dataset, database=DATABASE, strict=True):
         else:
             logging.warning("May not be a valid dataset: {} (not found in snmCSeq datasets directory)".format(dataset))
             
-    try:
+    if convention == 'CEMBA':
         if snmcseq_utils.isrs2(dataset): # rs2 dataset
             info = dataset.split('_')[2]
             injcode = info[0] 
@@ -93,10 +95,12 @@ def upload_to_datasets(dataset, database=DATABASE, strict=True):
             slicecode = dataset.split('_')[1] 
             brain_region = snmcseq_utils.slicecode_to_region(slicecode)
             target_region = None
-    except:
-        sex = 'M'
-        brain_region = 'brain'
-        target_region = None
+
+    else:
+        sex = sex
+        brain_region = brain_region 
+        target_region = target_region 
+
         
     datasets_table_content.append({
         'dataset': dataset,

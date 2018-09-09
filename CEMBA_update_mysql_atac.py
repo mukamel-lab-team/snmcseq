@@ -1,62 +1,39 @@
 #!/usr/bin/env python3
+"""Future Fangming: code to upload smoothed counts is un-tested.
+"""
 
+from __init__ import *
 import sqlalchemy as sa
 from scipy import sparse
 from collections import namedtuple
 
-from __init__ import *
+import snmcseq_utils
+import mnni_utils
+
 from snmcseq_utils import create_logger
 from snmcseq_utils import cd 
+from snmcseq_utils import sparse_logcpm 
+from snmcseq_utils import sparse_logtpm
 from CEMBA_update_mysql import insert_into
 from CEMBA_update_mysql import connect_sql 
 from CEMBA_update_mysql import gene_id_to_table_name 
 from CEMBA_update_mysql import upload_to_datasets
 
 
-# from snmcseq_utils import get_mouse_chromosomes
-# from snmcseq_utils import compute_global_mC 
-# from CEMBA_run_tsne import run_tsne_CEMBA
-
-# def gene_id_to_name(gene_id, df_genes):
-#     """df_genes
-#     """
-#     return df_genes.loc[gene_id, 'gene_name']
-
-# def gene_name_to_id(gene_name, df_genes):
-#     """df_genes
-#     """
-#     return df_genes[df_genes['gene_name'] == gene_name].index.values[0]
-
-GC_matrix = namedtuple('GC_matrix', ['gene', 'cell', 'data'])
-def sparse_logcpm(gc_matrix):
+def upload_dataset_worker(dataset, gc_normalized, gc_smoothed_normalized, database=DATABASE_ATAC):
+    """Given gene-by-cell count matrices (smoothed and not smoothed), upload it to CEMBA_ATAC
     """
-    """
-    lib_size_inv = sparse.diags(np.ravel(1.0/gc_matrix.data.sum(axis=0)))
-    logcpm = (gc_matrix.data).dot(lib_size_inv*1e6).tocoo()
-    logcpm.data = np.log10(logcpm.data + 1)
+    assert list(gc_normalized.gene) == list(gc_smoothed_normalized.gene)
+    assert list(gc_normalized.cell) == list(gc_smoothed_normalized.cell)
 
-    gc_logcpm = GC_matrix(
-        gc_matrix.gene, 
-        gc_matrix.cell, 
-        logcpm,
-    )
-    
-    return gc_logcpm
-
-def upload_dataset_worker(dataset, gc_matrix_raw, database=DATABASE_ATAC):
-    """Given a gene-by-cell count matrix, calculate log10(CPM+1), upload it to CEMBA_ATAC
-    """
     engine = connect_sql(database)
-
-    # logcpm
-    gc_logcpm = sparse_logcpm(gc_matrix_raw)
 
     # upload_to_datasets
     upload_to_datasets(dataset, database=database, strict=False)
 
     # upload to cells
     df_cells = pd.DataFrame()
-    df_cells['cell_name'] = gc_logcpm.cell 
+    df_cells['cell_name'] = gc_normalized.cell 
     df_cells['dataset'] = dataset 
     insert_into(engine, 'cells', df_cells, ignore=True, verbose='True')
 
@@ -65,22 +42,27 @@ def upload_dataset_worker(dataset, gc_matrix_raw, database=DATABASE_ATAC):
     df_cells = pd.read_sql(sql, engine)
     metadata = sa.MetaData(engine)
 
-    for i, gene in enumerate(gc_logcpm.gene):
-        # if i > 10:
-        #     break
-        
-        data_gene = gc_logcpm.data.getrow(i).tocoo()
+    for i, gene in enumerate(gc_normalized.gene):
         gene_table_name = gene_id_to_table_name(gene)
+
+        data_gene = gc_normalized.data.getrow(i).tocoo()
+        data_gene_smoothed = gc_smoothed_normalized.data.getrow(i).tocoo()
 
         if (i%100 == 0):
             logging.info("Progress on genes: {} {}".format(i+1, gene_table_name))
         
         df_gene = pd.DataFrame()
-        df_gene['cell_name'] = [gc_logcpm.cell[col] for col in data_gene.col]
+        df_gene['cell_name'] = [gc_normalized.cell[col] for col in data_gene.col]
         df_gene['normalized_counts'] = data_gene.data
         
+        df_gene_smoothed = pd.DataFrame()
+        df_gene_smoothed['cell_name'] = [gc_smoothed_normalized.cell[col] for col in data_gene_smoothed.col]
+        df_gene_smoothed['smoothed_normalized_counts'] = data_gene_smoothed.data
+
+        df_gene = pd.merge(df_gene, df_gene_smoothed, on='cell_name', how='outer')
+
         df_gene = pd.merge(df_gene, df_cells, on='cell_name')
-        df_gene = df_gene[['cell_id', 'normalized_counts']]
+        df_gene = df_gene[['cell_id', 'normalized_counts', 'smoothed_normalized_counts']]
 
         # print(gene, df_gene)
         if not df_gene.empty:
@@ -88,7 +70,7 @@ def upload_dataset_worker(dataset, gc_matrix_raw, database=DATABASE_ATAC):
 
     return
 
-def read_sparse_atac_matrix(fdata, frow, fcol, dataset):
+def read_sparse_atac_matrix(fdata, frow, fcol, dataset, add_dataset_as_suffix=True):
     """
     Example:
         dataset = 'CEMBA_1B_180118'
@@ -101,7 +83,10 @@ def read_sparse_atac_matrix(fdata, frow, fcol, dataset):
 
     gene_ids = pd.read_table(frow, header=None)[0].values
     cells = pd.read_table(fcol, header=None)[0].values
-    cells = cells + '_' + dataset 
+
+    if add_dataset_as_suffix:
+        cells = cells + '_' + dataset 
+
     data = sparse.load_npz(fdata)
 
     gc_matrix_raw = GC_matrix(
@@ -114,8 +99,10 @@ def read_sparse_atac_matrix(fdata, frow, fcol, dataset):
 
     return gc_matrix_raw
 
+
+
 def upload_dataset_atac_format(
-    dataset, fdata, frow, fcol, database=DATABASE_ATAC):
+    dataset, fdata, frow, fcol, fn_smooth_prefix=None, database=DATABASE_ATAC):
     """
     Example:
         dataset = 'CEMBA_1B_180118'
@@ -126,10 +113,39 @@ def upload_dataset_atac_format(
         database = 'CEMBA_ATAC'
 
     """
-    gc_matrix_raw = read_sparse_atac_matrix(fdata, frow, fcol, dataset)
+    # read in raw
+    logging.info("Reading files ({})".format(fdata))
+    gc_matrix_raw = read_sparse_atac_matrix(fdata, frow, fcol, dataset, add_dataset_as_suffix=True)
 
+    # smooth and save
+    logging.info("Smooth ATAC counts and save it to {}...".format(fn_prefix))
+    df_genes = pd.read_table(PATH_GENEBODY_ANNOTATION, index_col='gene_id')
+    gene_lengths = (df_genes['end'] - df_genes['start']).loc[gc_raw.gene]
+    gc_logtpm = snmcseq_utils.sparse_logtpm(gc_raw, gene_lengths)
+
+    p = 0.75 
+    counts_atac_smoothed, M_aa = mnni_utils.smooth_in_modality(
+                pd.DataFrame(gc_raw.data.todense(), index=gc_raw.gene, columns=gc_raw.cell),
+                pd.DataFrame(gc_logtpm.data.todense(), index=gc_logtpm.gene, columns=gc_logtpm.cell),
+                k=30, ka=5, npc=50, p=p)
+
+    gc_counts_smoothed = GC_matrix(
+                counts_atac_smoothed.index.values, 
+                counts_atac_smoothed.columns.values, 
+                sparse.coo_matrix(counts_atac_smoothed.values), 
+                )
+
+    if not fn_smooth_prefix:
+        fn_prefix = '/cndd/Public_Datasets/CEMBA/snATACSeq/Datasets/{0}/{1}/counts_smoothed/genebody/{1}.genebody_smoothed'.format(region, dataset_id)
+    save_gc_matrix(gc_counts_smoothed, fn_smooth_prefix)
+
+    # normalize smoothed 
+    gene_lengths = (df_genes['end'] - df_genes['start']).loc[gc_counts_smoothed.gene]
+    gc_smoothed_logtpm = snmcseq_utils.sparse_logtpm(gc_counts_smoothed, gene_lengths)
+
+    # upload
     logging.info("Upload dataset: {}".format(dataset))
-    upload_dataset_worker(dataset, gc_matrix_raw, database=DATABASE_ATAC)
+    upload_dataset_worker(dataset, gc_logtpm, gc_smoothed_logtpm, database=DATABASE_ATAC)
     logging.info("Done Upload dataset: {}".format(dataset))
 
     return 
