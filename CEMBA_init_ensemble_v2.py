@@ -248,7 +248,7 @@ def pull_binc_info(ens, ens_binc_path, cells_binc, binc_paths,
     return dfs, contexts
 
 
-def merge_bins(df, bin_size=10*BIN_SIZE, double_xsize=True, 
+def merge_bins(df, bin_size=10*BIN_SIZE, double_xsize=True, species=SPECIES, 
                output_file=None):
     """
     Merge bins of BIN_SIZE to n*BIN_SIZE, where n has to be an integer.
@@ -261,7 +261,7 @@ def merge_bins(df, bin_size=10*BIN_SIZE, double_xsize=True,
     logging.info("Merging bins to bin_size={}, double_xsize={}".format(bin_size, double_xsize))
     ti = time.time()
     
-    chromosomes = snmcseq_utils.get_mouse_chromosomes()
+    chromosomes = snmcseq_utils.get_chromosomes(species)
     chrs_all = np.asarray([])
     bins_all = np.asarray([])
     mc_c_all = OrderedDict()
@@ -272,11 +272,22 @@ def merge_bins(df, bin_size=10*BIN_SIZE, double_xsize=True,
         
     for chromosome, df_sub in df.groupby('chr'):
         # here -1 is very important!
-        bins = (np.arange(0, snmcseq_utils.get_chrom_lengths_mouse()[chromosome], bin_size) - 1)
+        if species == 'mouse':
+            bins = (np.arange(0, snmcseq_utils.get_chrom_lengths_mouse()[chromosome], bin_size) - 1)
+        elif species == 'human': 
+            bins = (np.arange(0, snmcseq_utils.get_chrom_lengths_human()[chromosome], bin_size) - 1)
+        else:
+            raise ValueError("species has to be mouse or human")
 
         if double_xsize and chromosome == 'X':
             # here -1 is very important!
-            bins = (np.arange(0, snmcseq_utils.get_chrom_lengths_mouse()[chromosome], 2*bin_size) - 1)
+            if species == 'mouse':
+                bins = (np.arange(0, snmcseq_utils.get_chrom_lengths_mouse()[chromosome], 2*bin_size) - 1)
+            elif species == 'human': 
+                bins = (np.arange(0, snmcseq_utils.get_chrom_lengths_human()[chromosome], 2*bin_size) - 1)
+            else:
+                raise ValueError("species has to be mouse or human")
+
         
         res = df_sub.groupby(pd.cut(df_sub['bin'], bins)).sum().fillna(0)
         
@@ -317,7 +328,7 @@ def merge_bins(df, bin_size=10*BIN_SIZE, double_xsize=True,
     return binc
 
 
-def main_setup(dataset, ens, ens_description, ens_name=None, ens_datasets=None):
+def main_setup(dataset, ens, ens_description, ens_name=None, ens_datasets=None, species=SPECIES):
     """
     create an singleton ensemble from a dataset:
     - 
@@ -388,7 +399,7 @@ def main_setup(dataset, ens, ens_description, ens_name=None, ens_datasets=None):
         df_binc = df_binc.reset_index()
         # added 18-04-04
         if snmcseq_utils.isrs2(dataset):
-            df_binc = df_binc[df_binc['chr'].isin(snmcseq_utils.get_mouse_chromosomes(include_x=False))]
+            df_binc = df_binc[df_binc['chr'].isin(snmcseq_utils.get_chromosomes(species, include_x=False))]
         # added 18-04-04
         output_binc = os.path.join(ens_path, 'binc/binc_m{}_{}_{}.tsv'.format(context, BIN_SIZE_FEATURE, ens))
         merged_binc = merge_bins(df_binc, bin_size=10*bin_size, double_xsize=True, output_file=output_binc)
@@ -453,7 +464,7 @@ def main_setup(dataset, ens, ens_description, ens_name=None, ens_datasets=None):
     log.info("Total time spent: {} sec".format(tft - tit))
 
 
-def main_setup_nonsingleton(ens, ens_name, ens_description, ens_datasets=None, ens_sql=None, ens_cells=None):
+def main_setup_nonsingleton(ens, ens_name, ens_description, ens_datasets=None, ens_sql=None, ens_cells=None, species=SPECIES):
     """
     There should be 1 not None value for (ens_datasets, ens_sql, ens_cells) 
     """
@@ -565,7 +576,7 @@ def main_setup_nonsingleton(ens, ens_name, ens_description, ens_datasets=None, e
                 include_RS2 = True
         if include_RS2:
             df_binc = df_binc.reset_index()
-            df_binc = df_binc[df_binc['chr'].isin(snmcseq_utils.get_mouse_chromosomes(include_x=False))]
+            df_binc = df_binc[df_binc['chr'].isin(snmcseq_utils.get_chromosomes(species, include_x=False))]
             df_binc = df_binc.set_index(['chr', 'bin'])
         # added 18-04-04
         # use for further analysis

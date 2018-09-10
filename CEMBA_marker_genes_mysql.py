@@ -30,7 +30,8 @@ def upload_marker_genes(ens, context, database=DATABASE):
 
     table_name = '{}_cluster_marker_genes'.format(ens)
     engine = CEMBA_update_mysql.connect_sql(database)
-    f_gene = os.path.join(PATH_REFERENCES, 'Annotation', 'gencode.vM16.annotation_genes.tsv')
+    # f_gene = os.path.join(PATH_REFERENCES, 'Annotation', 'gencode.vM16.annotation_genes.tsv')
+    f_gene = PATH_GENEBODY_ANNOTATION
     
     # create the mysql table
     metadata = sa.MetaData(engine)

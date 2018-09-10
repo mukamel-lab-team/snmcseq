@@ -30,8 +30,8 @@ def reorder_cols(cols):
 def auto_annotate_worker(cluster_f, input_f, 
     output_f, output_heatmap, 
     reject_threshold=0.9,
-    input_fgt=os.path.join(PATH_REFERENCES, 'Mouse_published/binc_mCH_100000_clusterwise_mcc_mouse_published.tsv'), 
-    input_gt=os.path.join(PATH_REFERENCES, 'Mouse_published/summary_mouse_published.tsv')):
+    input_fgt=REFERENCE_BINS, 
+    input_gt=REFERENCE_METADATA:
     """
 
     Args:
@@ -149,8 +149,8 @@ def auto_annotate_worker(cluster_f, input_f,
 def auto_annotate_worker_v2(df_cluster, df_input, 
     output_f, output_heatmap, 
     reject_threshold=0.9,
-    input_fgt=os.path.join(PATH_REFERENCES, 'Mouse_published/binc_mCH_100000_clusterwise_mcc_mouse_published.tsv'), 
-    input_gt=os.path.join(PATH_REFERENCES, 'Mouse_published/summary_mouse_published.tsv')):
+    input_fgt=REFERENCE_BINS, 
+    input_gt=REFERENCE_METADATA):
     """
 
     Args:

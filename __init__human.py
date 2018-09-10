@@ -90,7 +90,7 @@ CELLS_TABLE_COLS = ['cell_id',
                      # 'filtered_reads',
                      # 'filtered_rate',
                      # 'lambda_mC',
-                     ]
+#                      ]
                      
 def rename_ms_cols(column_names):
     """Rename headers in mapping summary files (from Chongyuan) to header names used in mySQL cells table
