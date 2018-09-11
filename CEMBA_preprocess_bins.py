@@ -248,7 +248,7 @@ def preproc_bins(ens, df_meta=None, df=None, bin_size=BIN_SIZE_FEATURE, context=
 	dfs = []
 	for chrom, sr_sub in fbins.groupby('chr'):
 	    num_bins = sr_sub.shape[0]
-	    candicates = sr_sub.nlargest(int(fraction_included*num_bins))
+	    candidates = sr_sub.nlargest(int(fraction_included*num_bins))
 	    # Fangming 09/11/2018 to remove nan values
 	    candidates = candidates[candidates>BIN_COV_THRESHOLD]
 	    dfs.append(candidates)

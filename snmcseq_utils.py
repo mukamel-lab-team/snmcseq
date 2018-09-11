@@ -752,7 +752,7 @@ def compress(file, suffix='bgz'):
     return
 
 def get_cluster_mc_c(ens, context, genome_regions='bin', 
-                     cluster_col='cluster_mCHmCG_lv_npc50_k30', database='CEMBA'):
+                     cluster_col='cluster_mCHmCG_lv_npc50_k30', database=DATABASE):
     """Example arguments:
     - ens: 'Ens1'
     - context: 'CG'
@@ -932,7 +932,7 @@ def get_clusters_mc_c_worker(df_cells, df_input, cluster_col):
     return df_mc_c
 
 
-def pull_genebody_mc_c(ens, context, database='CEMBA'):
+def pull_genebody_mc_c(ens, context, database=DATABASE):
     """Example arguments:
     - ens: 'Ens1'
     - context: 'CG'
