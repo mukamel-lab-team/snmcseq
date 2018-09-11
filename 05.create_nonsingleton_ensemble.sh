@@ -26,11 +26,12 @@
 # ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
 # 						 --ensemble_datasets $ens_datasets
 
-ens_id=73
-ens_name='CEMBA_4C'
-message="A combined ensemble with 2 datasets in CEMBA 4C"
-ens_datasets="CEMBA_4C_180417 \
-CEMBA_4C_180419"
+ens_id=4
+ens_name='HUMAN_MB_v1_EA_EB'
+message="3 human snmcseq samples: MB_v1(published), MB_EA, MB_EB"
+ens_datasets="MB_v1 \
+MB_EA \
+MB_EB"
 			
 ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
 						 --ensemble_datasets $ens_datasets

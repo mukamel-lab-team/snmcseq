@@ -19,6 +19,8 @@ from sklearn.manifold import TSNE
 from __init__ import *
 from snmcseq_utils import create_logger
 
+BIN_COV_THRESHOLD = 0.8 # a bin will be included if it has coverage in over #(frac) of cells.
+
 def default_paras(context):
 	"""
 	"""
@@ -246,7 +248,10 @@ def preproc_bins(ens, df_meta=None, df=None, bin_size=BIN_SIZE_FEATURE, context=
 	dfs = []
 	for chrom, sr_sub in fbins.groupby('chr'):
 	    num_bins = sr_sub.shape[0]
-	    dfs.append(sr_sub.nlargest(int(fraction_included*num_bins)))
+	    candicates = sr_sub.nlargest(int(fraction_included*num_bins))
+	    # Fangming 09/11/2018 to remove nan values
+	    candidates = candidates[candidates>BIN_COV_THRESHOLD]
+	    dfs.append(candidates)
 	dfs = pd.concat(dfs)    
 	condition_low = fbins.index.isin(dfs.index) # just for the purpose of re-ordering index 
 
