@@ -32,6 +32,14 @@ GENOME_ALLCG_FILE = PATH_REFERENCES + '/Genome/hg19_all_cg.tsv'
 GENOME_SIZE_FILE_HUMAN = '/cndd/Public_Datasets/human_snmcseq/References/Genome/hg19.chrom.sizes' 
 GENOME_SIZE_FILE_MOUSE = '/cndd/Public_Datasets/CEMBA/snmCSeq/References/Genome/mm10.chrom.sizes' 
 
+# for auto-annotation
+REFERENCE_BINS = (os.path.join(PATH_REFERENCES, 
+                                  'Human_reference/binc_mCH_human_combined_100000_clusterwise_mcc.tsv'))
+REFERENCE_METADATA = (os.path.join(PATH_REFERENCES, 
+                                  'Human_reference/mapping_summary_Ens0.tsv'))
+
+# 
+
 # tSNE
 PERPLEXITIES = [20, 30, 40, 50, 100] 
 N_PC = 50 

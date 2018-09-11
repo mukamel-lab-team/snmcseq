@@ -34,9 +34,9 @@ GENOME_SIZE_FILE_MOUSE = '/cndd/Public_Datasets/CEMBA/snmCSeq/References/Genome/
 
 # for auto-annotation
 REFERENCE_BINS = (os.path.join(PATH_REFERENCES, 
-                                  'Mouse_published/binc_mCH_100000_clusterwise_mcc_mouse_published.tsv')
-REFERENCE_METADATA = (os.path.join(PATH_REFERENCES, 
-                                  'Mouse_published/summary_mouse_published.tsv'))
+                                  'Human_reference/binc_mCH_human_combined_100000_clusterwise_mcc.tsv'))
+# REFERENCE_METADATA = (os.path.join(PATH_REFERENCES, 
+#                                   'Human_reference/mapping_summary_Ens0.tsv'))
 
 # 
 

@@ -30,8 +30,8 @@ def reorder_cols(cols):
 def auto_annotate_worker(cluster_f, input_f, 
     output_f, output_heatmap, 
     reject_threshold=0.9,
-    input_fgt=REFERENCE_BINS, 
-    input_gt=REFERENCE_METADATA:
+    input_fgt=REFERENCE_BINS,
+    ):
     """
 
     Args:
@@ -76,7 +76,7 @@ def auto_annotate_worker(cluster_f, input_f,
     df = pd.read_table(input_fgt, 
         index_col=['chr', 'bin'], dtype={'chr': object})
     df2 = df_mcc.reset_index().astype(dtype={'chr': str}).set_index(['chr', 'bin']) # changed 18-04-04 to correct for datatype! 
-    df_gt = pd.read_table(input_gt, index_col='Sample')['Neuron type'].to_frame()
+    # df_gt = pd.read_table(input_gt, index_col='Sample')['Neuron type'].to_frame()
 
     # combine gt clusters and clusters
     df_cmb = pd.merge(df, df2, left_index=True, right_index=True)
@@ -150,7 +150,7 @@ def auto_annotate_worker_v2(df_cluster, df_input,
     output_f, output_heatmap, 
     reject_threshold=0.9,
     input_fgt=REFERENCE_BINS, 
-    input_gt=REFERENCE_METADATA):
+    ):
     """
 
     Args:
@@ -195,7 +195,7 @@ def auto_annotate_worker_v2(df_cluster, df_input,
     df = pd.read_table(input_fgt, 
         index_col=['chr', 'bin'], dtype={'chr': object})
     df2 = df_mcc.reset_index().astype(dtype={'chr': str}).set_index(['chr', 'bin']) # changed 18-04-04 to correct for datatype! 
-    df_gt = pd.read_table(input_gt, index_col='Sample')['Neuron type'].to_frame()
+    # df_gt = pd.read_table(input_gt, index_col='Sample')['Neuron type'].to_frame()
 
     # combine gt clusters and clusters
     df_cmb = pd.merge(df, df2, left_index=True, right_index=True)
