@@ -6,6 +6,7 @@ import glob
 import os
 import numpy as np
 import pandas as pd
+import collections
 
 
 # define constant variables
@@ -52,7 +53,7 @@ K_NN = [5, 10, 15, 20, 30, 50, 100]
 NUM_DMS = 3
 
 # data structures
-GC_matrix = namedtuple('GC_matrix', ['gene', 'cell', 'data'])
+GC_matrix = collections.namedtuple('GC_matrix', ['gene', 'cell', 'data'])
 
 
 
