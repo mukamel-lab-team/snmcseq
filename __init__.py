@@ -56,6 +56,7 @@ USER = 'f7xie'
 HOST = 'ocarina'
 PWD = '3405040212'
 DATABASE = 'human_snmcseq'
+DATABASE_ATAC = 'human_snatacseq'
 DATABASE_ANNOJ = 'human_snmcseq_annoj'
 
 CELLS_TABLE_COLS = ['cell_id', 

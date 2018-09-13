@@ -67,10 +67,9 @@ def upload_dataset_worker(dataset, gc_normalized, gc_smoothed_normalized, databa
         # print(gene, df_gene)
         if not df_gene.empty:
             insert_into(engine, gene_table_name, df_gene, ignore=True, verbose=False)
-
     return
 
-def read_sparse_atac_matrix(fdata, frow, fcol, dataset, add_dataset_as_suffix=True):
+def read_sparse_atac_matrix(fdata, frow, fcol, dataset='', add_dataset_as_suffix=True):
     """
     Example:
         dataset = 'CEMBA_1B_180118'
