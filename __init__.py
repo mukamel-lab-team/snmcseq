@@ -51,6 +51,11 @@ K_NN = [5, 10, 15, 20, 30, 50, 100]
 # dmr
 NUM_DMS = 3
 
+# data structures
+GC_matrix = namedtuple('GC_matrix', ['gene', 'cell', 'data'])
+
+
+
 # mysql
 USER = 'f7xie'
 HOST = 'ocarina'
@@ -120,3 +125,5 @@ def rename_ms_cols(column_names):
                    'Estimated mCH/CH': 'estimated_mCH', 
                    '% Genome covered': 'percent_genome_covered'}
     return [dict_rename[col] for col in column_names] 
+
+
