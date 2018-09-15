@@ -1,6 +1,7 @@
 # put all dataset into data folder 
 # to avoid being synced to github 
 
+__init__.py
 *.tsv
 *.mat
 *.pdf
