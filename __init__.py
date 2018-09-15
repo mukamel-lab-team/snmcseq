@@ -9,8 +9,8 @@ import pandas as pd
 
 
 # define constant variables
-CONVENTION = 'CEMBA' # 'CEMBA' or 'human'
-SPECIES = 'mouse' # 'human' or 'mouse'
+CONVENTION = 'human' # 'CEMBA' or 'human'
+SPECIES = 'human' # 'human' or 'mouse'
 
 BIN_SIZE = 10000
 BIN_SIZE_FEATURE = 10*BIN_SIZE
@@ -18,24 +18,27 @@ BIN_SIZE_FEATURE = 10*BIN_SIZE
 CONTEXTS = ['CH', 'CG', 'CA']
 COMBINED_CONTEXTS_LIST = [['CH', 'CG'], ['CA', 'CG']]
 
-PATH_PROJECT = '/cndd/Public_Datasets/CEMBA/snmCSeq' 
-PATH_CEMBA = PATH_PROJECT # For back compatibility
+PATH_PROJECT = '/cndd/Public_Datasets/human_snmcseq'
+PATH_CEMBA = PATH_PROJECT # For back compatibility 
 
 PATH_DATASETS = PATH_PROJECT + '/Datasets'
 PATH_ENSEMBLES = PATH_PROJECT + '/Ensembles'
 PATH_REFERENCES = PATH_PROJECT + '/References'
-PATH_GENEBODY_ANNOTATION = PATH_REFERENCES + '/Annotation/gencode.vM16.annotation_genes.tsv'
+PATH_GENEBODY_ANNOTATION = PATH_REFERENCES + '/Annotation/gencode.v19.annotation_genes.tsv'
 GENEBODY = PATH_GENEBODY_ANNOTATION # for back-compatibility
-GENOME_SIZE_FILE = PATH_REFERENCES + '/Genome/mm10.chrom.sizes'
-GENOME_ALLCG_FILE = PATH_REFERENCES + '/Genome/mm10_all_cg.tsv'
+GENOME_SIZE_FILE = PATH_REFERENCES + '/Genome/hg19.chrom.sizes'
+GENOME_ALLCG_FILE = PATH_REFERENCES + '/Genome/hg19_all_cg.tsv'
 
 GENOME_SIZE_FILE_HUMAN = '/cndd/Public_Datasets/human_snmcseq/References/Genome/hg19.chrom.sizes' 
 GENOME_SIZE_FILE_MOUSE = '/cndd/Public_Datasets/CEMBA/snmCSeq/References/Genome/mm10.chrom.sizes' 
 
 # for auto-annotation
 REFERENCE_BINS = (os.path.join(PATH_REFERENCES, 
-                                  'Mouse_published/binc_mCH_100000_clusterwise_mcc_mouse_published.tsv')
+                                  'Human_reference/binc_mCH_human_combined_100000_clusterwise_mcc.tsv'))
+# REFERENCE_METADATA = (os.path.join(PATH_REFERENCES, 
+#                                   'Human_reference/mapping_summary_Ens0.tsv'))
 
+# 
 
 # tSNE
 PERPLEXITIES = [20, 30, 40, 50, 100] 
@@ -52,8 +55,8 @@ NUM_DMS = 3
 USER = 'f7xie'
 HOST = 'ocarina'
 PWD = '3405040212'
-DATABASE = 'CEMBA'
-DATABASE_ANNOJ = 'CEMBA_annoj'
+DATABASE = 'human_snmcseq'
+DATABASE_ANNOJ = 'human_snmcseq_annoj'
 
 CELLS_TABLE_COLS = ['cell_id', 
                      'cell_name', 
@@ -75,10 +78,10 @@ CELLS_TABLE_COLS = ['cell_id',
                      'filtered_rate',
                      'lambda_mC']
 
-DATABASE_ATAC = 'CEMBA_ATAC'
-CELLS_TABLE_COLS_ATAC = ['cell_id', 
-                     'cell_name', 
-                     'dataset', 
+# DATABASE_ATAC = 'CEMBA_ATAC'
+# CELLS_TABLE_COLS_ATAC = ['cell_id', 
+#                      'cell_name', 
+#                      'dataset', 
                      # 'cell_type',
                      # 'global_mCH', 
                      # 'global_mCG',
@@ -95,8 +98,8 @@ CELLS_TABLE_COLS_ATAC = ['cell_id',
                      # 'filtered_reads',
                      # 'filtered_rate',
                      # 'lambda_mC',
-                     ]
-
+#                      ]
+                     
 def rename_ms_cols(column_names):
     """Rename headers in mapping summary files (from Chongyuan) to header names used in mySQL cells table
     """
