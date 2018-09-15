@@ -6,6 +6,7 @@ import glob
 import os
 import numpy as np
 import pandas as pd
+import collections
 
 
 # define constant variables
@@ -35,8 +36,8 @@ GENOME_SIZE_FILE_MOUSE = '/cndd/Public_Datasets/CEMBA/snmCSeq/References/Genome/
 # for auto-annotation
 REFERENCE_BINS = (os.path.join(PATH_REFERENCES, 
                                   'Human_reference/binc_mCH_human_combined_100000_clusterwise_mcc.tsv'))
-REFERENCE_METADATA = (os.path.join(PATH_REFERENCES, 
-                                  'Human_reference/mapping_summary_Ens0.tsv'))
+# REFERENCE_METADATA = (os.path.join(PATH_REFERENCES, 
+#                                   'Human_reference/mapping_summary_Ens0.tsv'))
 
 # 
 
@@ -51,11 +52,17 @@ K_NN = [5, 10, 15, 20, 30, 50, 100]
 # dmr
 NUM_DMS = 3
 
+# data structures
+GC_matrix = collections.namedtuple('GC_matrix', ['gene', 'cell', 'data'])
+
+
+
 # mysql
 USER = 'f7xie'
 HOST = 'ocarina'
 PWD = '3405040212'
 DATABASE = 'human_snmcseq'
+DATABASE_ATAC = 'human_snatacseq'
 DATABASE_ANNOJ = 'human_snmcseq_annoj'
 
 CELLS_TABLE_COLS = ['cell_id', 
@@ -119,3 +126,5 @@ def rename_ms_cols(column_names):
                    'Estimated mCH/CH': 'estimated_mCH', 
                    '% Genome covered': 'percent_genome_covered'}
     return [dict_rename[col] for col in column_names] 
+
+
