@@ -10,10 +10,11 @@ import os
 from scipy import sparse
 from matplotlib import cm
 
+
 def get_grad_colors(n, cmap=cm.copper):
     """Generate n colors from a given colormap (a matplotlib.cm)
     """
-    return [cmap(i) for i in np.linspace(0, 255, n)] 
+    return [cmap(int(i)) for i in np.linspace(0, 255, n)] 
 
 def logcpm(counts):
     """
