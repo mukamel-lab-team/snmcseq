@@ -881,7 +881,7 @@ def plot_tsne_values_ax(df, ax, tx='tsne_x', ty='tsne_y', tc='mCH',
     return 
 
 
-def get_mcc(df, base_call_cutoff=100, sufficient_coverage_fraction=1, suffix=True):
+def get_mcc(df, base_call_cutoff=100, sufficient_coverage_fraction=1, suffix=True, fillna=True):
     """Get mcc matrix from mc_c matrix (filtering out low coverage gene or bins)
     """
     logging.info('Getting mcc matrix from mc and c') 
@@ -905,10 +905,11 @@ def get_mcc(df, base_call_cutoff=100, sufficient_coverage_fraction=1, suffix=Tru
     logging.info(df_mcc.shape)
 
     # imputation (missing value -> mean value of all cells)
-    logging.info('Imputing data... (No effect if sufficient_coverage_fraction=1)')
-    means = df_mcc.mean(axis=1)
-    fill_value = pd.DataFrame({col: means for col in df_mcc.columns})
-    df_mcc.fillna(fill_value, inplace=True)
+    if fillna:
+        logging.info('Imputing data... (No effect if sufficient_coverage_fraction=1)')
+        means = df_mcc.mean(axis=1)
+        fill_value = pd.DataFrame({col: means for col in df_mcc.columns})
+        df_mcc.fillna(fill_value, inplace=True)
     
     # add suffix
     if suffix:

@@ -26,12 +26,15 @@
 # ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
 # 						 --ensemble_datasets $ens_datasets
 
-ens_id=5
-ens_name='HUMAN_MB_v1_EA_EB'
-message="3 human snmcseq samples: MB_v1(published), MB_EA, MB_EB"
-ens_datasets="MB_v1 \
-MB_EA \
-MB_EB"
+ens_id=74
+ens_name='CEMBA_ACB'
+message="3F and 4E slices of striatum (Accumbens)"
+ens_datasets="CEMBA_3F_180105 \
+CEMBA_3F_180109 \
+CEMBA_3F_180109_v2 \
+CEMBA_4E_180110 \
+CEMBA_4E_180111
+"
 			
 ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
 						 --ensemble_datasets $ens_datasets
