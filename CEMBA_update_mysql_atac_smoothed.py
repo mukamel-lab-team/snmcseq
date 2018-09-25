@@ -104,21 +104,21 @@ if __name__ == '__main__':
         frow = fp + '.row.index'
         fcol = fp + '.col.index'
         
-        # try:
-        logging.info("Reading files from dataset: {} \n({}*)".format(dataset, fp))
-        gc_smoothed_counts = read_sparse_atac_matrix(fdata, frow, fcol, dataset, 
-                                                     add_dataset_as_suffix=False)
+        try:
+            logging.info("Reading files from dataset: {} \n({}*)".format(dataset, fp))
+            gc_smoothed_counts = read_sparse_atac_matrix(fdata, frow, fcol, dataset, 
+                                                         add_dataset_as_suffix=False)
 
-        # logtpm normalize
-        logging.info("logTPM normalize...")
-        df_genes = pd.read_table(PATH_GENEBODY_ANNOTATION, index_col='gene_id')
-        gene_lengths = (df_genes['end'] - df_genes['start']).loc[gc_smoothed_counts.gene]
-        gc_smoothed_logtpm = snmcseq_utils.sparse_logtpm(gc_smoothed_counts, gene_lengths)
-        
-        logging.info("Uploading to mysql database: {}".format(DATABASE_ATAC))
-        upload_smoothed_counts(dataset, gc_smoothed_logtpm, database=DATABASE_ATAC)
-        # except:
-        # logging.info("Problems with dataset {}, skipped!".format(dataset))
+            # logtpm normalize
+            logging.info("logTPM normalize...")
+            df_genes = pd.read_table(PATH_GENEBODY_ANNOTATION, index_col='gene_id')
+            gene_lengths = (df_genes['end'] - df_genes['start']).loc[gc_smoothed_counts.gene]
+            gc_smoothed_logtpm = snmcseq_utils.sparse_logtpm(gc_smoothed_counts, gene_lengths)
+            
+            logging.info("Uploading to mysql database: {}".format(DATABASE_ATAC))
+            upload_smoothed_counts(dataset, gc_smoothed_logtpm, database=DATABASE_ATAC)
+        except:
+            logging.info("Problems with dataset {}, skipped!".format(dataset))
         
 
 
