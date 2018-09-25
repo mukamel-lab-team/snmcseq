@@ -53,8 +53,8 @@ def upload_smoothed_counts(dataset, gc_matrix, database=DATABASE_ATAC):
         # df_gene[cond]
         gene_table = sa.Table(gene_table_name, metadata, autoload=True)
         for idx, row in df_gene[cond].iterrows():
-            cell_id = row['cell_id']
-            smoothed_normalized_counts = row['smoothed_normalized_counts']
+            cell_id = int(row['cell_id'])
+            smoothed_normalized_counts = float(row['smoothed_normalized_counts'])
             stmt = (gene_table.update()
                     .where(gene_table.c.cell_id==cell_id)
                     .values(smoothed_normalized_counts=smoothed_normalized_counts)
@@ -75,7 +75,7 @@ if __name__ == '__main__':
      
     # get atac file
     datasets_info = [
-            ('3C','CEMBA_3C_171206', 'CEMBA171206_3C_rep1'),
+           #  ('3C','CEMBA_3C_171206', 'CEMBA171206_3C_rep1'),
             ('3C','CEMBA_3C_171207', 'CEMBA171207_3C_rep2'),
             ('4B','CEMBA_4B_171212', 'CEMBA171212_4B_rep1'),
             ('4B','CEMBA_4B_171213', 'CEMBA171213_4B_rep2'),
@@ -104,21 +104,21 @@ if __name__ == '__main__':
         frow = fp + '.row.index'
         fcol = fp + '.col.index'
         
-        try:
-            logging.info("Reading files from dataset: {} \n({}*)".format(dataset, fp))
-            gc_smoothed_counts = read_sparse_atac_matrix(fdata, frow, fcol, dataset, 
-                                                         add_dataset_as_suffix=False)
+        # try:
+        logging.info("Reading files from dataset: {} \n({}*)".format(dataset, fp))
+        gc_smoothed_counts = read_sparse_atac_matrix(fdata, frow, fcol, dataset, 
+                                                     add_dataset_as_suffix=False)
 
-            # logtpm normalize
-            logging.info("logTPM normalize...")
-            df_genes = pd.read_table(PATH_GENEBODY_ANNOTATION, index_col='gene_id')
-            gene_lengths = (df_genes['end'] - df_genes['start']).loc[gc_smoothed_counts.gene]
-            gc_smoothed_logtpm = snmcseq_utils.sparse_logtpm(gc_smoothed_counts, gene_lengths)
-            
-            logging.info("Uploading to mysql database: {}".format(DATABASE_ATAC))
-            upload_smoothed_counts(dataset, gc_smoothed_logtpm, database=DATABASE_ATAC)
-        except:
-            logging.info("Problems with dataset {}, skipped!".format(dataset))
+        # logtpm normalize
+        logging.info("logTPM normalize...")
+        df_genes = pd.read_table(PATH_GENEBODY_ANNOTATION, index_col='gene_id')
+        gene_lengths = (df_genes['end'] - df_genes['start']).loc[gc_smoothed_counts.gene]
+        gc_smoothed_logtpm = snmcseq_utils.sparse_logtpm(gc_smoothed_counts, gene_lengths)
+        
+        logging.info("Uploading to mysql database: {}".format(DATABASE_ATAC))
+        upload_smoothed_counts(dataset, gc_smoothed_logtpm, database=DATABASE_ATAC)
+        # except:
+        # logging.info("Problems with dataset {}, skipped!".format(dataset))
         
 
 
