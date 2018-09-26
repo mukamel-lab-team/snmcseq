@@ -14,3 +14,4 @@ old*/
 logs/
 *.log*
 *.ipynb
+test*
