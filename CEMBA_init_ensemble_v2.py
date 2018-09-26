@@ -667,7 +667,7 @@ def create_parser():
         help="List of cell names included in the ensemble (space separated). Eg: 171213_CEMBA_mm_P56_P63_3C_MOp_CEMBA171207_3C_3_CEMBA171207_3C_4_E3_AD010_indexed...")
     parser.add_argument("--ensemble_sql",
         nargs='+', 
-        help="A sql query string that specify the cells Eg: SELECT cell_name FROM cells WHERE dataset LIKE 'CEMBA_4B_%'")
+        help="A sql query string that specify the cells Eg: SELECT cell_name FROM cells WHERE dataset LIKE 'CEMBA_4B_%%'")
 
     return parser
 
