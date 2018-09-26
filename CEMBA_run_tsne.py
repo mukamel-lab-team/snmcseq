@@ -2,24 +2,9 @@
 
 """Generate tSNE coordinates
 """
-# import matplotlib
-# matplotlib.use('Agg')
-# import matplotlib.pyplot as plt
-
-# import numpy as np
-# import pandas as pd
-# import time
-# import os
-# import logging
-# import glob
-
-# from sklearn.decomposition import PCA
-# from sklearn.manifold import TSNE 
 
 from __init__ import *
 from snmcseq_utils import create_logger
-from snmcseq_utils import plot_tsne_values
-from snmcseq_utils import plot_tsne_labels
 
 
 
@@ -147,15 +132,15 @@ def run_tsne_CEMBA(ens, perps=PERPLEXITIES, n_pc=N_PC, n_dim=N_DIM):
 
 	if not os.path.isdir(os.path.join(ens_path, 'tsne')):
 		os.makedirs(os.path.join(ens_path, 'tsne'))
-	if not os.path.isdir(os.path.join(ens_path, 'plots')):
-		os.makedirs(os.path.join(ens_path, 'plots'))
+	# if not os.path.isdir(os.path.join(ens_path, 'plots')):
+	#	os.makedirs(os.path.join(ens_path, 'plots'))
 
 	for nmcc_file in nmcc_files:
 		nmcc_basename = os.path.basename(nmcc_file) 
 		df = pd.read_table(nmcc_file, dtype={'chr': object})
 		for perp in perps:
 			output_coords = os.path.join(ens_path, 'tsne/tsne_ndim{}_perp{}_npc{}_{}'.format(n_dim, perp, n_pc, nmcc_basename))
-			output_plot = os.path.join(ens_path, 'plots/tsne_ndim{}_perp{}_npc{}_{}.pdf'.format(n_dim, perp, n_pc, nmcc_basename[:-len('.tsv')]))
+			# output_plot = os.path.join(ens_path, 'plots/tsne_ndim{}_perp{}_npc{}_{}.pdf'.format(n_dim, perp, n_pc, nmcc_basename[:-len('.tsv')]))
 			df_tsne = run_tsne(df, perp=perp, n_pc=n_pc, n_tsne=n_dim, output_file=output_coords, sample_column_suffix='_mcc')
 			# if n_dim == 2:
 			# 	plot_tsne(df_tsne, output_file=output_plot)

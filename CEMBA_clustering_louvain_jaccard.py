@@ -6,13 +6,8 @@ louvain clustering from kNN graph
 
 """
 
-# import numpy as np
-# import pandas as pd
-# import matplotlib.pyplot as plt
-# import seaborn as sns
-# import os
-# import logging
-# import glob
+from __init__ import *
+
 from collections import OrderedDict
 import argparse
 
@@ -22,7 +17,6 @@ import louvain
 import igraph as ig
 from scipy import sparse
 
-from __init__ import *
 from snmcseq_utils import create_logger
 from snmcseq_utils import plot_tsne_labels
 

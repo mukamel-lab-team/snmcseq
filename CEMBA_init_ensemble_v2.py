@@ -1,20 +1,11 @@
 #!/usr/bin/env python3
 
-# import matplotlib
-# matplotlib.use('Agg')
-
-import pandas as pd
-import numpy as np
-import os
+from __init__ import *
 import shutil
-import glob
-import time
 import subprocess as sp
 from collections import OrderedDict
 import argparse
-import logging
 
-from __init__ import *
 import snmcseq_utils
 from snmcseq_utils import create_logger
 from snmcseq_utils import chunks 
