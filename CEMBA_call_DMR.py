@@ -37,11 +37,11 @@ if __name__ == '__main__':
 
 	# ens = 'Ens1'
 	cluster_type = 'cluster_mCHmCG_lv_npc50_k30'
-	enss = ['Ens51']
+	enss = ['Ens29']
 	nprocs = 4
 	for ens in enss: 
 		ens_path = os.path.join(PATH_ENSEMBLES, ens)
-		allc_paths = sorted(glob.glob(os.path.join(ens_path, 'allc_merged/allc_merged_mCG_{}_*_{}.tsv'.format(cluster_type, ens))))
+		allc_paths = sorted(glob.glob(os.path.join(ens_path, 'allc_merged/allc_merged_mCG_{}_*_{}.tsv.gz'.format(cluster_type, ens))))
 
 		output_path = os.path.join(ens_path, 'dmr')
 		output_prefix = os.path.join(output_path, 'dmr_allc_merged_mCG_{}'.format(cluster_type))
