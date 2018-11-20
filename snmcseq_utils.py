@@ -11,6 +11,109 @@ from scipy import sparse
 from matplotlib import cm
 
 
+def diag_matrix(X, rows=np.array([]), cols=np.array([])):
+    """Diagonalize a matrix as much as possible
+    """
+    di, dj = X.shape
+    new_X = X.copy()
+    new_rows = rows.copy() 
+    new_cols = cols.copy() 
+    
+    if new_rows.size == 0:
+        new_rows = np.arange(di)
+    if new_cols.size == 0:
+        new_cols = np.arange(dj)
+        
+    # 
+    for idx in range(min(di, dj)):
+        T = new_X[idx: , idx: ]
+        i, j = np.unravel_index(T.argmax(), T.shape)
+
+        # swap row idx, idx+i
+        tmp = new_X[idx, :].copy()
+        new_X[idx, :] = new_X[idx+i, :].copy() 
+        new_X[idx+i, :] = tmp 
+        
+        tmp = new_rows[idx]
+        new_rows[idx] = new_rows[idx+i]
+        new_rows[idx+i] = tmp
+
+        # swap col idx, idx+j
+        tmp = new_X[:, idx].copy()
+        new_X[:, idx] = new_X[:, idx+j].copy() 
+        new_X[:, idx+j] = tmp 
+        
+        tmp = new_cols[idx]
+        new_cols[idx] = new_cols[idx+j]
+        new_cols[idx+j] = tmp
+    # 
+    if di == dj:
+        pass
+    elif di < dj:
+        part_mat =  new_X[:, di:].copy()
+        new_ids = (part_mat.max(axis=0).argsort()[::-1])
+        tmp = part_mat[:, new_ids].copy()
+        new_X[:, di:] = tmp 
+        
+        new_cols[di:] = new_cols[di+new_ids].copy()
+        
+    elif di > dj:
+        part_mat =  new_X[dj:, :].copy()
+        new_ids = (part_mat.max(axis=1).argsort()[::-1])
+        tmp = part_mat[new_ids, :].copy()
+        new_X[dj:, :] = tmp 
+        
+        new_rows[dj:] = new_rows[dj+new_ids].copy()
+        
+    return new_X, new_rows, new_cols 
+
+def partition_network(binary_clst, row_index=np.array([]), col_index=np.array([]), 
+                       row_name='row', col_name='col'):
+    """Partition a network (binary matrix) into sub-networks 
+    """
+    groups = []
+    row_node, col_node = sparse.lil_matrix(binary_clst).nonzero()
+    if row_index.size:
+        row_node = [row_index[node] for node in row_node]
+    if col_index.size:
+        col_node = [col_index[node] for node in col_node]
+    nrow, ncol = binary_clst.shape
+    if (len(set(row_node)) < nrow) or (len(set(col_node)) < ncol):
+        print("Warning: some nodes don't connect to any others!")
+    
+    for i, j in zip(row_node, col_node):
+        if not groups:
+            groups.append({row_name: {i}, 
+                           col_name: {j},
+                          })
+        else:
+            groupi = -1
+            groupj = -1
+            for idx, group in enumerate(groups):
+                if i in group[row_name]:
+                    groupi = idx 
+                if j in group[col_name]:
+                    groupj = idx 
+
+            # not matched 
+            if (groupi==-1 and groupj==-1):
+                groups.append({row_name: {i}, 
+                               col_name: {j},
+                            })
+            else:
+                if groupi != -1 and groupj != -1 and groupi != groupj:
+                    # link 2 groups
+                    groups[groupi][row_name] = groups[groupi][row_name].union(groups[groupj][row_name])
+                    groups[groupi][col_name] = groups[groupi][col_name].union(groups[groupj][col_name])
+                    del groups[groupj]
+                    
+                else:
+                    if groupi != -1:
+                        groups[groupi][col_name].add(j)
+                    if groupj != -1:
+                        groups[groupj][row_name].add(i)
+    return pd.DataFrame(groups)
+
 def get_grad_colors(n, cmap=cm.copper):
     """Generate n colors from a given colormap (a matplotlib.cm)
     """
