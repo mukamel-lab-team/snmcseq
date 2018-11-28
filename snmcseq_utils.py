@@ -130,7 +130,11 @@ def diag_matrix(X, rows=np.array([]), cols=np.array([]), threshold=None):
         for col in sorted_col_idx:
             col_dict[col] = [col]
         for col, key in zip(free_col_idx, linked_rowcol_idx): 
-            col_dict[key] = col_dict[key] + [col]
+            if key < dm:
+                col_dict[key] = col_dict[key] + [col]
+            else:
+                col_dict[key] = [col]
+                
             
         new_col_order = np.hstack([col_dict[key] for key in sorted(col_dict.keys())])
         
@@ -139,6 +143,30 @@ def diag_matrix(X, rows=np.array([]), cols=np.array([]), threshold=None):
         new_cols = new_cols[new_col_order]
     else:
         raise ValueError("Unexpected situation: dm > dj")
+    
+    # 
+    if dm == di:
+        pass
+    elif dm < di: # free columns
+        row_dict = {}
+        sorted_row_idx = np.arange(dm)
+        free_row_idx = np.arange(dm, di)
+        linked_rowcol_idx = new_X[dm:, :].argmax(axis=1)
+        
+        for row in sorted_row_idx:
+            row_dict[row] = [row]
+        for row, key in zip(free_row_idx, linked_rowcol_idx): 
+            if key < dm:
+                row_dict[key] = row_dict[key] + [row]
+            else:
+                row_dict[key] = [row]
+                
+        new_row_order = np.hstack([row_dict[key] for key in sorted(row_dict.keys())])
+        # update new_X new_cols
+        new_X = new_X[new_row_order, :].copy()
+        new_rows = new_rows[new_row_order]
+    else:
+        raise ValueError("Unexpected situation: dm > di")
         
     # end
     if transposed:
