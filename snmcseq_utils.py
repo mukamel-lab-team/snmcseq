@@ -11,7 +11,7 @@ from scipy import sparse
 from matplotlib import cm
 
 
-def diag_matrix(X, rows=np.array([]), cols=np.array([])):
+def diag_matrix_old(X, rows=np.array([]), cols=np.array([])):
     """Diagonalize a matrix as much as possible
     """
     di, dj = X.shape
@@ -66,6 +66,86 @@ def diag_matrix(X, rows=np.array([]), cols=np.array([])):
         new_rows[dj:] = new_rows[dj+new_ids].copy()
         
     return new_X, new_rows, new_cols 
+
+def diag_matrix(X, rows=np.array([]), cols=np.array([]), threshold=None):
+    """Diagonalize a matrix as much as possible
+    """
+    di, dj = X.shape
+    transposed = 0
+    
+    if di > dj:
+        di, dj = dj, di
+        X = X.T.copy()
+        rows, cols = cols.copy(), rows.copy()
+        transposed = 1
+        
+    # start (di <= dj)
+    new_X = X.copy()
+    new_rows = rows.copy() 
+    new_cols = cols.copy() 
+    
+    if new_rows.size == 0:
+        new_rows = np.arange(di)
+    if new_cols.size == 0:
+        new_cols = np.arange(dj)
+        
+    # bring the greatest values in the lower right matrix to diagnal position 
+    for idx in range(min(di, dj)):
+        T = new_X[idx: , idx: ]
+        i, j = np.unravel_index(T.argmax(), T.shape) # get the coords of the max element of T
+        
+        if threshold and T[i, j] < threshold:
+            dm = idx # new_X[:dm, :dm] is done (0, 1, ..., dm-1) excluding dm
+            break
+        else:
+            dm = idx+1 # new_X[:dm, :dm] will be done
+
+        # swap row idx, idx+i
+        tmp = new_X[idx, :].copy()
+        new_X[idx, :] = new_X[idx+i, :].copy() 
+        new_X[idx+i, :] = tmp 
+        
+        tmp = new_rows[idx]
+        new_rows[idx] = new_rows[idx+i]
+        new_rows[idx+i] = tmp
+
+        # swap col idx, idx+j
+        tmp = new_X[:, idx].copy()
+        new_X[:, idx] = new_X[:, idx+j].copy() 
+        new_X[:, idx+j] = tmp 
+        
+        tmp = new_cols[idx]
+        new_cols[idx] = new_cols[idx+j]
+        new_cols[idx+j] = tmp
+        
+    # 
+    if dm == dj:
+        pass
+    elif dm < dj: # free columns
+        col_dict = {}
+        sorted_col_idx = np.arange(dm)
+        free_col_idx = np.arange(dm, dj)
+        linked_rowcol_idx = new_X[:, dm:].argmax(axis=0)
+        
+        for col in sorted_col_idx:
+            col_dict[col] = [col]
+        for col, key in zip(free_col_idx, linked_rowcol_idx): 
+            col_dict[key] = col_dict[key] + [col]
+            
+        new_col_order = np.hstack([col_dict[key] for key in sorted(col_dict.keys())])
+        
+        # update new_X new_cols
+        new_X = new_X[:, new_col_order].copy()
+        new_cols = new_cols[new_col_order]
+    else:
+        raise ValueError("Unexpected situation: dm > dj")
+        
+    # end
+    if transposed:
+        new_X = new_X.T
+        new_rows, new_cols = new_cols, new_rows
+    return new_X, new_rows, new_cols 
+
 
 def partition_network(binary_clst, row_index=np.array([]), col_index=np.array([]), 
                        row_name='row', col_name='col'):
@@ -661,13 +741,20 @@ def get_kwcolors(labels, colors):
     kw_colors = {l:c for (l,c) in zip(labels, colors)}
     return kw_colors
 
+def rgb2hex(r,g,b):
+    """From rgb (255, 255, 255) to hex
+    """
+    hex = "#{:02x}{:02x}{:02x}".format(int(r),int(g),int(b))
+    return hex
+
 def gen_colors(n, l=0.6, s=0.6, colors=None):
-    """Generate maximumly distinct rgb colors
+    """Generate compatible and distinct hex colors
     """
     if not colors:
         import colorsys
         hs = np.linspace(0, 1, n, endpoint=False)
-        rgbs = [colorsys.hls_to_rgb(h, l, s) for h in hs]
+        rgbs = [rgb2hex(*(256*np.array(colorsys.hls_to_rgb(h, l, s))))
+                 for h in hs]
         return rgbs
     else:
         clrs = [colors[i%len(colors)] for i in range(n)] 
@@ -696,7 +783,8 @@ def myScatter(ax, df, x, y, l,
     if not kw_colors:
         # add a color column
         inds, catgs = pd.factorize(df[l])
-        df['c'] = [colors[i%len(colors)] if catgs[i]!=grey_label else 'grey' for i in inds]
+        df['c'] = [colors[i%len(colors)] if catgs[i]!=grey_label else 'grey' 
+                    for i in inds]
     else:
         df['c'] = [kw_colors[i] if i!=grey_label else 'grey' for i in df[l]]
     
