@@ -24,7 +24,7 @@ def run_mc_region_level(allc_files, output_files,
 	"""
 	run mc_gene_level in parallel
 
-	cap: remove totalC>cap
+	cap: remove totalC>cap (0 means no filtering)
 	"""
 	logger = create_logger()
 

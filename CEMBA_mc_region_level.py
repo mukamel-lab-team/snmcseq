@@ -55,7 +55,7 @@ def mc_region_level_worker(allc_file, output_file, bed_file,
     logging.info("Done with mc_region_level processing: {} {}\n Saving results to {}".format(allc_file, contexts, output_file))
 
     if compress:
-        snmcseq_utils.compress(output_file) 
+        snmcseq_utils.compress(output_file, suffix='gz') # Fangming 12/3/2018 
 
     return 0
 
