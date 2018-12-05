@@ -970,10 +970,12 @@ def compress(file, suffix='bgz'):
     # compress and name them .bgz
     try:
         sp.run("bgzip -f {}".format(file), shell=True)
-        sp.run("mv {}.gz {}.{}".format(file, file, suffix), shell=True)
+        if suffix != 'gz':
+            sp.run("mv {}.gz {}.{}".format(file, file, suffix), shell=True)
     except:
         sp.call("bgzip -f {}".format(file), shell=True)
-        sp.call("mv {}.gz {}.{}".format(file, file, suffix), shell=True)
+        if suffix != 'gz':
+            sp.call("mv {}.gz {}.{}".format(file, file, suffix), shell=True)
     return
 
 def get_cluster_mc_c(ens, context, genome_regions='bin', 

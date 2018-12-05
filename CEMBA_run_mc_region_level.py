@@ -17,6 +17,7 @@ from snmcseq_utils import create_logger
 
 def run_mc_region_level(allc_files, output_files, 
 	bed_file, 
+	bed_file_name_column=False, 
 	contexts=CONTEXTS,
 	compress=True, 
 	cap=2,
@@ -42,6 +43,7 @@ def run_mc_region_level(allc_files, output_files,
 									kwds={'contexts': contexts, 
 										'compress': compress,
 										'cap': cap,
+										'bed_file_name_column': bed_file_name_column,
 										}) 
 					for allc_file, output_file in zip(allc_files, output_files)]
 					

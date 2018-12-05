@@ -17,7 +17,7 @@ from CEMBA_update_mysql import insert_into
 from CEMBA_update_mysql_atac import read_sparse_atac_matrix
 
 
-def upload_smoothed_counts(dataset, gc_matrix, database=DATABASE_ATAC):
+def upload_smoothed_counts(dataset, gc_matrix, feature_type='smoothed_normalized_counts', database=DATABASE_ATAC):
     """
     """
     engine = connect_sql(database)
@@ -40,10 +40,10 @@ def upload_smoothed_counts(dataset, gc_matrix, database=DATABASE_ATAC):
         
         df_gene = pd.DataFrame()
         df_gene['cell_name'] = [gc_matrix.cell[col] for col in data_gene.col]
-        df_gene['smoothed_normalized_counts'] = data_gene.data
+        df_gene[feature_type] = data_gene.data
         
         df_gene = pd.merge(df_gene, df_cells, on='cell_name')
-        df_gene = df_gene[['cell_id', 'smoothed_normalized_counts']]
+        df_gene = df_gene[['cell_id', feature_type]]
         
 
         if not df_gene.empty: # otherwise just skip; the check is necessary to prevent error
@@ -54,7 +54,9 @@ def upload_smoothed_counts(dataset, gc_matrix, database=DATABASE_ATAC):
             sqls = [
                 text('DROP TABLE IF EXISTS {}'.format(tmp_table)),
                 text('CREATE TABLE {} LIKE templates.gene_table_atac_smoothed'.format(tmp_table)),
+                text('ALTER TABLE {} CHANGE COLUMN `smoothed_normalized_counts` `{}` FLOAT'.format(tmp_table, feature_type)),
                 ]
+                # ]
             for sql in sqls:
                 engine.execute(sql)
 
@@ -63,10 +65,10 @@ def upload_smoothed_counts(dataset, gc_matrix, database=DATABASE_ATAC):
 
             # insert tmp_table into the full gene table ON DUPLICATED KEY UPDATE
             sqls = [
-                text('INSERT INTO {} (cell_id, smoothed_normalized_counts) '
-                     'SELECT cell_id, smoothed_normalized_counts from {} '
-                     'ON DUPLICATE KEY UPDATE smoothed_normalized_counts = VALUES(smoothed_normalized_counts)'
-                     .format(full_table, tmp_table)
+                text('INSERT INTO {0} (cell_id, {2}) '
+                     'SELECT cell_id, {2} from {1} '
+                     'ON DUPLICATE KEY UPDATE {2} = VALUES({2})'
+                     .format(full_table, tmp_table, feature_type)
                     ),
                 text('DROP TABLE {}'.format(tmp_table)), 
                 ] 

@@ -37,6 +37,14 @@ def connect_sql(database, user=USER, host=HOST, pwd=PWD):
 def insert_into_worker(engine, table_name, dict_list, ignore=False):
     """
     """
+    # convert float64 to float (update 09/25/2018 Fangming for pymysql)
+    for dict_ in dict_list:
+        for key in dict_.keys():
+            if isinstance(dict_[key], np.float64):
+                dict_[key] = float(dict_[key]) 
+            elif isinstance(dict_[key], np.int64):
+                dict_[key] = int(dict_[key]) 
+
     metadata = sa.MetaData(engine)
     table = sa.Table(table_name, metadata, autoload=True, autoload_with=engine)
     if ignore: 
@@ -55,12 +63,6 @@ def insert_into(engine, table_name, df_sql, ignore=False, verbose=True):
         logging.info(df_sql.head())
     # dict_list
     dict_list = list(df_sql.T.to_dict().values())
-
-    # convert float64 to float (update 09/25/2018 Fangming for pymysql)
-    for dict_ in dict_list:
-        for key in dict_.keys():
-            if isinstance(dict_[key], np.float64):
-                dict_[key] = float(dict_[key]) 
     
     return insert_into_worker(engine, table_name, dict_list, ignore=ignore)
  

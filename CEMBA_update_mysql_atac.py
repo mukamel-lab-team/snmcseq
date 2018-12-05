@@ -15,9 +15,91 @@ from snmcseq_utils import cd
 from snmcseq_utils import sparse_logcpm 
 from snmcseq_utils import sparse_logtpm
 from CEMBA_update_mysql import insert_into
+from CEMBA_update_mysql import insert_into_worker
 from CEMBA_update_mysql import connect_sql 
 from CEMBA_update_mysql import gene_id_to_table_name 
 from CEMBA_update_mysql import upload_to_datasets
+
+
+def upload_atac_worker(dataset, dataset_cemba, database=DATABASE_ATAC, 
+                    ens_id=None, 
+                    ensemble_table=None, 
+                    gc_matrix=None,
+                    table_cells=True, table_datasets=True, 
+                    table_ensembles=True, table_ens=True, 
+                    table_genes=True,
+                    ):
+    """
+    """
+    # assert ensemble_table['cell_name'].tolist() == gc_matrix.cell.tolist()
+
+    engine = connect_sql(database)
+
+    # upload_to_datasets
+    if table_datasets:
+        upload_to_datasets(dataset, database=database, strict=False)
+
+    # upload to cells
+    if table_cells:
+        df_cells = pd.DataFrame()
+        df_cells['cell_name'] = ensemble_table['cell_name'] 
+        df_cells['dataset'] = dataset 
+        # if a cell barcode doesn't exist, it will be uploaded
+        insert_into(engine, 'cells', df_cells, ignore=True, verbose=True) 
+
+    # get cell_ids
+    sql = """SELECT cell_id, cell_name FROM cells WHERE dataset = '{}'""".format(dataset)
+    df_cells = pd.read_sql(sql, engine)
+    # print(df_cells.head())
+
+    # update to ensembles
+    if table_ensembles:
+        table_name = 'ensembles'
+        ens_name = dataset
+        ens_datasets = dataset
+        snmc_ens_id = ens_id
+        dict_list = [{'ensemble_id': ens_id, 
+                      'ensemble_name': ens_name, 
+                      'public_access': False, 
+                      'datasets': ens_datasets, 
+                      'snmc_ensemble_id': snmc_ens_id, 
+                     }]
+        # print(dict_list)
+        insert_into_worker(engine, table_name, dict_list, ignore=False)
+
+    # create and upload to Ens table
+    if table_ens:
+        engine.execute("DROP TABLE IF EXISTS Ens{}".format(ens_id))
+        engine.execute("CREATE TABLE Ens{} LIKE Ens".format(ens_id))
+
+        table_name = 'Ens{}'.format(ens_id)
+        ensemble_table = pd.merge(ensemble_table, df_cells, on='cell_name').drop('cell_name', axis=1)
+        # print(ensemble_table.head())
+        insert_into(engine, table_name, ensemble_table, ignore=False, verbose=True)
+
+    # upload to gene tables
+    if table_genes:
+        for i, gene in enumerate(gc_matrix.gene):
+            gene_table_name = gene_id_to_table_name(gene)
+
+            data_gene = gc_matrix.data.getrow(i).tocoo() # no need to upload 0 values
+
+            if (i%100 == 0):
+                logging.info("Progress on genes: {} {}".format(i+1, gene_table_name))
+            
+            df_gene = pd.DataFrame()
+            df_gene['cell_name'] = [gc_matrix.cell[col] for col in data_gene.col]
+            df_gene['normalized_counts_renlab'] = data_gene.data
+
+            df_gene = pd.merge(df_gene, df_cells, on='cell_name')
+            df_gene = df_gene[['cell_id', 'normalized_counts_renlab']]
+
+            # print(gene, df_gene.head())
+            if not df_gene.empty:
+                insert_into(engine, gene_table_name, df_gene, ignore=True, verbose=False)
+            # break
+
+    return 
 
 
 def upload_dataset_worker(dataset, gc_normalized, gc_smoothed_normalized, database=DATABASE_ATAC):

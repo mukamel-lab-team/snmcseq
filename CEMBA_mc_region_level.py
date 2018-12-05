@@ -15,7 +15,7 @@ import argparse
 import snmcseq_utils
 from snmcseq_utils import create_logger
 
-def mc_region_level_worker(allc_file, output_file, bed_file,
+def mc_region_level_worker(allc_file, output_file, bed_file, bed_file_name_column=False,
     contexts=CONTEXTS, compress=True, cap=2, species=SPECIES):
     """
     allc_file 
@@ -25,8 +25,17 @@ def mc_region_level_worker(allc_file, output_file, bed_file,
 
     chromosomes = snmcseq_utils.get_chromosomes(species)  
 
-    df_gtf = pd.read_table(bed_file, header=None, 
-            names=['chr', 'start', 'end'], usecols=[0, 1, 2], dtype={'chr': object})
+    if bed_file_name_column:
+        columns = ['chr', 'start', 'end', 'name']
+        df_gtf = pd.read_table(bed_file, header=None, 
+                names=columns, usecols=[0, 1, 2, 3], dtype={'chr': object, 'name': object})
+    else:
+        columns = ['chr', 'start', 'end']
+        df_gtf = pd.read_table(bed_file, header=None, 
+                names=columns, usecols=[0, 1, 2], dtype={'chr': object})
+
+
+
     df_gtf.chr = df_gtf.chr.apply(lambda x: x[len('chr'):] if x.startswith('chr') else x)
     df_gtf = df_gtf.loc[df_gtf.chr.isin(chromosomes)]
 
@@ -34,7 +43,6 @@ def mc_region_level_worker(allc_file, output_file, bed_file,
 
 
     outfile = open(output_file, "w")
-    columns = ['chr', 'start', 'end']
     for context in contexts:
         columns += ['m{}'.format(context), context]
 
@@ -42,7 +50,11 @@ def mc_region_level_worker(allc_file, output_file, bed_file,
 
     allc = tabix.open(allc_file)
     for i, row in df_gtf.iterrows():
-        row_out = [str(row.chr), str(row.start), str(row.end)]
+        if bed_file_name_column:
+            row_out = [str(row.chr), str(row.start), str(row.end), str(row['name'])]
+        else:
+            row_out = [str(row.chr), str(row.start), str(row.end)]
+
         records = list(allc.query(row.chr, row.start, row.end))
         for context in contexts:
             mc, c = snmcseq_utils.tabix_summary(records, context=context, cap=cap) # remove sites with total_c > 2
