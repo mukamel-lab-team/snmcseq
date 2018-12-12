@@ -8,8 +8,10 @@ import CEMBA_call_DMR
 
 log = create_logger()
 
-ens = 'Ens51'
-allc_paths = glob.glob(os.path.join(PATH_ENSEMBLES, ens, 'allc_merged', 'allc_multimodal_v1_*.tsv'))
-output_prefix = os.path.join(PATH_ENSEMBLES, ens, 'dmr', 'cgdmr_multimodal_v1')
+ens = 'Ens5'
+PATH_ENSEMBLES = '/cndd/Public_Datasets/human_snmcseq/Ensembles'
+allc_paths = glob.glob(os.path.join(PATH_ENSEMBLES, ens, 'allc_merged', 'allc_human_mouse_v2-181120_*_human.tsv.gz'))
+output_prefix = os.path.join(PATH_ENSEMBLES, ens, 'dmr', 'cgdmr_human_mouse_v2-181120_human')
+file_suffix = '.tsv.gz'
 
-CEMBA_call_DMR.call_DMR_wrapper(allc_paths, output_prefix, nprocs=8)
+CEMBA_call_DMR.call_DMR_wrapper(allc_paths, output_prefix, file_suffix=file_suffix, nprocs=8)

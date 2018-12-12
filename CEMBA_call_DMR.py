@@ -6,10 +6,10 @@ from __init__ import *
 from snmcseq_utils import create_logger
 
 
-def call_DMR_wrapper(allc_paths, output_prefix, nprocs=8):
+def call_DMR_wrapper(allc_paths, output_prefix, file_suffix='.tsv.gz', nprocs=8):
 	"""
 	"""	
-	samples = [os.path.basename(allc_path)[len('allc_'):-len('.tsv')] for allc_path in allc_paths]
+	samples = [os.path.basename(allc_path)[len('allc_'):-len(file_suffix)] for allc_path in allc_paths]
 	# nothing should be there (including space) after each line in cmd
 	cmd = (
 	"""methylpy DMRfind \\
