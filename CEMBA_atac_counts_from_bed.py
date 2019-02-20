@@ -13,15 +13,22 @@ import subprocess
 import shutil
 import gzip
 
-dataset_cemba = 'CEMBA171206_3C'
-brain_slice = dataset_cemba.split('_')[1]
-readends = '/cndd/Public_Datasets/CEMBA/snATACSeq/Datasets/{1}/{0}/readends/{0}.readends.bed.gz'.format(dataset_cemba, brain_slice)
-barcodes = '/cndd/Public_Datasets/CEMBA/snATACSeq/Datasets/{1}/{0}/qc/{0}.qc_barcodes.txt'.format(dataset_cemba, brain_slice)
-bed = '/cndd/Public_Datasets/Cusanovich_Trapnell_Shendure_Nature_2018/uniq_peaks_nochr.bed'
-out = '/cndd/fangming/CEMBA/data/MOp_cicero/{}.cicero_peaks'.format(dataset_cemba)
-countfunc.counts_per_bed(readends,
-            barcodes,
-            bed,
-            out,
-            nproc=1,
-            combine=True)
+datasets_cemba = [
+	# 'CEMBA171206_3C',
+	'CEMBA171207_3C',
+	'CEMBA171212_4B',
+	'CEMBA171213_4B',
+	]
+	
+for dataset_cemba in datasets_cemba:
+	brain_slice = dataset_cemba.split('_')[1]
+	readends = '/cndd/Public_Datasets/CEMBA/snATACSeq/Datasets/{1}/{0}/readends/{0}.readends.bed.gz'.format(dataset_cemba, brain_slice)
+	barcodes = '/cndd/Public_Datasets/CEMBA/snATACSeq/Datasets/{1}/{0}/qc/{0}.qc_barcodes.txt'.format(dataset_cemba, brain_slice)
+	bed = '/cndd/fangming/CEMBA/data/MOp_cicero/uniq_peaks_liftOver_nochr_mm10.bed'
+	out = '/cndd/fangming/CEMBA/data/MOp_cicero/{}.cicero_peaks'.format(dataset_cemba)
+	countfunc.counts_per_bed(readends,
+	            barcodes,
+	            bed,
+	            out,
+	            nproc=1,
+	            combine=True)

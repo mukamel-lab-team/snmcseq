@@ -49,7 +49,7 @@ def run_mc_gene_level(allc_dirs,
 									args=(allc_file, ), 
 									kwds={'contexts': contexts, 
 										'genebody': genebody,
-										'convention': convention,
+										# 'convention': convention,
 										'overwrite': overwrite,
 										}) 
 					for allc_file in allc_files]

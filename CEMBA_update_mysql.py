@@ -144,6 +144,16 @@ def upload_to_cells(dataset, database=DATABASE,
     df_cells['global_mCA'] = df_res.loc[df_cells.cell_name, 'global_mCA'].values
     df_cells = df_cells[CELLS_TABLE_COLS[1:]]
 
+    # add by Fangming 2/20/2019
+    if 'RS2' not in dataset and 'SCI' not in dataset:
+        try: # test if it's in column 12
+            df_cells['NeuN'] = (df_cells['cell_name'].apply(lambda x: int(x.split('_')[-3][1:])!=12)   
+                                                     .replace(False, '-')
+                                                     .replace(True, '+')
+                                )
+        except:
+            raise ValueError("Cell names don't match with the convention (XXX_A12_XXX_XXX)")
+
     # insert into
     insert_into(engine, 'cells', df_cells, ignore=False, verbose='True')
     logging.info("Upload complete.")

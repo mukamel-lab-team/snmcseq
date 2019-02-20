@@ -26,7 +26,7 @@ def run_bin_allc(allc_dirs,
 	chromosomes=None,
 	species=SPECIES,
 	compression='gzip',
-	convention='CEMBA',
+	# convention='CEMBA',
 	overwrite=False,
 	nprocs=1):
 	"""
@@ -57,7 +57,7 @@ def run_bin_allc(allc_dirs,
 										'chromosomes': chromosomes,
 										'species': species,
 										'compression': compression,	
-										'convention': convention,
+										# 'convention': convention,
 										'overwrite': overwrite,
 										}) 
 					for allc_file in allc_files]
@@ -117,6 +117,6 @@ if __name__ == '__main__':
 		chromosomes=args.chromosomes,
 		species=args.species,
 		compression=args.compression,
-		convention='CEMBA',
+		# convention='CEMBA',
 		overwrite=args.overwrite,
 		nprocs=args.nprocs)

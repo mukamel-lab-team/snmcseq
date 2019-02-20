@@ -1,4 +1,4 @@
 #!/bin/bash
 
 
-./CEMBA_mc_gene_level.py -f -i /cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_RS2_Pm4B/allc/allc_180118_CEMBA_mm_P56_P63_RS2_180117_P1_180117_P2_D9_AD010.tsv.bgz
+./CEMBA_mc_gene_level.py -f -i /cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_2A_180122/allc/allc_180705_CEMBA_mm_P56_P63_2A_CEMBA180122_2A_3_CEMBA180122_2A_4_H9_AD010_indexed.tsv.bgz

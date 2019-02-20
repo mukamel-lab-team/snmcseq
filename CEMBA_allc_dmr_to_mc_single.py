@@ -120,7 +120,7 @@ def allc_dmr_to_mc_single_worker(allc_files, dmr_files, output_prefixes, use_dmr
             output_file = "{}_{}.tsv".format(output_prefix, chrom)
             allc_to_mc(allc, output_fname=output_file)
             # find mc sites overlapping with dmrs and append them in mc_single files
-            if use_dmrs:	
+            if use_dmrs:    
                 append_dmr_mc(output_file, dmr_file)
         
     return
@@ -162,7 +162,7 @@ if __name__ == '__main__':
     allc_files = natsorted(glob.glob(os.path.join(
         '/cndd/Public_Datasets/CEMBA/snmCSeq/Ensembles/Ens10/allc_merged/allc_multimodal_v2_*.tsv'))) 
 
-	use_dmrs = True
+    use_dmrs = True
     dmr_files = natsorted(glob.glob(os.path.join(
         '/cndd/Public_Datasets/CEMBA/snmCSeq/Ensembles/Ens10/dmr/cgdmr_multimodal_v2/multimodal_v2_*.bed')))
 

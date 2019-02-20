@@ -107,13 +107,25 @@ def main(dataset, nprocs=1):
 if __name__ == '__main__':
 
 	log = create_logger()
+	
 	datasets = [
-		'CEMBA_4C_180417', 
-		'CEMBA_4C_180419', 
+		'CEMBA_2A_180122',
+		'CEMBA_2A_180123',
+		'CEMBA_2C_180409',
+		'CEMBA_2C_180410',
+		'CEMBA_3B_180312',
+		'CEMBA_3B_180501',
+		'CEMBA_3D_180412',
+		'CEMBA_3D_180416',
+		'CEMBA_5B_180514',
+		'CEMBA_5B_180529',
+		'CEMBA_5D_180605',
+		'CEMBA_5D_180612',
+		'CEMBA_7B_180423',
+		'CEMBA_7B_180424',
 	]
 
 	nprocs = 8 
-
 	# check if dataset exists 
 	for dataset in datasets:
 		if not isdataset(dataset):

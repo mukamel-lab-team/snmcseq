@@ -174,6 +174,32 @@ def diag_matrix(X, rows=np.array([]), cols=np.array([]), threshold=None):
         new_rows, new_cols = new_cols, new_rows
     return new_X, new_rows, new_cols 
 
+def diag_matrix_rows(X, rows=np.array([]), cols=np.array([]),):
+    """Diagonalize a matrix as much as possible by only rearrange rows
+    """
+    di, dj = X.shape
+    
+    new_X = X.copy()
+    new_rows = rows.copy() 
+    new_cols = cols.copy() 
+    
+    # free to move rows
+    row_dict = {}
+    free_row_idx = np.arange(di)
+    linked_rowcol_idx = new_X.argmax(axis=1) # the column with max value for each row
+    
+    for row, key in zip(free_row_idx, linked_rowcol_idx): 
+        if key in row_dict.keys():
+            row_dict[key] = row_dict[key] + [row]
+        else:
+            row_dict[key] = [row]
+            
+    new_row_order = np.hstack([row_dict[key] for key in sorted(row_dict.keys())])
+    # update new_X new_cols
+    new_X = new_X[new_row_order, :].copy()
+    new_rows = new_rows[new_row_order]
+    
+    return new_X, new_rows, new_cols 
 
 def partition_network(binary_clst, row_index=np.array([]), col_index=np.array([]), 
                        row_name='row', col_name='col'):
@@ -790,6 +816,10 @@ def gen_colors(n, l=0.6, s=0.6, colors=None):
 
 def myScatter(ax, df, x, y, l, 
               s=20,
+              sample_frac=None,
+              sample_n=None,
+              legend_size=None,
+              legend_kws=None,
               grey_label='unlabeled',
               shuffle=True,
               random_state=None,
@@ -807,6 +837,14 @@ def myScatter(ax, df, x, y, l,
     # shuffle (and copy) data
     if shuffle:
         df = df.sample(frac=1, random_state=random_state)
+    if sample_n:
+        df = (df.groupby(l).apply(lambda x: x.sample(min(len(x), sample_n), random_state=random_state))
+                            .reset_index(level=0, drop=True)
+            )
+    if sample_frac:
+        df = (df.groupby(l).apply(lambda x: x.sample(frac=sample_frac, random_state=random_state))
+                            .reset_index(level=0, drop=True)
+            )
 
     if not kw_colors:
         # add a color column
@@ -821,7 +859,7 @@ def myScatter(ax, df, x, y, l,
         ax.scatter(row[x], row[y], c=row['c'], label=ind, s=s, **kwargs)
         
     if legend_mode == 0:
-        ax.legend()
+        lgnd = ax.legend()
     elif legend_mode == -1:
         pass
     elif legend_mode == 1:
@@ -829,15 +867,39 @@ def myScatter(ax, df, x, y, l,
         box = ax.get_position()
         ax.set_position([box.x0, box.y0 + box.height * 0.1,
                          box.width, box.height * 0.9])
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.07),
+        lgnd = ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.07),
               ncol=6, fancybox=False, shadow=False) 
-    
+    elif legend_mode == 2:
+        # Shrink current axis's width by 10% on the bottom
+        box = ax.get_position()
+        ax.set_position([box.x0 + box.width*0.1, box.y0,
+                                 box.width*0.8, box.height])
+
+    if legend_kws:
+        lgnd = ax.legend(**legend_kws)
+
+    if legend_mode != -1 and legend_size:
+        for handle in lgnd.legendHandles:
+            handle._sizes = [legend_size] 
+
+    # backgroud (grey)
+    df_grey = df.loc[df['c']=='grey']
+    if not df_grey.empty:
+        ax.scatter(df_grey[x], 
+                   df_grey[y],
+                   c=df_grey['c'], s=s, **kwargs)
     # actual plot
-    ax.scatter(df[x], df[y], c=df['c'], s=s, **kwargs)
+    ax.scatter(df.loc[df['c']!='grey', x], 
+               df.loc[df['c']!='grey', y],
+               c=df.loc[df['c']!='grey', 'c'], s=s, **kwargs)
     
     return
 
 def plot_tsne_labels_ax(df, ax, tx='tsne_x', ty='tsne_y', tc='cluster_ID', 
+                    sample_frac=None,
+                    sample_n=None,
+                    legend_size=None,
+                    legend_kws=None,
                     grey_label='unlabeled',
                     legend_mode=0,
                     s=1,
@@ -858,6 +920,10 @@ def plot_tsne_labels_ax(df, ax, tx='tsne_x', ty='tsne_y', tc='cluster_ID',
 
     myScatter(ax, df, tx, ty, tc,
              s=s,
+             sample_frac=sample_frac,
+             sample_n=sample_n,
+             legend_size=legend_size,
+             legend_kws=legend_kws,
              shuffle=shuffle,
              grey_label=grey_label,
              random_state=random_state, 
@@ -897,7 +963,11 @@ def plot_tsne_labels_ax(df, ax, tx='tsne_x', ty='tsne_y', tc='cluster_ID',
 
 def plot_tsne_labels(df, tx='tsne_x', ty='tsne_y', tc='cluster_ID', 
                     grey_label='unlabeled',
+                    sample_frac=None,
+                    sample_n=None,
+                    legend_size=None,
                     legend_mode=0,
+                    legend_kws=None,
                     s=1,
                     random_state=None,
                     output=None, show=True, close=False, 
@@ -918,6 +988,10 @@ def plot_tsne_labels(df, tx='tsne_x', ty='tsne_y', tc='cluster_ID',
 
     myScatter(ax, df, tx, ty, tc,
              s=s,
+             sample_frac=sample_frac,
+             sample_n=sample_n,
+             legend_size=legend_size,
+             legend_kws=legend_kws,
              grey_label=grey_label,
              random_state=random_state, 
              legend_mode=legend_mode, 
