@@ -142,8 +142,6 @@ def upload_to_cells(dataset, database=DATABASE,
     df_cells['dataset'] = dataset
     df_res = compute_global_mC(dataset)
     df_cells['global_mCA'] = df_res.loc[df_cells.cell_name, 'global_mCA'].values
-    df_cells = df_cells[CELLS_TABLE_COLS[1:]]
-
     # add by Fangming 2/20/2019
     if 'RS2' not in dataset and 'SCI' not in dataset:
         try: # test if it's in column 12
@@ -153,6 +151,10 @@ def upload_to_cells(dataset, database=DATABASE,
                                 )
         except:
             raise ValueError("Cell names don't match with the convention (XXX_A12_XXX_XXX)")
+    else:
+        df_cells['NeuN'] = '+'
+
+    df_cells = df_cells[CELLS_TABLE_COLS[1:]]
 
     # insert into
     insert_into(engine, 'cells', df_cells, ignore=False, verbose='True')

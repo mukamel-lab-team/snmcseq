@@ -10,7 +10,6 @@ import os
 from scipy import sparse
 from matplotlib import cm
 
-
 def diag_matrix_old(X, rows=np.array([]), cols=np.array([])):
     """Diagonalize a matrix as much as possible
     """
@@ -273,20 +272,24 @@ def logtpm(counts, gene_lengths):
     logtpm = np.log10((tpm.divide(cov, axis=1))*1000000 + 1)
     return logtpm
 
-def sparse_logcpm(gc_matrix):
+def sparse_logcpm(gc_matrix, mode='logcpm'):
     """
     """
     lib_size_inv = sparse.diags(np.ravel(1.0/gc_matrix.data.sum(axis=0)))
-    logcpm = (gc_matrix.data).dot(lib_size_inv*1e6).tocoo()
-    logcpm.data = np.log10(logcpm.data + 1)
+    cpm = (gc_matrix.data).dot(lib_size_inv*1e6).tocoo()
 
-    gc_logcpm = GC_matrix(
+    if mode == 'logcpm':
+        cpm.data = np.log10(cpm.data + 1)
+    elif mode == 'cpm':
+        pass
+
+    gc_cpm = GC_matrix(
         gc_matrix.gene, 
         gc_matrix.cell, 
-        logcpm,
+        cpm,
     )
     
-    return gc_logcpm
+    return gc_cpm
 
 def sparse_logtpm(gc_matrix, gene_lengths):
     """
@@ -387,7 +390,7 @@ def slicecode_to_region(slicecode,
     """Given a slice code, return a brain region (ABA acronym)
     3C -> MOp
     """
-    assert len(slicecode) < 3
+    assert len(slicecode) < 4
     slicecode = slicecode.upper()
     df = pd.read_table(reference_table, index_col=slicecode_col)
     try:

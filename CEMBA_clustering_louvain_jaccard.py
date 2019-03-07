@@ -5,7 +5,6 @@ louvain clustering from kNN graph
 2 model parameters: # of PCs and # of nearest neighbors
 
 """
-
 from __init__ import *
 
 from collections import OrderedDict
@@ -21,6 +20,7 @@ from snmcseq_utils import create_logger
 from snmcseq_utils import plot_tsne_labels
 
 
+    
 def compute_jaccard_weights_v2(X, k):
     """compute jaccard index on a knn graph
     Arguments: 
@@ -101,7 +101,7 @@ def louvain_clustering(adj_mtx, index, option='DIRECTED', sample_column_suffix=N
     else:
         df_res = pd.DataFrame(index=index)
     df_res['cluster_ID'] = labels 
-    df_res = df_res.rename_axis('sample', inplace=True)
+    df_res = df_res.rename_axis('sample', inplace=False) # 2/27/2019 Fangming fix inplace
     return df_res
 
 def louvain_jaccard(df, n_pc=50, k=30, sub_ncells=None, output_file=None, sample_column_suffix='_mcc', whiten=False):

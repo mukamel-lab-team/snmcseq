@@ -425,6 +425,7 @@ def main_setup(dataset, ens, ens_description, ens_name=None, ens_datasets=None, 
     # tSNE use from nmcc files
     logging.info("Running tSNE...")
     CEMBA_run_tsne.run_tsne_CEMBA(ens, perps=PERPLEXITIES, n_pc=N_PC, n_dim=N_DIM)
+
     # louvain clustering
     logging.info("Running clustering...")
     # added 18-04-04
@@ -434,6 +435,7 @@ def main_setup(dataset, ens, ens_description, ens_name=None, ens_datasets=None, 
             ks.append(k)
     # added 18-04-04
     CEMBA_clustering_louvain_jaccard.run_louvain_CEMBA(ens, ks=ks, n_pc=N_PC)
+
     # annotation
     logging.info("Running cluster annotation...")
     CEMBA_autoannotate.run_autoannotate_CEMBA(ens)
@@ -444,11 +446,14 @@ def main_setup(dataset, ens, ens_description, ens_name=None, ens_datasets=None, 
 
     # added 18-07-10
     # need ensemble level mysql set up
-    logging.info("Running cluster marker genes...")
-    CEMBA_marker_genes.find_marker_genes_CEMBA(ens, 
-        context='CH', clsts='auto', p_putative=0.10)
-    # upload mysql 
-    CEMBA_marker_genes_mysql.upload_marker_genes(ens, context='CH', database=DATABASE)
+    if len(cells) > 1000: # added 2/27/2019
+        logging.info("Running cluster marker genes...")
+        CEMBA_marker_genes.find_marker_genes_CEMBA(ens, 
+            context='CH', clsts='auto', p_putative=0.10)
+        # upload mysql 
+        CEMBA_marker_genes_mysql.upload_marker_genes(ens, context='CH', database=DATABASE)
+    else:
+        logging.info("Skipping marker gene calling because # of cells <= 1000")
 
     tft = time.time()
     log.info("Ensemble initiation complete: {}".format(ens)) 
@@ -622,11 +627,14 @@ def main_setup_nonsingleton(ens, ens_name, ens_description, ens_datasets=None, e
 
     # added 18-07-10
     # need ensemble level mysql set up
-    logging.info("Running cluster marker genes...")
-    CEMBA_marker_genes.find_marker_genes_CEMBA(ens, 
-        context='CH', clsts='auto', p_putative=0.10)
-    # upload mysql 
-    CEMBA_marker_genes_mysql.upload_marker_genes(ens, context='CH', database=DATABASE)
+    if len(cells) > 1000: # added 2/27/2019
+        logging.info("Running cluster marker genes...")
+        CEMBA_marker_genes.find_marker_genes_CEMBA(ens, 
+            context='CH', clsts='auto', p_putative=0.10)
+        # upload mysql 
+        CEMBA_marker_genes_mysql.upload_marker_genes(ens, context='CH', database=DATABASE)
+    else:
+        logging.info("Skipping marker gene calling because # of cells <= 1000")
 
     tft = time.time()
     log.info("Ensemble initiation complete: {}".format(ens)) 

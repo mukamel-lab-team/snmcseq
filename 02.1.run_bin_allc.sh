@@ -26,6 +26,7 @@ input="/cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_RS2_Pf10A/allc \
 	/cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_RS2_Pm9B/allc \
 	/cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_RS2_Pm9D/allc
 "
+input="/cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_RS2_Pm9D/allc"
 
-./CEMBA_run_bin_allc_files.py -f -i $input -n 2 
+./CEMBA_run_bin_allc_files.py -i $input -n 2 
 

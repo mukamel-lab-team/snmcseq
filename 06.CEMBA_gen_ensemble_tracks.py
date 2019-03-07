@@ -174,6 +174,7 @@ if __name__ == '__main__':
             # transfer data to brainome (need ssh-keygen from banjo to brainome)
             brainome_html_dir = 'f7xie@brainome:/var/www/html/annoj_private/CEMBA'
             brainome_php_dir = 'f7xie@brainome:/var/www/html/annoj_private/CEMBA/browser/fetchers/mc_cemba' # update 2/22/2019
+            brainome_php_dir2 = 'f7xie@brainome:/var/www/html/annoj_private/CEMBA/browser/fetchers/mc_single' # update 2/22/2019
             # output_html -> brainome_html
             cmd = 'rsync -vh --ignore-existing {} {}'.format(output_html, brainome_html_dir)
             print(cmd)
@@ -183,6 +184,9 @@ if __name__ == '__main__':
             php_files = glob.glob(os.path.join(output_php_dir, 'php_mc_single', '*'))
             for _file in php_files:
                 cmd = 'rsync -vh --ignore-existing {} {}'.format(_file, brainome_php_dir)
+                print(cmd)
+                sp.run(cmd, shell=True)
+                cmd = 'rsync -vh --ignore-existing {} {}'.format(_file, brainome_php_dir2)
                 print(cmd)
                 sp.run(cmd, shell=True)
 
