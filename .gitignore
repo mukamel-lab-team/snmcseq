@@ -15,3 +15,4 @@ logs/
 *.log*
 *.ipynb
 test*
+old_ipynb/

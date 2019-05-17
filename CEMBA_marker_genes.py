@@ -125,7 +125,14 @@ def find_marker_genes(cells_nmcc, clusters_nmcc, df_cells, df_genes,
     markers_all = pd.DataFrame() 
     
     # zscore by cluster, quantile by genes
-    data_pct = clusters_nmcc.apply(lambda x: zscore(x, ddof=1), axis=1).rank(pct=True, axis=0)
+    # data_pct = clusters_nmcc.apply(lambda x: zscore(x, ddof=1), axis=1).rank(pct=True, axis=0)
+    # depends on pandas version, bug fix: 
+    z_scored = pd.DataFrame(zscore(clusters_nmcc.values,axis=1,ddof=1),
+                            index=clusters_nmcc.index.values,
+                            columns=clusters_nmcc.columns.values)
+    data_pct = z_scored.rank(pct=True,axis=0)
+    del z_scored
+    
 
     for col in clusters_nmcc.columns:
         # print(col, end=',')

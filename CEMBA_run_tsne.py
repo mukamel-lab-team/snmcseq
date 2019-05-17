@@ -47,6 +47,41 @@ def run_tsne(df, perp=30, n_pc=50, n_tsne=2,
     
     return df_tsne
 
+def run_umap_lite(X, cell_list, n_neighbors=15, min_dist=0.1, n_dim=2, 
+             random_state=1, output_file=None, **kwargs):
+    """run umap on X (n_obs, n_features) 
+    """
+    from sklearn.decomposition import PCA
+    from umap import UMAP
+    # from sklearn.manifold import TSNE 
+
+    ti = time.time()
+
+    logging.info("Running UMAP: {} n_neighbors, {} min_dist , {} dim.\nInput shape: {}"
+                        .format(n_neighbors, min_dist, n_dim, X.shape))
+    
+    umap = UMAP(n_components=n_dim, random_state=random_state, 
+                n_neighbors=n_neighbors, min_dist=min_dist, **kwargs)
+    ts = umap.fit_transform(X)
+ 
+    if n_dim == 2: 
+        df_tsne = pd.DataFrame(ts, columns=['tsne_x','tsne_y'])
+    elif n_dim == 3:
+        df_tsne = pd.DataFrame(ts, columns=['tsne_x','tsne_y', 'tsne_z'])
+
+    df_tsne['sample'] = cell_list 
+    df_tsne = df_tsne.set_index('sample')
+    
+    if output_file:
+        df_tsne.to_csv(output_file, sep="\t", na_rep='NA', header=True, index=True)
+        logging.info("Saved tsne coordinates to file. {}".format(output_file))
+
+    tf = time.time()
+    logging.info("Done with tSNE. running time: {} seconds.".format(tf - ti))
+    
+    return df_tsne
+
+
 def run_umap(df, n_neighbors=15, min_dist=0.1, n_pc=50, n_dim=2, 
              random_state=1, output_file=None, sample_column_suffix=None, **kwargs):
     """run tsne on "_mcc$" columns

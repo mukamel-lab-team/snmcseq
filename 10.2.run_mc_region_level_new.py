@@ -10,27 +10,33 @@ def run_mc_region_level(allc_files, output_files,
 
 from __init__ import *
 from CEMBA_run_mc_region_level import run_mc_region_level 
+from natsort import natsorted
 
-# allc_files = glob.glob('/cndd/Public_Datasets/CEMBA/snmCSeq/Ensembles/Ens100/allc_merged/allc_multimodal_v2_*.tsv.gz')[:2]
-# bed_file = '/cndd/Public_Datasets/CEMBA/snmCSeq/Ensembles/Ens100/dmr/cgdmr_multimodal_v2_rms_results_collapsed.tsv.DMR_3dms.bed'
-# contexts = ['CG'] # 'CH CG'
+# datasets = ['CEMBA_3C_171206', 
+# 			'CEMBA_3C_171207',
+# 			'CEMBA_4B_171212',
+# 			'CEMBA_4B_171213',
+# 			'CEMBA_4B_180104',
+# 			]
+# allc_files = np.hstack([natsorted(glob.glob(
+# 						'/cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/{}/allc/allc_*.tsv.bgz'.format(dataset)
+# 						))
+# 						for dataset in datasets])
 
-# clsts = [allc.split('/')[-1][len('allc_multimodal_v2_clst'):-len('.tsv.gz')] 
-# 						for allc in allc_files]
-# output_files = ['/cndd/Public_Datasets/CEMBA/snmCSeq/Ensembles/Ens100/dmr/cgcounts_cgdmr_multimodal_v2_clst{}.tsv'.format(clst) 
-# 				for clst in clsts]
-
-allc_files = glob.glob('/cndd/Public_Datasets/CEMBA/snmCSeq/Ensembles/Ens100/allc_merged/allc_multimodal_v2_*.tsv.gz')[:2]
-bed_file = '/cndd/junhao/genomes/mm10/gencode.vM10.gene.annotation.bed'
+allc_files = natsorted(glob.glob(
+	'/cndd/fangming/CEMBA/data/MOp_all/enhancers_may1/allc/allc_multimodal_v2_clst*.tsv.gz'
+	))
+bed_file = '/cndd/fangming/CEMBA/data/MOp_all/enhancers_may1/enhancers/allclusters_intersect_peaks_dmrs.bed.sort1'
 contexts = ['CG'] # 'CH CG'
-output_files = ['test_1.tsv', 'test_2.tsv']
+output_files = [('/cndd/fangming/CEMBA/data/MOp_all/enhancers_may1/enhancers/counts/'
+				+'mcg_'
+				+allc.split('/')[-1][len('allc_'):-len('.tsv.gz')]+'.tsv') 
+				for allc in allc_files]
 
 cap = 0 # no counts cap
-nprocs = 1
+nprocs = 4
 compress = True
-bed_file_name_column = True 
-
-print(allc_files, output_files, bed_file, contexts)
+bed_file_name_column = False
 
 run_mc_region_level(allc_files, output_files, 
 	bed_file, 

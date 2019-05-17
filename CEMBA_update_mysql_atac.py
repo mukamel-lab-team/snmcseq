@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Future Fangming: code to upload smoothed counts is un-tested.
+Upload dataset level seems complete
+Upload ensemble level seems incomplete, need to get code to do and upload it
 """
 
 from __init__ import *
@@ -20,7 +22,7 @@ from CEMBA_update_mysql import connect_sql
 from CEMBA_update_mysql import gene_id_to_table_name 
 from CEMBA_update_mysql import upload_to_datasets
 
-
+# seems old and deprecated
 def upload_atac_worker(dataset, dataset_cemba, database=DATABASE_ATAC, 
                     ens_id=None, 
                     ensemble_table=None, 
@@ -101,6 +103,15 @@ def upload_atac_worker(dataset, dataset_cemba, database=DATABASE_ATAC,
 
     return 
 
+def save_gc_matrix(gxc, f_mat, f_gene, f_cell):
+    """
+    """
+    sparse.save_npz(f_mat, gxc.data)
+    with open(f_gene, 'w') as f:
+        f.write('\n'.join(gxc.gene)+'\n')
+    with open(f_cell, 'w') as f:
+        f.write('\n'.join(gxc.cell)+'\n')
+
 
 def upload_dataset_worker(dataset, gc_normalized, gc_smoothed_normalized, database=DATABASE_ATAC):
     """Given gene-by-cell count matrices (smoothed and not smoothed), upload it to CEMBA_ATAC
@@ -142,7 +153,6 @@ def upload_dataset_worker(dataset, gc_normalized, gc_smoothed_normalized, databa
         df_gene_smoothed['smoothed_normalized_counts'] = data_gene_smoothed.data
 
         df_gene = pd.merge(df_gene, df_gene_smoothed, on='cell_name', how='outer')
-
         df_gene = pd.merge(df_gene, df_cells, on='cell_name')
         df_gene = df_gene[['cell_id', 'normalized_counts', 'smoothed_normalized_counts']]
 
@@ -184,7 +194,7 @@ def read_sparse_atac_matrix(fdata, frow, fcol, dataset='', add_dataset_as_suffix
 
 def upload_dataset_atac_format(
     dataset, fdata, frow, fcol, fn_smooth_prefix=None, database=DATABASE_ATAC):
-    """
+    """Generate and save smoothed counts -> upload a ATAC dataset (dataset, counts, smoothed counts) to mysql
     Example:
         dataset = 'CEMBA_1B_180118'
         fdir = '/cndd/Public_Datasets/CEMBA/snATACSeq/Datasets/1B/CEMBA180118_1B_rep1/counts/genebody/'
@@ -196,10 +206,10 @@ def upload_dataset_atac_format(
     """
     # read in raw
     logging.info("Reading files ({})".format(fdata))
-    gc_matrix_raw = read_sparse_atac_matrix(fdata, frow, fcol, dataset, add_dataset_as_suffix=True)
+    gc_raw = read_sparse_atac_matrix(fdata, frow, fcol, dataset, add_dataset_as_suffix=True)
 
     # smooth and save
-    logging.info("Smooth ATAC counts and save it to {}...".format(fn_prefix))
+    logging.info("Smooth ATAC counts and save it to {}...".format(fn_smooth_prefix))
     df_genes = pd.read_table(PATH_GENEBODY_ANNOTATION, index_col='gene_id')
     gene_lengths = (df_genes['end'] - df_genes['start']).loc[gc_raw.gene]
     gc_logtpm = snmcseq_utils.sparse_logtpm(gc_raw, gene_lengths)
@@ -217,8 +227,11 @@ def upload_dataset_atac_format(
                 )
 
     if not fn_smooth_prefix:
-        fn_prefix = '/cndd/Public_Datasets/CEMBA/snATACSeq/Datasets/{0}/{1}/counts_smoothed/genebody/{1}.genebody_smoothed'.format(region, dataset_id)
-    save_gc_matrix(gc_counts_smoothed, fn_smooth_prefix)
+        fn_smooth_prefix = '/cndd/Public_Datasets/CEMBA/snATACSeq/Datasets/{0}/{1}/counts_smoothed/genebody/{1}.genebody_smoothed'.format(region, dataset_id)
+    dirname = os.path.dirname(fn_smooth_prefix)
+    if not os.path.isdir(dirname):
+        os.makedirs(dirname)
+    save_gc_matrix(gc_counts_smoothed, fn_smooth_prefix+'.npz', fn_smooth_prefix+'.row.index', fn_smooth_prefix+'.col.index')
 
     # normalize smoothed 
     gene_lengths = (df_genes['end'] - df_genes['start']).loc[gc_counts_smoothed.gene]
@@ -244,8 +257,8 @@ if __name__ == '__main__':
         # ('4D','CEMBA_4D_171219', 'CEMBA171219_4D_rep2'),
         # ('3F','CEMBA_3F_180105', 'CEMBA180105_3F_rep1'),
         # ('3F','CEMBA_3F_180109', 'CEMBA180109_3F_rep2'),
-        ('4E','CEMBA_4E_180110', 'CEMBA180110_4E_rep1'),
-        ('4E','CEMBA_4E_180111', 'CEMBA180111_4E_rep2'),
+        # ('4E','CEMBA_4E_180110', 'CEMBA180110_4E_rep1'),
+        # ('4E','CEMBA_4E_180111', 'CEMBA180111_4E_rep2'),
         # ('1B','CEMBA_1B_180118', 'CEMBA180118_1B_rep1'),
         # ('1B','CEMBA_1B_180119', 'CEMBA180119_1B_rep2'),
         # ('3A','CEMBA_3A_180129', 'CEMBA180129_3A_rep1'),
@@ -255,13 +268,15 @@ if __name__ == '__main__':
         # ('1C','CEMBA_1C_180208', 'CEMBA180208_1C_rep1'),
         # ('1C','CEMBA_1C_180212', 'CEMBA180212_1C_rep2'),
         # ('1B','CEMBA_1B_180213', 'CEMBA180213_1B_rep3'),
+        ('2B','CEMBA_2B_180306', 'CEMBA180306_2B'),
+        ('3B','CEMBA_3B_180308', 'CEMBA180308_3B'),
     ]
 
     for region, dataset, dataset_id in datasets_info:
         fdir = '/cndd/Public_Datasets/CEMBA/snATACSeq/Datasets/{}/{}/counts/genebody/'.format(region, dataset_id)
-        fdata = fdir + '{}.genebody.count_matrix.npz'.format(dataset_id)
-        frow = fdir + '{}.genebody.count_matrix.row.index'.format(dataset_id) # gene
-        fcol = fdir + '{}.genebody.count_matrix.col.index'.format(dataset_id) # col
+        fdata = fdir + '{}.genebody.npz'.format(dataset_id)
+        frow = fdir + '{}.genebody.row.index'.format(dataset_id) # gene
+        fcol = fdir + '{}.genebody.col.index'.format(dataset_id) # col
 
         upload_dataset_atac_format(dataset, fdata, frow, fcol, database=DATABASE_ATAC)
 

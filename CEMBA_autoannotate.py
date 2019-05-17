@@ -145,6 +145,58 @@ def auto_annotate_worker(cluster_f, input_f,
     tf = time.time()
     logging.info('Done annotating {}, total time spent: {} second'.format(cluster_f, tf-ti))
 
+# Fangming added 3/12/2019
+def auto_annotate_lite(df_bin, df_clst,  
+    output_f,  
+    reject_threshold=0.9,
+    input_fgt=REFERENCE_BINS,
+    ):
+    """
+    Args:
+    - df_bin: binxcell dataframe, indexed by bin tuple ('1', 100000)
+    - df_clst: cell cluster assignment dataframe, indexed by cell and with column "cluster_ID"
+    
+    """
+    ti = time.time()
+    logging.info('Auto annotate')
+
+    # cluster mc_c
+    df_mcc = pd.DataFrame(index=df_bin.index) 
+    for label, df_sub in df_clst.groupby('cluster_ID'):
+        samples = df_sub.index.values
+        df_mcc[label+'_mcc'] = df_bin[samples+'_mcc'].mean(axis=1)
+
+
+    # compare with ground truth
+    df = pd.read_table(input_fgt, dtype={'chr': str, 'bin': int})
+    df['index'] = list(zip(df['chr'], df['bin']))
+    df = df.reset_index().drop(['chr', 'bin'], axis=1).set_index('index')
+    df = df.loc[df_bin.index]
+    
+    # corr
+    corr = np.corrcoef(df.rank(axis=0).T, df_mcc.rank(axis=0).T)
+    print(corr.shape)
+    corr = corr[:len(df.columns), len(df.columns):] 
+    print(corr.shape)
+    df_corr = pd.DataFrame(corr, index=[item[:-len('_mcc')] for item in df.columns.values], 
+                                columns=[item[:-len('_mcc')] for item in df_mcc.columns.values])
+    
+    celltype_res = []
+    for col, idx in df_corr.idxmax().iteritems():
+        if df_corr.loc[idx, col] > reject_threshold:
+            celltype_res.append({'cluster_ID': col,
+                                 'cluster_annotation': idx})
+        else:
+            
+            celltype_res.append({'cluster_ID': col,
+                                 'cluster_annotation': 'NA ({})'.format(idx)})
+    celltype_res = pd.DataFrame(celltype_res)
+    celltype_res.to_csv(output_f, sep='\t', header=True, index=False, na_rep='NA')
+    logging.info('Saved autotation file to {}'.format(output_f))
+    logging.info('Done annotating, total time spent: {} second'.format(time.time()-ti))
+    
+    return celltype_res
+
 # a hack removable, 07/05/2018 Fangming
 def auto_annotate_worker_v2(df_cluster, df_input, 
     output_f, output_heatmap, 

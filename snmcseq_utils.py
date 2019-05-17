@@ -478,7 +478,7 @@ def get_chrom_lengths_mouse(
     """
     """
     srs_gsize = pd.read_table(genome_size_fname, header=None, index_col=0, squeeze=True)
-    srs_gsize = srs_gsize.loc[get_human_chromosomes(include_chr=True)]
+    srs_gsize = srs_gsize.loc[get_mouse_chromosomes(include_chr=True)]
     # remove leading 'chr'
     srs_gsize.index = [idx[len('chr'):] for idx in srs_gsize.index]
     return srs_gsize
@@ -838,8 +838,6 @@ def myScatter(ax, df, x, y, l,
     import seaborn as sns
     df = df.copy()
     # shuffle (and copy) data
-    if shuffle:
-        df = df.sample(frac=1, random_state=random_state)
     if sample_n:
         df = (df.groupby(l).apply(lambda x: x.sample(min(len(x), sample_n), random_state=random_state))
                             .reset_index(level=0, drop=True)
@@ -848,6 +846,8 @@ def myScatter(ax, df, x, y, l,
         df = (df.groupby(l).apply(lambda x: x.sample(frac=sample_frac, random_state=random_state))
                             .reset_index(level=0, drop=True)
             )
+    if shuffle:
+        df = df.sample(frac=1, random_state=random_state)
 
     if not kw_colors:
         # add a color column
@@ -1134,6 +1134,7 @@ def get_cluster_mc_c(ens, context, genome_regions='bin',
 def plot_tsne_values_ax(df, ax, tx='tsne_x', ty='tsne_y', tc='mCH',
                     low_p=5, hi_p=95,
                     s=2,
+                    cbar=True,
                     cbar_label=None,
                     t_xlim='auto', t_ylim='auto', title=None, **kwargs):
     """
@@ -1152,9 +1153,10 @@ def plot_tsne_values_ax(df, ax, tx='tsne_x', ty='tsne_y', tc='mCH',
     else:
         ax.set_title(tc)
     ax.set_aspect('auto')
-    clb = plt.colorbar(im, ax=ax, shrink=0.4)
-    if cbar_label:
-        clb.set_label(cbar_label, rotation=270, labelpad=10)
+    if cbar:
+        clb = plt.colorbar(im, ax=ax, shrink=0.4)
+        if cbar_label:
+            clb.set_label(cbar_label, rotation=270, labelpad=10)
 
     if t_xlim == 'auto':
         t_xlim = [np.nanpercentile(df[tx].values, 0.1), np.nanpercentile(df[tx].values, 99.9)]
@@ -1212,6 +1214,52 @@ def get_mcc(df, base_call_cutoff=100, sufficient_coverage_fraction=1, suffix=Tru
     # add suffix
     if suffix:
         df_mcc.columns = df_mcc.columns.values + '_mcc'
+    
+    return df_mcc
+
+def get_mcc_lite(mc_table, c_table, base_call_cutoff=100, sufficient_coverage_fraction=1, fillna=True):
+    """Given 2 numpy array, return mcc table
+    Gene/region by sample matrix
+    """
+    df_c = pd.DataFrame(c_table)
+    df_mc = pd.DataFrame(mc_table)
+    assert df_c.shape == df_mc.shape
+    
+    # a gene is sufficiently covered in % of cells 
+    condition = (df_c > base_call_cutoff).sum(axis=1) >= sufficient_coverage_fraction*(df_c.shape[1])
+
+    logging.info("Matrix size before pruning... "+ str(df_c.shape))
+    logging.info("Matrix size after pruning... "+ str(df_c.loc[condition].shape))
+    
+    # get mcc matrix with kept bins and nan values for low coverage sites
+    df_c_nan = df_c.copy()
+    df_c_nan[df_c < base_call_cutoff] = np.nan
+    df_mcc = df_mc.loc[condition]/df_c_nan.loc[condition]
+    logging.info(df_mcc.shape)
+
+    # imputation (missing value -> mean value of all cells)
+    if fillna:
+        logging.info('Imputing data... (No effect if sufficient_coverage_fraction=1)')
+        means = df_mcc.mean(axis=1)
+        fill_value = pd.DataFrame({col: means for col in df_mcc.columns})
+        df_mcc.fillna(fill_value, inplace=True)
+    
+    # return matrix and index (regions)
+    return df_mcc.values, df_mcc.index.values
+
+def get_mcc_lite_v2(df_c, df_mc, base_call_cutoff):
+    """
+    """
+    # get mcc matrix with kept bins and nan values for low coverage sites
+    df_c_nan = df_c.copy()
+    df_c_nan[df_c < base_call_cutoff] = np.nan
+    df_mcc = df_mc/df_c_nan
+    logging.info(df_mcc.shape)
+
+    # imputation (missing value -> mean value of all cells)
+    means = df_mcc.mean(axis=1)
+    fill_value = pd.DataFrame({col: means for col in df_mcc.columns})
+    df_mcc.fillna(fill_value, inplace=True)
     
     return df_mcc
 
@@ -1273,3 +1321,138 @@ def pull_genebody_mc_c(ens, context, database=DATABASE):
 
     logging.info("Output shape: {}".format(df_input.shape))
     return df_input
+
+
+def rank_array(array):
+    """Return ranking of each element of an array
+    """
+    array = np.array(array)
+    temp = array.argsort()
+    ranks = np.empty_like(temp)
+    ranks[temp] = np.arange(len(array))
+    return ranks
+
+# added 4/5/2019
+def rank_rows(matrix):
+    """Return rankings of each rwo in a 2d array
+    """
+    matrix = np.array(matrix)
+    return np.apply_along_axis(rank_array, 1, matrix) # row = 1
+
+def spearman_corrcoef(X, Y):
+    """return spearman correlation matrix for each pair of rows of X and Y
+    """
+    return np.corrcoef(rank_rows(X), rank_rows(Y))
+
+def get_index_from_array(arr, inqs, na_rep=-1):
+    """Get index of array
+    """
+    arr = np.array(arr)
+    arr = pd.Series(arr).reset_index().set_index(0)
+    idxs = arr.loc[inqs, 'index'].fillna(na_rep).astype(int).values
+    return idxs
+
+def get_genomic_distance(sa, ea, sb, eb):
+    """Get genomic distance
+    """
+    assert sa < ea and sb < eb
+    if sa > sb:
+        sa, sb = sb, sa
+        ea, eb = eb, ea
+        
+    # sa <= sb
+    distance = max(0, sb - ea)
+    
+    return distance
+
+def get_reverse_comp(string):
+    """Get reverse compliment of a string
+    """
+    comp_dict = {
+        'A': 'T',
+        'T': 'A',
+        'G': 'C',
+        'C': 'G',
+        'N': 'N',
+    }
+    for char in set(string):
+        if char not in ['A', 'C', 'G', 'T', 'N']:
+            raise ValueError('Not allowed char in string')
+            
+    new_string = ''.join([comp_dict[char] for char in string[::-1]])
+    return new_string
+    
+# added 4/11/2019
+def save_gxc_matrix(gxc, f_mat, f_gene, f_cell):
+    """
+    """
+    sparse.save_npz(f_mat, gxc.data)
+    with open(f_gene, 'w') as f:
+        f.write('\n'.join(gxc.gene)+'\n')
+    with open(f_cell, 'w') as f:
+        f.write('\n'.join(gxc.cell)+'\n')
+        
+def save_gxc_matrix_methylation(gxc, f_mat_c, f_mat_mc, f_gene, f_cell):
+    """
+    """
+    sparse.save_npz(f_mat_c, gxc.data['c'])
+    sparse.save_npz(f_mat_mc, gxc.data['mc'])
+    with open(f_gene, 'w') as f:
+        f.write('\n'.join(gxc.gene)+'\n')
+    with open(f_cell, 'w') as f:
+        f.write('\n'.join(gxc.cell)+'\n') 
+
+
+# annoj_URL
+def gen_annoj_url(assembly, position, bases, prefix=ANNOJ_URL_PREFIX, file=ANNOJ_URL_FILE):
+    """Generate URL for AnnoJ browser view
+    """
+
+    url = prefix.strip('/') + '/' + file + '?' + '&'.join(['assembly='+str(assembly), 
+                                                            'position='+str(position), 
+                                                            'bases='+str(bases)])
+    return url
+
+
+def nondup_legends(ax='', **kwargs):
+    """Assuming plt (matplotlib.pyplot) is imported
+    """
+    from collections import OrderedDict
+
+    if ax == '':
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = OrderedDict(zip(labels, handles))
+        plt.legend(by_label.values(), by_label.keys(), **kwargs)
+    else:
+        handles, labels = ax.get_legend_handles_labels()
+        by_label = OrderedDict(zip(labels, handles))
+        ax.legend(by_label.values(), by_label.keys(), **kwargs)
+    return 
+
+def dedup_array_elements(x, empty_string=''):
+    """Replacing repeats with empty_string
+    """
+    newx = np.empty_like(x)
+    newx[0] = x[0]
+    for i in range(1, len(x)):
+        if x[i-1] == x[i]:
+            newx[i] = empty_string
+        else:
+            newx[i] = x[i]
+    return newx
+
+def vcorrcoef(X,Y):
+    """Compute correlation coef for each rows of X and Y
+    """
+    Xm = np.mean(X,axis=1).reshape(-1,1)
+    Ym = np.mean(Y,axis=1).reshape(-1,1)
+    Xm = X-Xm
+    Ym = Y-Ym
+    
+    r_num = np.sum(Xm*Ym,axis=1)
+    r_den = np.sqrt(np.sum(Xm**2,axis=1)*np.sum(Ym**2, axis=1))
+    r = r_num/r_den
+    return r
+
+def zscore(x, offset=1e-7):
+    return (x - np.mean(x))/(np.std(x) + offset)

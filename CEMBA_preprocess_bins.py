@@ -281,6 +281,28 @@ def preproc_bins(ens, df_meta=None, df=None, bin_size=BIN_SIZE_FEATURE, context=
 
 	return df_mcc
 
+def normalize_and_concat_feature_sets(dfs, output_nmcc=None):
+	"""A lite version of preproc_bins_combine_contexts
+	dfs are list of dataframes: feature-by-cell
+	"""
+
+	# get an overall standard deviation
+	stds = [df.stack().std() for df in dfs]
+	logging.info("Standard deviation before normalization: {}".format(stds))
+
+	# normalize by over all standard deviation
+	dfs_n = [df/std for df, std in zip(dfs, stds)]
+
+	# concatenate
+	df_cat = pd.concat(dfs_n)
+	logging.info("Input shapes: {}_{}\nOutput shape: {}".format(dfs[0].shape, dfs[1].shape, df_cat.shape))
+
+	# output
+	if output_nmcc:
+		df_cat.to_csv(output_nmcc, sep='\t', na_rep='NA', header=True, index=True)
+		logging.info("Saved combined feature matrix to {}".format(output_nmcc))
+
+	return df_cat
 
 def preproc_bins_combine_contexts(ens, dfs=None, bin_size=BIN_SIZE_FEATURE, contexts=['CH', 'CG'], to_file=False):
 	"""Concatenate and normalize (by standard deviation) different marks of bins

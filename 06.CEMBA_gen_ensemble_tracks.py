@@ -61,14 +61,10 @@ if __name__ == '__main__':
     log = create_logger()
 
     enss = [
-            'Ens117',
-            'Ens118',
-            'Ens119',
-            'Ens120',
-            'Ens121',
-            'Ens122',
-            'Ens123',
+            'Ens149',
+            'Ens148',
      ]  # example
+
 
       #   'Ens38', #3F
       #   'Ens43', #1B
@@ -84,7 +80,7 @@ if __name__ == '__main__':
       #   'Ens73', #4C
       #   'Ens74', #ACB
 
-    nprocs = 4
+    nprocs = 2
     # choose a clustering type
     cluster_type = 'cluster_mCHmCG_lv_npc50_k30'
     MERGE_ALLC = True
