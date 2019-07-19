@@ -430,7 +430,7 @@ def clustering_routine_multiple_resolutions(X, cell_list, k,
         
     else:
         raise ValueError('Choose from "plain" and "jaccard"')
-    res = pd.concat(df_res, axis=1)
+    res = pd.concat(res, axis=1)
     
     return res
 
