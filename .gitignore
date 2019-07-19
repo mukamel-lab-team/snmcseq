@@ -12,7 +12,9 @@ browsers/
 __pycache__/
 old*/
 logs/
-*.log*
 *.ipynb
 test*
 old_ipynb/
+log*
+*log
+config*

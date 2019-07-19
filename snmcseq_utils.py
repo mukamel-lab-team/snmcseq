@@ -272,10 +272,14 @@ def logtpm(counts, gene_lengths):
     logtpm = np.log10((tpm.divide(cov, axis=1))*1000000 + 1)
     return logtpm
 
-def sparse_logcpm(gc_matrix, mode='logcpm'):
+def sparse_logcpm(gc_matrix, mode='logcpm', lib_size=[]):
     """
     """
-    lib_size_inv = sparse.diags(np.ravel(1.0/gc_matrix.data.sum(axis=0)))
+    lib_size = np.array(lib_size)
+    if np.size(lib_size) == 0:
+        lib_size = gc_matrix.data.sum(axis=0)
+
+    lib_size_inv = sparse.diags(np.ravel(1.0/(1e-7+lib_size)))
     cpm = (gc_matrix.data).dot(lib_size_inv*1e6).tocoo()
 
     if mode == 'logcpm':
@@ -675,7 +679,9 @@ def plot_tsne_values(df, tx='tsne_x', ty='tsne_y', tc='mCH',
         ax.set_title(tc)
     ax.set_xlabel(tx)
     ax.set_ylabel(ty)
-    ax.set_aspect('auto')
+    # ax.set_aspect('auto')
+
+
     clb = plt.colorbar(im, ax=ax)
     if cbar_label:
         clb.set_label(cbar_label, rotation=270, labelpad=10)
@@ -735,7 +741,7 @@ def tsne_and_boxplot(df, tx='tsne_x', ty='tsne_y', tc='mCH', bx='cluster_ID', by
         ax.set_title(tc)
     ax.set_xlabel('tsne_x')
     ax.set_ylabel('tsne_y')
-    ax.set_aspect('auto')
+    # ax.set_aspect('auto')
     clb = plt.colorbar(im, ax=ax)
     clb.set_label(tc, rotation=270, labelpad=10)
 
@@ -834,6 +840,7 @@ def myScatter(ax, df, x, y, l,
 
     - kw_colors is a dictinary {label: color}
     """
+
     import matplotlib.pyplot as plt
     import seaborn as sns
     df = df.copy()
@@ -858,13 +865,14 @@ def myScatter(ax, df, x, y, l,
         df['c'] = [kw_colors[i] if i!=grey_label else 'grey' for i in df[l]]
     
     # take care of legend
-    for ind, row in df.groupby(l).first().iterrows():
-        ax.scatter(row[x], row[y], c=row['c'], label=ind, s=s, **kwargs)
+    if legend_mode != -1:
+        for ind, row in df.groupby(l).first().iterrows():
+            ax.scatter(row[x], row[y], c=row['c'], label=ind, s=s, **kwargs)
         
-    if legend_mode == 0:
-        lgnd = ax.legend()
-    elif legend_mode == -1:
+    if legend_mode == -1:
         pass
+    elif legend_mode == 0:
+        lgnd = ax.legend()
     elif legend_mode == 1:
         # Shrink current axis's height by 10% on the bottom
         box = ax.get_position()
@@ -892,9 +900,10 @@ def myScatter(ax, df, x, y, l,
                    df_grey[y],
                    c=df_grey['c'], s=s, **kwargs)
     # actual plot
-    ax.scatter(df.loc[df['c']!='grey', x], 
-               df.loc[df['c']!='grey', y],
-               c=df.loc[df['c']!='grey', 'c'], s=s, **kwargs)
+    df_tmp = df.loc[df['c']!='grey']
+    ax.scatter(df_tmp[x], 
+               df_tmp[y],
+               c=df_tmp['c'], s=s, **kwargs)
     
     return
 
@@ -939,7 +948,7 @@ def plot_tsne_labels_ax(df, ax, tx='tsne_x', ty='tsne_y', tc='cluster_ID',
         ax.set_title(tc)
     ax.set_xlabel(tx)
     ax.set_ylabel(ty)
-    ax.set_aspect('auto')
+    # ax.set_aspect('auto')
 
     if t_xlim == 'auto':
         t_xlim = [np.nanpercentile(df[tx].values, 0.1), np.nanpercentile(df[tx].values, 99.9)]
@@ -1006,7 +1015,7 @@ def plot_tsne_labels(df, tx='tsne_x', ty='tsne_y', tc='cluster_ID',
         ax.set_title(tc)
     ax.set_xlabel(tx)
     ax.set_ylabel(ty)
-    ax.set_aspect('auto')
+    # ax.set_aspect('auto')
 
     if t_xlim == 'auto':
         t_xlim = [np.nanpercentile(df[tx].values, 0.1), np.nanpercentile(df[tx].values, 99.9)]
@@ -1135,6 +1144,7 @@ def plot_tsne_values_ax(df, ax, tx='tsne_x', ty='tsne_y', tc='mCH',
                     low_p=5, hi_p=95,
                     s=2,
                     cbar=True,
+                    cbar_ax=None,
                     cbar_label=None,
                     t_xlim='auto', t_ylim='auto', title=None, **kwargs):
     """
@@ -1152,9 +1162,12 @@ def plot_tsne_values_ax(df, ax, tx='tsne_x', ty='tsne_y', tc='mCH',
         ax.set_title(title)
     else:
         ax.set_title(tc)
-    ax.set_aspect('auto')
+    # ax.set_aspect('auto')
     if cbar:
-        clb = plt.colorbar(im, ax=ax, shrink=0.4)
+        if cbar_ax:
+            clb = plt.colorbar(im, cax=cbar_ax, shrink=0.4)
+        else:
+            clb = plt.colorbar(im, cax=ax, shrink=0.4)
         if cbar_label:
             clb.set_label(cbar_label, rotation=270, labelpad=10)
 
@@ -1349,7 +1362,7 @@ def get_index_from_array(arr, inqs, na_rep=-1):
     """
     arr = np.array(arr)
     arr = pd.Series(arr).reset_index().set_index(0)
-    idxs = arr.loc[inqs, 'index'].fillna(na_rep).astype(int).values
+    idxs = arr.reindex(inqs)['index'].fillna(na_rep).astype(int).values
     return idxs
 
 def get_genomic_distance(sa, ea, sb, eb):
@@ -1386,6 +1399,7 @@ def get_reverse_comp(string):
 def save_gxc_matrix(gxc, f_mat, f_gene, f_cell):
     """
     """
+    print("Deprecated: 6/29/2019 Use save_gc_matrix instead")
     sparse.save_npz(f_mat, gxc.data)
     with open(f_gene, 'w') as f:
         f.write('\n'.join(gxc.gene)+'\n')
@@ -1395,12 +1409,48 @@ def save_gxc_matrix(gxc, f_mat, f_gene, f_cell):
 def save_gxc_matrix_methylation(gxc, f_mat_c, f_mat_mc, f_gene, f_cell):
     """
     """
+    print("Deprecated: 6/29/2019 Use save_gc_matrix_methylation instead")
     sparse.save_npz(f_mat_c, gxc.data['c'])
     sparse.save_npz(f_mat_mc, gxc.data['mc'])
     with open(f_gene, 'w') as f:
         f.write('\n'.join(gxc.gene)+'\n')
     with open(f_cell, 'w') as f:
         f.write('\n'.join(gxc.cell)+'\n') 
+
+def save_gc_matrix(gc_matrix, f_gene, f_cell, f_mat):
+    """
+    """
+    sparse.save_npz(f_mat, gc_matrix.data)
+    with open(f_gene, 'w') as f:
+        f.write('\n'.join(gc_matrix.gene)+'\n')
+    with open(f_cell, 'w') as f:
+        f.write('\n'.join(gc_matrix.cell)+'\n')
+
+def save_gc_matrix_methylation(gc_matrix, f_gene, f_cell, f_mat_mc, f_mat_c):
+    """
+    """
+    sparse.save_npz(f_mat_mc, gc_matrix.data['mc'])
+    sparse.save_npz(f_mat_c, gc_matrix.data['c'])
+    with open(f_gene, 'w') as f:
+        f.write('\n'.join(gc_matrix.gene)+'\n')
+    with open(f_cell, 'w') as f:
+        f.write('\n'.join(gc_matrix.cell)+'\n') 
+
+def import_single_textcol(fname, header=None):
+    return pd.read_csv(fname, header=header, sep='\t')[0].values
+
+def export_single_textcol(fname, array):
+    with open(fname, 'w') as f:
+        f.write('\n'.join(array)+'\n')
+
+def load_gc_matrix(f_gene, f_cell, f_mat):
+    """
+    """
+    gene = import_single_textcol(f_gene)
+    cell = import_single_textcol(f_cell)
+    mat = sparse.load_npz(f_mat) 
+    assert (len(gene), len(cell)) == mat.shape
+    return GC_matrix(gene, cell, mat) 
 
 
 # annoj_URL
@@ -1418,6 +1468,7 @@ def nondup_legends(ax='', **kwargs):
     """Assuming plt (matplotlib.pyplot) is imported
     """
     from collections import OrderedDict
+    import matplotlib.pyplot as plt
 
     if ax == '':
         handles, labels = plt.gca().get_legend_handles_labels()
@@ -1444,6 +1495,7 @@ def dedup_array_elements(x, empty_string=''):
 def vcorrcoef(X,Y):
     """Compute correlation coef for each rows of X and Y
     """
+    assert X.shape == Y.shape
     Xm = np.mean(X,axis=1).reshape(-1,1)
     Ym = np.mean(Y,axis=1).reshape(-1,1)
     Xm = X-Xm
@@ -1456,3 +1508,36 @@ def vcorrcoef(X,Y):
 
 def zscore(x, offset=1e-7):
     return (x - np.mean(x))/(np.std(x) + offset)
+
+
+def clst_umap_pipe_lite(pcs, cells_all, 
+                        resolution=1,
+                        npc=50,
+                        k=30,
+                        verbose=False, seed=0, cluster_only=False, 
+                       ):
+    # clustering
+    import CEMBA_clst_utils
+    import CEMBA_run_tsne
+
+    df_clst = CEMBA_clst_utils.clustering_routine(
+                                    pcs, 
+                                    cells_all, k, 
+                                    verbose=verbose,
+                                    resolution=resolution,
+                                    seed=seed,
+                                    metric='euclidean', option='plain', n_trees=10, search_k=-1)
+
+    # umap
+    if not cluster_only:
+        df_tsne = CEMBA_run_tsne.run_umap_lite(
+                    pcs, 
+                    cells_all, 
+                    verbose=verbose,
+                    n_neighbors=30, min_dist=0.5, n_dim=2, 
+                    random_state=1)
+
+        df_summary = df_clst.join(df_tsne)
+        return df_summary
+    else:
+        return df_clst

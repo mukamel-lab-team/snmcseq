@@ -7,28 +7,16 @@ def run_mc_region_level(allc_files, output_files,
 	cap=2,
 	nprocs=1):
 """
-
 from __init__ import *
 from CEMBA_run_mc_region_level import run_mc_region_level 
 from natsort import natsorted
-
-# datasets = ['CEMBA_3C_171206', 
-# 			'CEMBA_3C_171207',
-# 			'CEMBA_4B_171212',
-# 			'CEMBA_4B_171213',
-# 			'CEMBA_4B_180104',
-# 			]
-# allc_files = np.hstack([natsorted(glob.glob(
-# 						'/cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/{}/allc/allc_*.tsv.bgz'.format(dataset)
-# 						))
-# 						for dataset in datasets])
 
 allc_files = natsorted(glob.glob(
 	'/cndd/fangming/CEMBA/data/MOp_all/enhancers_may1/allc/allc_multimodal_v2_clst*.tsv.gz'
 	))
 bed_file = '/cndd/fangming/CEMBA/data/MOp_all/enhancers_may1/enhancers/allclusters_intersect_peaks_dmrs.bed.sort1'
 contexts = ['CG'] # 'CH CG'
-output_files = [('/cndd/fangming/CEMBA/data/MOp_all/enhancers_may1/enhancers/counts/'
+output_files = [('/cndd/fangming/CEMBA/data/MOp_all/enhancers_may1/enhancers_june19/counts/'
 				+'mcg_'
 				+allc.split('/')[-1][len('allc_'):-len('.tsv.gz')]+'.tsv') 
 				for allc in allc_files]

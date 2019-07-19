@@ -27,64 +27,16 @@
 # 						 --ensemble_datasets $ens_datasets
 
 
-ens_id=117
-ens_name='CEMBA_2A'
-message="2A"
-ens_datasets="CEMBA_2A_180122 \
-CEMBA_2A_180123
-"
-			
-./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
-						 --ensemble_datasets $ens_datasets
-
-
-ens_id=118
-ens_name='CEMBA_2C'
-message="2C"
+ens_id=151
+ens_name='CEMBA_MOp_all'
+message="2C 3C 4B 5D"
 ens_datasets="CEMBA_2C_180409 \
-CEMBA_2C_180410
-"
-			
-./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
-						 --ensemble_datasets $ens_datasets
-
-
-ens_id=119
-ens_name='CEMBA_3B'
-message="3B"
-ens_datasets="CEMBA_3B_180312 \
-CEMBA_3B_180501
-"
-			
-./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
-						 --ensemble_datasets $ens_datasets
-
-
-ens_id=120
-ens_name='CEMBA_3D'
-message="3D"
-ens_datasets="CEMBA_3D_180412 \
-CEMBA_3D_180416
-"
-			
-./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
-						 --ensemble_datasets $ens_datasets
-
-ens_id=121
-ens_name='CEMBA_5B'
-message="5B"
-ens_datasets="CEMBA_5B_180514 \
-CEMBA_5B_180529
-"
-			
-./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
-						 --ensemble_datasets $ens_datasets
-
-
-ens_id=122
-ens_name='CEMBA_5D'
-message="5D"
-ens_datasets="CEMBA_5D_180605 \
+CEMBA_2C_180410 \
+CEMBA_3C_171206 \
+CEMBA_3C_171207 \
+CEMBA_4B_171212 \
+CEMBA_4B_171213 \
+CEMBA_5D_180605 \
 CEMBA_5D_180612
 "
 			
@@ -92,14 +44,68 @@ CEMBA_5D_180612
 						 --ensemble_datasets $ens_datasets
 
 
-ens_id=123
-ens_name='CEMBA_7B'
-message="7B"
-ens_datasets="CEMBA_7B_180423 \
-CEMBA_7B_180424
-"
-			
-./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
+# ens_id=118
+# ens_name='CEMBA_2C'
+# message="2C"
+# ens_datasets="CEMBA_2C_180409 \
+# CEMBA_2C_180410
+# "
+# 			
+# ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
+# 						 --ensemble_datasets $ens_datasets
+# 
+# 
+# ens_id=119
+# ens_name='CEMBA_3B'
+# message="3B"
+# ens_datasets="CEMBA_3B_180312 \
+# CEMBA_3B_180501
+# "
+# 			
+# ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
+# 						 --ensemble_datasets $ens_datasets
+# 
+# 
+# ens_id=120
+# ens_name='CEMBA_3D'
+# message="3D"
+# ens_datasets="CEMBA_3D_180412 \
+# CEMBA_3D_180416
+# "
+# 			
+# ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
+# 						 --ensemble_datasets $ens_datasets
+# 
+# ens_id=121
+# ens_name='CEMBA_5B'
+# message="5B"
+# ens_datasets="CEMBA_5B_180514 \
+# CEMBA_5B_180529
+# "
+# 			
+# ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
+# 						 --ensemble_datasets $ens_datasets
+# 
+# 
+# ens_id=122
+# ens_name='CEMBA_5D'
+# message="5D"
+# ens_datasets="CEMBA_5D_180605 \
+# CEMBA_5D_180612
+# "
+# 			
+# ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
+# 						 --ensemble_datasets $ens_datasets
+# 
+# 
+# ens_id=123
+# ens_name='CEMBA_7B'
+# message="7B"
+# ens_datasets="CEMBA_7B_180423 \
+# CEMBA_7B_180424
+# "
+# 			
+# ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
 						 --ensemble_datasets $ens_datasets
 
 
