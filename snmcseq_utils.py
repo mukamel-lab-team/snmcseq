@@ -1541,3 +1541,6 @@ def clst_umap_pipe_lite(pcs, cells_all,
         return df_summary
     else:
         return df_clst
+
+def gen_cdf(array, ax, **kwargs):
+    ax.plot(np.sort(array), np.arange(len(array))/len(array), **kwargs)

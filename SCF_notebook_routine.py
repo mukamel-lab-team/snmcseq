@@ -9,6 +9,7 @@ import fbpca
 import sys
 import seaborn as sns 
 import matplotlib.pyplot as plt
+import scipy.cluster.hierarchy as sch
 
 import snmcseq_utils
 import CEMBA_run_tsne
@@ -96,6 +97,7 @@ pcX_all, cells_all = SCF_utils.core_scf_routine(mods_selected, features_selected
                                                 cross_mod_distance_measure, knn, relaxation, n_cca,
                                                 npc,
                                                 output_pcX_all, output_cells_all,
+                                                output_imputed_data_format,
                                                 )
 logging.info('Done integration into a common PC space')
 
@@ -306,8 +308,6 @@ hist_enrich.head()
 
 
 # In[18]:
-
-
 mod_colors = collections.OrderedDict({mod: settings[mod].color for mod in mods_selected})
 with sns.plotting_context('talk'), sns.axes_style('white', {"patch.edgecolor": "black", 'patch.force_edgecolor': False,}):
     # histograms
@@ -445,5 +445,88 @@ with sns.plotting_context('talk'), sns.axes_style('white', {'patch.edgecolor': '
     plt.subplots_adjust(hspace=0.05, wspace=0.05)
     fig.savefig(output_figures.format(5, 'pdf'), bbox_inches='tight')
     plt.show()
+
+
+mods_included = mods_selected
+mod_reference = features_selected[0]
+
+joint_annot = df_info.groupby(['cluster_joint_r1']).agg({'annot': lambda x: x.value_counts().index.values[0]})
+cells_all = np.load(output_cells_all)
+imputed_data = np.load(output_imputed_data_format.format(mod_reference))
+
+cluster_centroids = collections.OrderedDict()
+for (clst, mod), df_sub in df_info.groupby(['cluster_joint_r1', 'modality']):
+    if mod in mods_included:
+        cells_sub = df_sub.index.values
+        cells_sub_idx = snmcseq_utils.get_index_from_array(cells_all, cells_sub)
+        if mod not in cluster_centroids.keys():
+            cluster_centroids[mod] = {}
+        cluster_centroids[mod][clst] = np.ravel(imputed_data[cells_sub_idx,:].mean(axis=0))
+
+cluster_centroids_df = collections.OrderedDict()
+for mod in mods_selected:
+    if mod in mods_included:
+        cluster_centroids_df[mod] = pd.DataFrame(cluster_centroids[mod])
+
+uniq_clusters = df_info['cluster_joint_r1'].unique()
+corr_grand_clusters = np.hstack([[mod+'_'+str(clst)
+                                for clst in cluster_centroids_df[mod].columns.values]
+                                for mod in mods_included])
+
+corr_grand = {}
+for i, mod_x in enumerate(mods_included):
+    for j, mod_y in enumerate(mods_included):
+        if j >= i:
+            gene_x = cluster_centroids_df[mod_x].index.values
+            gene_y = cluster_centroids_df[mod_y].index.values
+            gene_common = np.intersect1d(gene_x, gene_y)
+            _x = (cluster_centroids_df[mod_x].loc[gene_common]).rank(axis=0).T.values
+            _y = (cluster_centroids_df[mod_y].loc[gene_common]).rank(axis=0).T.values
+            corr = np.corrcoef(_x, _y)[:len(_x), len(_x):]
+#             corr = euclidean_distances(_x, _y) #[:len(_x), len(_x):]
+            corr_grand[(i, j)] = corr
+            if j != i:
+                corr_grand[(j, i)] = corr.T
+                
+corr_grand = np.hstack([np.vstack([
+                    corr_grand[(i, j)] for i in range(len(mods_included))
+                    ])
+                for j in range(len(mods_included))
+                ])
+
+corr_grand_label = np.hstack([[str(clst) + "_" + str(joint_annot.loc[clst, 'annot'])
+                               for clst in cluster_centroids_df[mod].columns.values] 
+                            for mod in mods_included
+                            ])
+corr_grand_clsts = np.hstack([cluster_centroids_df[mod].columns.values
+                            for mod in mods_included
+                            ])
+corr_grand_mods = np.hstack([
+                            [mod]*len(cluster_centroids_df[mod].columns.values) for mod in mods_included
+                            ])
+
+clsts = np.sort(df_info['cluster_joint_r1'].unique())
+clst_colors = snmcseq_utils.gen_colors(len(clsts)) 
+clst_colors = {clst: color for clst, color in zip(clsts, clst_colors)}
+
+corr_grand_mod_colors = np.array([settings[mod].color for mod in corr_grand_mods])
+corr_grand_clst_colors = np.array([clst_colors[clst] for clst in corr_grand_clsts])
+
+mat = corr_grand
+Z = sch.linkage(mat, method='average')
+dn = sch.dendrogram(Z, no_plot=True)
+
+g = sns.clustermap(mat[dn['leaves'],:][:,dn['leaves']], 
+                   row_cluster=False, col_cluster=False,
+                   row_colors=[corr_grand_mod_colors[dn['leaves']], 
+                               corr_grand_clst_colors[dn['leaves']], 
+                              ], 
+                   yticklabels=snmcseq_utils.dedup_array_elements(corr_grand_label[dn['leaves']]),
+                   xticklabels=[],
+#                    figsize=(8, 12),
+                  )
+g.ax_heatmap.set_yticklabels(g.ax_heatmap.get_ymajorticklabels(), fontsize=8)
+g.savefig(output_figures.format('8_cluster_heatmap', 'pdf'), bbox_inches='tight')
+plt.show()
 
 logging.info('Done making figures')

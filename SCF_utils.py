@@ -319,6 +319,7 @@ def core_scf_routine(mods_selected, features_selected, settings,
                     cross_mod_distance_measure, knn, relaxation, n_cca,
                     npc,
                     output_pcX_all, output_cells_all,
+                    output_imputed_data_format,
                     ):
     """smooth within modality, impute across modalities, and construct a joint PC matrix
     """
@@ -381,6 +382,8 @@ def core_scf_routine(mods_selected, features_selected, settings,
                     raise ValueError("Choose from correlation and cca")
                 X.append(imputed_xy)
         X = np.vstack(X) # cell (all mods) by gene (mod_y) 
+        # save X (imputed counts)
+        np.save(output_imputed_data_format.format(mod_y), X)
         # PCA
         U, s, V = fbpca.pca(X, npc)
         del X

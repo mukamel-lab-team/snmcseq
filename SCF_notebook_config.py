@@ -8,6 +8,8 @@ import os
 name = 'MOp_neurons_v3_190701-test'
 outdir = '/cndd/fangming/CEMBA/data/MOp_all/results'
 output_pcX_all = outdir + '/pcX_all_{}.npy'.format(name)
+output_imputed_data_format = outdir + '/imputed_data_{}_{{}}.npy'.format(name)
+output_cells_all = outdir + '/cells_all_{}.npy'.format(name)
 output_cells_all = outdir + '/cells_all_{}.npy'.format(name)
 output_clst_and_umap = outdir + '/intg_summary_{}.tsv'.format(name)
 output_figures = outdir + '/figures/{}_{{}}.{{}}'.format(name)

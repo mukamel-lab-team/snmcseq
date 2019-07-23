@@ -183,7 +183,6 @@ def gen_knn_annoy_train_test(X_train, X_test, k,
                                 verbose=verbose, 
                                 )
 
-
 def gen_knn(pcX, k, form='adj', metric='euclidean', verbose=True): 
     """Generate kNN matrix from a pcX (n_obs, n_feature) matrix
     """

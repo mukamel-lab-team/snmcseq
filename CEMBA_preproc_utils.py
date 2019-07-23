@@ -79,6 +79,8 @@ def filter_genes(gxc_raw, sufficient_cell_coverage=0.01):
 def preproc_rna_cpm_based(gxc_raw, sufficient_cell_coverage=0.01, 
                           hv_percentile=30, hv_ncut=20):
     # select genes expressed in > 1% of cells
+    # raw genes
+    # _gxc_tmp, gxc_ftr, hvgs
     print("Removing low coverage genes...")
     lib_size = np.ravel(gxc_raw.data.sum(axis=0))
     _gxc_tmp = filter_genes(gxc_raw, sufficient_cell_coverage=sufficient_cell_coverage)
@@ -102,12 +104,15 @@ def preproc_rna_cpm_based(gxc_raw, sufficient_cell_coverage=0.01,
     print("Number of genes: {}".format(len(hvgs)))
     return gxc_hvftr
 
-def preproc_rna_tpm_based(gxc_raw, gene_lengths, impute_length=True, 
+def preproc_rna_tpm_based(gxc_raw, gene_lengths,                           
                           impute_gene_lengths=True, 
                           sufficient_cell_coverage=0.01, 
                           hv_percentile=30, hv_ncut=20):
     """Gene lengths is a gene length pandas series indexed by gene names
     """
+    # gxc_raw, gxc_logtpm
+    # _gxc_tmp, gxc_ftr, hvgs
+
     assert np.all(gxc_raw.gene == gene_lengths.index.values) 
     if impute_gene_lengths:
         print("Imputing gene lengths...")
@@ -137,12 +142,75 @@ def preproc_rna_tpm_based(gxc_raw, gene_lengths, impute_length=True,
     # Trim logTPM matrix
     print("Trim logTPM matrix...")
     gxc_hvftr = GC_matrix(
-                          gxc_logtpm.gene[hvgs],
+                          gxc_logtpm.gene[hvgs_idx],
                           gxc_logtpm.cell,
-                          gxc_logtpm.data.tocsr()[hvgs, :],
+                          gxc_logtpm.data.tocsr()[hvgs_idx, :],
                           )
-    print("Number of genes: {}".format(len(hvgs)))
+    print("Number of genes: {}".format(len(hvgs_idx)))
     return gxc_hvftr
 
 def preproc_methylation():
     pass
+
+
+def preproc_rna_tpm_based_kruskal(metadata, cluster_col, gxc_raw, gene_lengths, 
+                                  impute_gene_lengths=True, 
+                                  sufficient_cell_coverage=0.01, 
+                                  hv_percentile=30):
+    """Gene lengths is a gene length pandas series indexed by gene names
+    """
+    from scipy.stats import kruskal
+    
+    assert np.all(gxc_raw.gene == gene_lengths.index.values) 
+    if impute_gene_lengths:
+        print("Imputing gene lengths...")
+        gene_lengths = gene_lengths.fillna(gene_lengths.mean())
+    lib_size = np.ravel(gxc_raw.data.sum(axis=0))
+
+    # select genes expressed in > 1% of cells
+    print("Removing low coverage genes...")
+    _gxc_tmp = filter_genes(gxc_raw, sufficient_cell_coverage=sufficient_cell_coverage)
+    
+    # CPM matrix
+    print("Getting CPM..")
+    gxc_ftr = snmcseq_utils.sparse_logcpm(_gxc_tmp, mode='cpm', lib_size=lib_size)
+    del _gxc_tmp
+
+    datasets = []
+    for clst, df_sub in metadata.groupby(cluster_col):
+        cell_idx = snmcseq_utils.get_index_from_array(gxc_raw.cell, df_sub.index.values)
+        datasets.append(gxc_raw.data.tocsc()[:,cell_idx].tocsr())
+
+    print("Getting highly variable genes...")
+    # select genes with KW test
+    ps = []
+    for i, gene in enumerate(gxc_ftr.gene): 
+        if i%1000==0:
+            print(i)
+        gene_data = [np.ravel(np.array(dataset[i,:].todense())) for dataset in datasets]
+        try:
+            s, p = kruskal(*gene_data)
+        except:
+            p = 1
+        ps.append(p)
+    
+    p_th = np.percentile(ps, hv_percentile)
+    print(p_th)
+    hvgs = np.arange(len(ps))[ps<p_th]
+    hvgs_genes = gxc_ftr.gene[hvgs]   
+    del gxc_ftr
+
+    # TPM matrix from gxc_raw
+    print("Getting logTPM...")
+    gxc_logtpm = snmcseq_utils.sparse_logtpm(gxc_raw, gene_lengths)
+    hvgs_idx = snmcseq_utils.get_index_from_array(gxc_logtpm.gene, hvgs_genes)
+
+    # Trim logTPM matrix
+    print("Trim logTPM matrix...")
+    gxc_hvftr = GC_matrix(
+                          gxc_logtpm.gene[hvgs_idx],
+                          gxc_logtpm.cell,
+                          gxc_logtpm.data.tocsr()[hvgs_idx, :],
+                          )
+    print("Number of genes: {}".format(len(hvgs_idx)))
+    return gxc_hvftr
