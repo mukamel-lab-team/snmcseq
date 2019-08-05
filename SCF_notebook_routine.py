@@ -364,7 +364,7 @@ heatmap_kws = {
     'yticklabels': False,
     'vmin': 0, 
     'vmax': 1,
-    'cmap': 'viridis',
+    'cmap': 'Reds',
 }
 
 cbar_kws = {

@@ -82,7 +82,6 @@ def diag_matrix(X, rows=np.array([]), cols=np.array([]), threshold=None):
     new_X = X.copy()
     new_rows = rows.copy() 
     new_cols = cols.copy() 
-    
     if new_rows.size == 0:
         new_rows = np.arange(di)
     if new_cols.size == 0:
@@ -90,6 +89,7 @@ def diag_matrix(X, rows=np.array([]), cols=np.array([]), threshold=None):
         
     # bring the greatest values in the lower right matrix to diagnal position 
     for idx in range(min(di, dj)):
+
         T = new_X[idx: , idx: ]
         i, j = np.unravel_index(T.argmax(), T.shape) # get the coords of the max element of T
         
@@ -121,6 +121,7 @@ def diag_matrix(X, rows=np.array([]), cols=np.array([]), threshold=None):
     if dm == dj:
         pass
     elif dm < dj: # free columns
+
         col_dict = {}
         sorted_col_idx = np.arange(dm)
         free_col_idx = np.arange(dm, dj)
@@ -143,31 +144,6 @@ def diag_matrix(X, rows=np.array([]), cols=np.array([]), threshold=None):
     else:
         raise ValueError("Unexpected situation: dm > dj")
     
-    # 
-    if dm == di:
-        pass
-    elif dm < di: # free columns
-        row_dict = {}
-        sorted_row_idx = np.arange(dm)
-        free_row_idx = np.arange(dm, di)
-        linked_rowcol_idx = new_X[dm:, :].argmax(axis=1)
-        
-        for row in sorted_row_idx:
-            row_dict[row] = [row]
-        for row, key in zip(free_row_idx, linked_rowcol_idx): 
-            if key < dm:
-                row_dict[key] = row_dict[key] + [row]
-            else:
-                row_dict[key] = [row]
-                
-        new_row_order = np.hstack([row_dict[key] for key in sorted(row_dict.keys())])
-        # update new_X new_cols
-        new_X = new_X[new_row_order, :].copy()
-        new_rows = new_rows[new_row_order]
-    else:
-        raise ValueError("Unexpected situation: dm > di")
-        
-    # end
     if transposed:
         new_X = new_X.T
         new_rows, new_cols = new_cols, new_rows
@@ -1452,6 +1428,16 @@ def load_gc_matrix(f_gene, f_cell, f_mat):
     assert (len(gene), len(cell)) == mat.shape
     return GC_matrix(gene, cell, mat) 
 
+def load_gc_matrix_methylation(f_gene, f_cell, f_mat_mc, f_mat_c):
+    """
+    """
+    _gene = import_single_textcol(f_gene) 
+    _cell = import_single_textcol(f_cell)
+    _mat_mc = sparse.load_npz(f_mat_mc) 
+    _mat_c = sparse.load_npz(f_mat_c) 
+    gxc_raw = GC_matrix(_gene, _cell, 
+                              {'c': _mat_c, 'mc': _mat_mc})
+    return gxc_raw
 
 # annoj_URL
 def gen_annoj_url(assembly, position, bases, prefix=ANNOJ_URL_PREFIX, file=ANNOJ_URL_FILE):
@@ -1543,4 +1529,9 @@ def clst_umap_pipe_lite(pcs, cells_all,
         return df_clst
 
 def gen_cdf(array, ax, **kwargs):
+    """
+    """
+    x = np.sort(array)
+    y = np.arange(len(array))/len(array)
     ax.plot(np.sort(array), np.arange(len(array))/len(array), **kwargs)
+    return x, y 

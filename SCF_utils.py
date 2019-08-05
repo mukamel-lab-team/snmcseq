@@ -336,7 +336,9 @@ def core_scf_routine(mods_selected, features_selected, settings,
                               index=gxc_hvftrs[mod].gene, 
                               columns=gxc_hvftrs[mod].cell, 
                               ) 
-        mat_smoothed, mat_knn = smooth_in_modality(_df, _df, k=30, ka=5, npc=50, 
+        npc = min(len(metas[mod]), 50)
+        k_smooth = min(len(metas[mod]), 30)
+        mat_smoothed, mat_knn = smooth_in_modality(_df, _df, k=k_smooth, ka=5, npc=npc, 
                                                      p=ps[settings[mod].mod_category], 
                                                      drop_npc=drop_npcs[settings[mod].mod_category])
         smoothed_features[mod] = mat_smoothed

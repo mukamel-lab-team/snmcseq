@@ -2,7 +2,7 @@ from __init__ import *
 from __init__jupyterlab import *
 import snmcseq_utils
 
-def select_hvg(gbc_cpm, percentile=30, n_qcut=20, ylim=[]):
+def select_hvg(gbc_cpm, percentile=30, n_qcut=20, ylim=[], close_fig=True):
     # further select highly variable genes
     # variance/mean
     from sklearn.utils.sparsefuncs import mean_variance_axis
@@ -29,11 +29,14 @@ def select_hvg(gbc_cpm, percentile=30, n_qcut=20, ylim=[]):
     
     if ylim:
         ax.set_ylim(ylim)
-    plt.show()
+    if close_fig:
+        plt.close()
+    else:
+        plt.show()
     
     return hvgs
 
-def select_hvg_methylation(df_nmcc, percentile=30, n_qcut=20):
+def select_hvg_methylation(df_nmcc, percentile=30, n_qcut=20, close_fig=True):
     # further select highly variable genes
     # standard deviation 
     
@@ -60,7 +63,10 @@ def select_hvg_methylation(df_nmcc, percentile=30, n_qcut=20):
 
     hvgs = np.hstack(hvgs)
 
-    plt.show()
+    if close_fig:
+        plt.close()
+    else:
+        plt.show()
     return hvgs
 
 def filter_genes(gxc_raw, sufficient_cell_coverage=0.01):
@@ -94,6 +100,53 @@ def preproc_rna_cpm_based(gxc_raw, sufficient_cell_coverage=0.01,
     print("Getting highly variable genes and logCPM...")
     hvgs = select_hvg(gxc_ftr, percentile=hv_percentile, n_qcut=hv_ncut)
     
+    gxc_hvftr = GC_matrix(
+                          gxc_ftr.gene[hvgs],
+                          gxc_ftr.cell,
+                          gxc_ftr.data.tocsr()[hvgs, :],
+                          )
+    del gxc_ftr
+    gxc_hvftr.data.data = np.log10(1+gxc_hvftr.data.data) # very important 
+    print("Number of genes: {}".format(len(hvgs)))
+    return gxc_hvftr
+
+def preproc_rna_cpm_based_kruskal(metadata, cluster_col, gxc_raw, sufficient_cell_coverage=0.01, 
+                          hv_percentile=30):
+    # select genes expressed in > 1% of cells
+    # raw genes
+    # _gxc_tmp, gxc_ftr, hvgs
+    from scipy.stats import kruskal
+
+    print("Removing low coverage genes...")
+    lib_size = np.ravel(gxc_raw.data.sum(axis=0))
+    _gxc_tmp = filter_genes(gxc_raw, sufficient_cell_coverage=sufficient_cell_coverage)
+    
+    # CPM matrix
+    print("Getting CPM..")
+    gxc_ftr = snmcseq_utils.sparse_logcpm(_gxc_tmp, mode='logcpm', lib_size=lib_size) # logcpm for kw
+    del _gxc_tmp
+
+    # select highy variable genes
+    print("Getting highly variable genes and logCPM...")
+    # select genes with KW test
+    datasets = []
+    for clst, df_sub in metadata.groupby(cluster_col):
+        cell_idx = snmcseq_utils.get_index_from_array(gxc_ftr.cell, df_sub.index.values)
+        datasets.append(gxc_ftr.data.tocsc()[:,cell_idx].tocsr())
+    ps = []
+    for i, gene in enumerate(gxc_ftr.gene): 
+        if i%1000==0:
+            print(i)
+        gene_data = [np.ravel(np.array(dataset[i,:].todense())) for dataset in datasets]
+        try:
+            s, p = kruskal(*gene_data)
+        except:
+            p = 1
+        ps.append(p)
+    p_th = np.percentile(ps, hv_percentile)
+    print("Pvalue threshold p_th: {}".format(p_th))
+    hvgs = np.arange(len(ps))[ps<=p_th]
+
     gxc_hvftr = GC_matrix(
                           gxc_ftr.gene[hvgs],
                           gxc_ftr.cell,
@@ -149,10 +202,6 @@ def preproc_rna_tpm_based(gxc_raw, gene_lengths,
     print("Number of genes: {}".format(len(hvgs_idx)))
     return gxc_hvftr
 
-def preproc_methylation():
-    pass
-
-
 def preproc_rna_tpm_based_kruskal(metadata, cluster_col, gxc_raw, gene_lengths, 
                                   impute_gene_lengths=True, 
                                   sufficient_cell_coverage=0.01, 
@@ -173,16 +222,16 @@ def preproc_rna_tpm_based_kruskal(metadata, cluster_col, gxc_raw, gene_lengths,
     
     # CPM matrix
     print("Getting CPM..")
-    gxc_ftr = snmcseq_utils.sparse_logcpm(_gxc_tmp, mode='cpm', lib_size=lib_size)
+    gxc_ftr = snmcseq_utils.sparse_logcpm(_gxc_tmp, mode='logcpm', lib_size=lib_size)
     del _gxc_tmp
 
-    datasets = []
-    for clst, df_sub in metadata.groupby(cluster_col):
-        cell_idx = snmcseq_utils.get_index_from_array(gxc_raw.cell, df_sub.index.values)
-        datasets.append(gxc_raw.data.tocsc()[:,cell_idx].tocsr())
 
     print("Getting highly variable genes...")
     # select genes with KW test
+    datasets = []
+    for clst, df_sub in metadata.groupby(cluster_col):
+        cell_idx = snmcseq_utils.get_index_from_array(gxc_ftr.cell, df_sub.index.values)
+        datasets.append(gxc_ftr.data.tocsc()[:,cell_idx].tocsr())
     ps = []
     for i, gene in enumerate(gxc_ftr.gene): 
         if i%1000==0:
@@ -195,8 +244,8 @@ def preproc_rna_tpm_based_kruskal(metadata, cluster_col, gxc_raw, gene_lengths,
         ps.append(p)
     
     p_th = np.percentile(ps, hv_percentile)
-    print(p_th)
-    hvgs = np.arange(len(ps))[ps<p_th]
+    print("Pvalue threshold p_th: {}".format(p_th))
+    hvgs = np.arange(len(ps))[ps<=p_th]
     hvgs_genes = gxc_ftr.gene[hvgs]   
     del gxc_ftr
 
@@ -214,3 +263,44 @@ def preproc_rna_tpm_based_kruskal(metadata, cluster_col, gxc_raw, gene_lengths,
                           )
     print("Number of genes: {}".format(len(hvgs_idx)))
     return gxc_hvftr
+
+
+def preproc_methylation(
+    gxc_raw,
+    metadata,
+    global_value_col='mCH', 
+    base_call_cutoff=20, 
+    sufficient_coverage_fraction=0.95,
+    hv_percentile=30,
+    n_qcut=10,
+    ):
+    """
+    """
+    # select genes covered (20 counts) in > 95% of cells
+    n_gene, n_cell = gxc_raw.data['c'].shape
+    gene_cov = (gxc_raw.data['c'] > base_call_cutoff).sum(axis=1)
+    gene_cov = np.array(gene_cov).squeeze()/n_cell # fraction of cells covered
+    cond = gene_cov>sufficient_coverage_fraction
+    
+    # to full matrix
+    _gene = np.array(gxc_raw.gene)[cond]
+    df_mc = pd.DataFrame(
+        gxc_raw.data['mc'].tocsr()[cond, :].todense(),
+        index=_gene,
+        columns=gxc_raw.cell,
+    )
+    df_c = pd.DataFrame(
+        gxc_raw.data['c'].tocsr()[cond, :].todense(),
+        index=_gene,
+        columns=gxc_raw.cell,
+    )
+
+    # compute normalized methylation matrix (no need to further select genes) 
+    df_mcc = snmcseq_utils.get_mcc_lite_v2(df_c, df_mc, base_call_cutoff=base_call_cutoff)
+    df_nmcc = df_mcc.divide(metadata.loc[df_mcc.columns.values, global_value_col], axis=1)
+    # select highly variable genes 
+    hvgs = select_hvg_methylation(df_nmcc, percentile=hv_percentile, n_qcut=n_qcut)
+    # trim 
+    df_hvnmcc = df_nmcc.loc[hvgs] 
+
+    return df_hvnmcc
