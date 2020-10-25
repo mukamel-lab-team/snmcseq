@@ -3,9 +3,9 @@
 # Read in allc tables (with tabix open) and generate summarized mc levels within gene bodies
 """
 
-import pandas as pd
+# import pandas as pd
+# import numpy as np
 import tabix
-import numpy as np
 import os
 import argparse
 import time
@@ -18,7 +18,9 @@ from snmcseq_utils import create_logger
 def mc_gene_level_worker(allc_file, output_file,
     genebody=GENEBODY,
     species=SPECIES,
-    contexts=CONTEXTS):
+    contexts=CONTEXTS, 
+    chr_prefix=True,
+    ):
     """
     allc_file 
     genebody anntotation file:
@@ -46,7 +48,10 @@ def mc_gene_level_worker(allc_file, output_file,
         row_out = [row.gene_id]
 
         # try:
-        records = list(allc.query(row['chr'], row['start'], row['end']))
+        if chr_prefix: 
+            records = list(allc.query('chr'+str(row['chr']), row['start'], row['end']))
+        else:
+            records = list(allc.query(row['chr'], row['start'], row['end']))
         # except:
         #     print(row)
         #     raise ValueError
@@ -66,7 +71,9 @@ def mc_gene_level_worker(allc_file, output_file,
 def mc_gene_level(allc_file,
     contexts=CONTEXTS, 
     genebody=GENEBODY,
-    overwrite=False):
+    overwrite=False,
+    chr_prefix=True,
+    ):
 
     """
     set up conventions for output_file
@@ -115,6 +122,9 @@ def create_parser():
     parser.add_argument("-f", "--overwrite", 
         action='store_true',
         help="overwrite a file if it exists")
+    parser.add_argument("-chr", "--chr_prefix", 
+        action='store_true',
+        help="weather allc file has a chr as prefix")
     return parser
 
 
@@ -123,7 +133,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ti = time.time()
-    mc_gene_level(args.input_allc, contexts=args.contexts, genebody=args.genebody, overwrite=args.overwrite)
+    mc_gene_level(args.input_allc, contexts=args.contexts, genebody=args.genebody, overwrite=args.overwrite, chr_prefix=args.chr_prefix)
     tf = time.time()
     print("time: %s sec" % (tf-ti))
 

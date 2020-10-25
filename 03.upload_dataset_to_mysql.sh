@@ -1,34 +1,11 @@
 #!/bin/bash
 
 database='CEMBA'
-# datasets="CEMBA_4C_180417 \
-# CEMBA_4C_180419
-# "
 
-datasets="CEMBA_RS2_Pf10A \
-	CEMBA_RS2_Pf10C \
-	CEMBA_RS2_Pf11B \
-	CEMBA_RS2_Pf12B \
-	CEMBA_RS2_Pf3D \
-	CEMBA_RS2_Pf4A \
-	CEMBA_RS2_Pf5A \
-	CEMBA_RS2_Pf6B \
-	CEMBA_RS2_Pf7B \
-	CEMBA_RS2_Pf9A \
-	CEMBA_RS2_Pf9B \
-	CEMBA_RS2_Pf9D \
-	CEMBA_RS2_Pm10A \
-	CEMBA_RS2_Pm10C \
-	CEMBA_RS2_Pm11B \
-	CEMBA_RS2_Pm12B \
-	CEMBA_RS2_Pm3D \
-	CEMBA_RS2_Pm4A \
-	CEMBA_RS2_Pm5A \
-	CEMBA_RS2_Pm6B \
-	CEMBA_RS2_Pm7B \
-	CEMBA_RS2_Pm9A \
-	CEMBA_RS2_Pm9B \
-	CEMBA_RS2_Pm9D
-"
+# space delimited string
+samples="/cndd2/Public_Datasets/CEMBA_cndd2/snmCSeq/Datasets/to_process_upload2.txt"
+mapfile -t datasets < $samples
+datasets="${datasets[*]}"
+echo $datasets
 
 ./CEMBA_update_mysql.py -db $database -d $datasets

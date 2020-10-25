@@ -336,12 +336,16 @@ def core_scf_routine(mods_selected, features_selected, settings,
                               index=gxc_hvftrs[mod].gene, 
                               columns=gxc_hvftrs[mod].cell, 
                               ) 
-        npc = min(len(metas[mod]), 50)
+        npc = min(len(metas[mod]), npc)
         k_smooth = min(len(metas[mod]), 30)
-        mat_smoothed, mat_knn = smooth_in_modality(_df, _df, k=k_smooth, ka=5, npc=npc, 
-                                                     p=ps[settings[mod].mod_category], 
-                                                     drop_npc=drop_npcs[settings[mod].mod_category])
-        smoothed_features[mod] = mat_smoothed
+        ka = 5
+        if k_smooth >= 2*ka:
+            mat_smoothed, mat_knn = smooth_in_modality(_df, _df, k=k_smooth, ka=ka, npc=npc, 
+                                                         p=ps[settings[mod].mod_category], 
+                                                         drop_npc=drop_npcs[settings[mod].mod_category])
+            smoothed_features[mod] = mat_smoothed
+        else:
+            smoothed_features[mod] = _df
         logging.info("{}: {}".format(mod, time.time()-ti))
     # delete
     del gxc_hvftrs[mod]

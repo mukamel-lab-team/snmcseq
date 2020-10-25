@@ -144,13 +144,25 @@ def upload_to_cells(dataset, database=DATABASE,
     df_cells['global_mCA'] = df_res.loc[df_cells.cell_name, 'global_mCA'].values
     # add by Fangming 2/20/2019
     if 'RS2' not in dataset and 'SCI' not in dataset:
-        try: # test if it's in column 12
-            df_cells['NeuN'] = (df_cells['cell_name'].apply(lambda x: int(x.split('_')[-3][1:])!=12)   
-                                                     .replace(False, '-')
-                                                     .replace(True, '+')
-                                )
-        except:
-            raise ValueError("Cell names don't match with the convention (XXX_A12_XXX_XXX)")
+        # fix by Fangming 9/12/2019
+        cell_name_structure = df_cells['cell_name'].apply(lambda x: len(x.split('_'))).values
+        if np.all(cell_name_structure >= 4): # all in the old
+            try: # test if it's in column 12
+                df_cells['NeuN'] = (df_cells['cell_name'].apply(lambda x: int(x.split('_')[-3][1:])!=12)   
+                                                         .replace(False, '-')
+                                                         .replace(True, '+')
+                                    )
+            except:
+                raise ValueError("Cell names don't match with the convention (XXX_A12_XXX_XXX)")
+
+        elif np.all(cell_name_structure == 2): # all in the new
+            try: # test if it's in column 12
+                df_cells['NeuN'] = (df_cells['cell_name'].apply(lambda x: int(x.split('_')[0].split('-')[-1][1:])!=12)   
+                                                         .replace(False, '-')
+                                                         .replace(True, '+')
+                                    )
+            except:
+                raise ValueError("Cell names don't match with the convention (XXX_A12_XXX_XXX)")
     else:
         df_cells['NeuN'] = '+'
 

@@ -1,2 +1,5 @@
 #!/bin/bash
-./CEMBA_bin_allc_files.py -f -i /cndd/Public_Datasets/CEMBA/snmCSeq/Datasets/CEMBA_RS2_17Q4/allc/allc_180118_CEMBA_mm_P56_P63_RS2_180117_P1_180117_P2_D9_AD010.tsv.bgz
+
+./CEMBA_bin_allc_files.py -f \
+	-i /cndd2/Public_Datasets/CEMBA_cndd2/snmCSeq/Datasets/CEMBA_10A_190423/allc/allc_CEMBA190423-10A-3-CEMBA190423-10A-4-H9_ad012.tsv.bgz
+	

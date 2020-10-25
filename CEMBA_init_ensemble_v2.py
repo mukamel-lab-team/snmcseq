@@ -762,9 +762,22 @@ def init_ensemble_from_ensembles(ens_id, ens_name, ens_description,
         
         # read in files, count bins (10 min) 
         for i, idx in enumerate(ensid_list):
+            logging.info("get Ens{}".format(idx))
             # read in file
             file = file_pattern.format('Ens'+str(idx), context)
-            df = pd.read_table(file, dtype={'chr': str, 'bin': int})
+            if os.path.isfile(file):
+                try:
+                    df = pd.read_table(file, dtype={'chr': str, 'bin': int})
+                except:
+                    logging.info("Reading file {} or (.gz) incurs error, skipped this ensemble".format(file))
+            elif os.path.isfile(file+'.gz'):
+                try:
+                    df = pd.read_table(file+'.gz', dtype={'chr': str, 'bin': int})
+                except:
+                    logging.info("Reading file {} or (.gz) incurs error, skipped this ensemble".format(file))
+            else:
+                logging.info("File {} or (.gz) not found, skipped this ensemble".format(file))
+
             pos = list(zip(df['chr'], df['bin']))
             df.index = pos
             df = df.drop(['chr', 'bin'], axis=1)
@@ -796,10 +809,10 @@ def init_ensemble_from_ensembles(ens_id, ens_name, ens_description,
         fill_value = {col: means for col in df_all.columns}
         df_all.fillna(fill_value, inplace=True)
         
-        # record
-        nmcc_basename = 'binc_m{}_{}_nmcc_{}.tsv'.format(context, BIN_SIZE_FEATURE, ens)
-        output = os.path.join(ens_path, 'binc', nmcc_basename)
-        df_all.to_csv(output, sep="\t", header=True, index=True, na_rep='NA')
+        # # record (don't save these matrices)
+        # nmcc_basename = 'binc_m{}_{}_nmcc_{}.tsv'.format(context, BIN_SIZE_FEATURE, ens)
+        # output = os.path.join(ens_path, 'binc', nmcc_basename)
+        # df_all.to_csv(output, sep="\t", header=True, index=True, na_rep='NA')
         
         df_alls[context] = df_all
         
@@ -808,8 +821,9 @@ def init_ensemble_from_ensembles(ens_id, ens_name, ens_description,
     del data_bin_nmcc
 
     for combined_context in combined_contexts:
-        nmcc_basename = 'binc_m{}_{}_nmcc_{}.tsv'.format(combined_context, BIN_SIZE_FEATURE, ens)
-        output = os.path.join(ens_path, 'binc', nmcc_basename)
+        # nmcc_basename = 'binc_m{}_{}_nmcc_{}.tsv'.format(combined_context, BIN_SIZE_FEATURE, ens)
+        # output = os.path.join(ens_path, 'binc', nmcc_basename)
+        output = '' # don't save this mat
         dfs = [df_alls[context] for context in combined_context.split('m')]
         df_alls[combined_context] = CEMBA_preprocess_bins.normalize_and_concat_feature_sets(dfs, output_nmcc=output)
         logging.info("Done getting: {} bins".format(combined_context))

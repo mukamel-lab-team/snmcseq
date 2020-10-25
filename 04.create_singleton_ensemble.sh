@@ -37,35 +37,12 @@
 # 	./CEMBA_init_ensemble_v2.py --singleton -d $dataset -ei $ens_id -m $message -en $ens_name
 # done
 
-datasets="CEMBA_RS2_Pf10A \
-	CEMBA_RS2_Pf10C \
-	CEMBA_RS2_Pf11B \
-	CEMBA_RS2_Pf12B \
-	CEMBA_RS2_Pf3D \
-	CEMBA_RS2_Pf4A \
-	CEMBA_RS2_Pf5A \
-	CEMBA_RS2_Pf6B \
-	CEMBA_RS2_Pf7B \
-	CEMBA_RS2_Pf9A \
-	CEMBA_RS2_Pf9B \
-	CEMBA_RS2_Pf9D \
-	CEMBA_RS2_Pm10A \
-	CEMBA_RS2_Pm10C \
-	CEMBA_RS2_Pm11B \
-	CEMBA_RS2_Pm12B \
-	CEMBA_RS2_Pm3D \
-	CEMBA_RS2_Pm4A \
-	CEMBA_RS2_Pm5A \
-	CEMBA_RS2_Pm6B \
-	CEMBA_RS2_Pm7B \
-	CEMBA_RS2_Pm9A \
-	CEMBA_RS2_Pm9B \
-	CEMBA_RS2_Pm9D
-"
-
-ens_id=123 # LAST ensemble id!!! 
-for dataset in $datasets
-do
+# space delimited string
+samples="/cndd2/Public_Datasets/CEMBA_cndd2/snmCSeq/Datasets/to_process_upload2.txt"
+mapfile -t datasets < $samples
+                
+ens_id=252  # LAST ensemble id!!! 
+for dataset in ${datasets[@]}; do
 	ens_id=$((ens_id+1))
 	# echo $dataset $ens_id
 	message="Singleton ensemble of $dataset dataset."

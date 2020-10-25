@@ -10,7 +10,8 @@ def select_hvg(gbc_cpm, percentile=30, n_qcut=20, ylim=[], close_fig=True):
     vmr_cpm = (var_cpm+1)/(mean_cpm+1)
     
     # select top 30 percentile vmr from each first 9 deciles of CPM
-    _x = pd.qcut(pd.Series(mean_cpm), n_qcut, labels=False).to_frame('decile')
+    # duplicates = 'drop' 9/21/2019 Fangming
+    _x = pd.qcut(pd.Series(mean_cpm), n_qcut, labels=False, duplicates='drop').to_frame('decile')
     hvgs = []
     fig, ax = plt.subplots()
     for decile, _x_sub in _x.groupby('decile'):
@@ -44,7 +45,8 @@ def select_hvg_methylation(df_nmcc, percentile=30, n_qcut=20, close_fig=True):
     mean_nmcc = df_nmcc.mean(axis=1)
 
     # select top 30 percentile vmr from each first 9 deciles of NMCC 
-    _x = pd.qcut(mean_nmcc, n_qcut, labels=False).to_frame('decile')
+    # duplicates = 'drop' 9/21/2019 Fangming
+    _x = pd.qcut(mean_nmcc, n_qcut, labels=False, duplicates='drop').to_frame('decile')
     hvgs = []
     fig, ax = plt.subplots()
     for decile, _x_sub in _x.groupby('decile'):

@@ -8,63 +8,9 @@ from __init__ import *
 import subprocess as sp
 import os
 from scipy import sparse
-from matplotlib import cm
+from scipy import stats
+import collections
 
-def diag_matrix_old(X, rows=np.array([]), cols=np.array([])):
-    """Diagonalize a matrix as much as possible
-    """
-    di, dj = X.shape
-    new_X = X.copy()
-    new_rows = rows.copy() 
-    new_cols = cols.copy() 
-    
-    if new_rows.size == 0:
-        new_rows = np.arange(di)
-    if new_cols.size == 0:
-        new_cols = np.arange(dj)
-        
-    # 
-    for idx in range(min(di, dj)):
-        T = new_X[idx: , idx: ]
-        i, j = np.unravel_index(T.argmax(), T.shape)
-
-        # swap row idx, idx+i
-        tmp = new_X[idx, :].copy()
-        new_X[idx, :] = new_X[idx+i, :].copy() 
-        new_X[idx+i, :] = tmp 
-        
-        tmp = new_rows[idx]
-        new_rows[idx] = new_rows[idx+i]
-        new_rows[idx+i] = tmp
-
-        # swap col idx, idx+j
-        tmp = new_X[:, idx].copy()
-        new_X[:, idx] = new_X[:, idx+j].copy() 
-        new_X[:, idx+j] = tmp 
-        
-        tmp = new_cols[idx]
-        new_cols[idx] = new_cols[idx+j]
-        new_cols[idx+j] = tmp
-    # 
-    if di == dj:
-        pass
-    elif di < dj:
-        part_mat =  new_X[:, di:].copy()
-        new_ids = (part_mat.max(axis=0).argsort()[::-1])
-        tmp = part_mat[:, new_ids].copy()
-        new_X[:, di:] = tmp 
-        
-        new_cols[di:] = new_cols[di+new_ids].copy()
-        
-    elif di > dj:
-        part_mat =  new_X[dj:, :].copy()
-        new_ids = (part_mat.max(axis=1).argsort()[::-1])
-        tmp = part_mat[new_ids, :].copy()
-        new_X[dj:, :] = tmp 
-        
-        new_rows[dj:] = new_rows[dj+new_ids].copy()
-        
-    return new_X, new_rows, new_cols 
 
 def diag_matrix(X, rows=np.array([]), cols=np.array([]), threshold=None):
     """Diagonalize a matrix as much as possible
@@ -130,7 +76,7 @@ def diag_matrix(X, rows=np.array([]), cols=np.array([]), threshold=None):
         for col in sorted_col_idx:
             col_dict[col] = [col]
         for col, key in zip(free_col_idx, linked_rowcol_idx): 
-            if key < dm:
+            if key in col_dict.keys():
                 col_dict[key] = col_dict[key] + [col]
             else:
                 col_dict[key] = [col]
@@ -223,9 +169,11 @@ def partition_network(binary_clst, row_index=np.array([]), col_index=np.array([]
                         groups[groupj][row_name].add(i)
     return pd.DataFrame(groups)
 
-def get_grad_colors(n, cmap=cm.copper):
+def get_grad_colors(n, cmap='copper'):
     """Generate n colors from a given colormap (a matplotlib.cm)
     """
+    from matplotlib import cm
+    cmap = cm.get_cmap(cmap)
     return [cmap(int(i)) for i in np.linspace(0, 255, n)] 
 
 def logcpm(counts):
@@ -372,7 +320,7 @@ def slicecode_to_region(slicecode,
     """
     assert len(slicecode) < 4
     slicecode = slicecode.upper()
-    df = pd.read_table(reference_table, index_col=slicecode_col)
+    df = pd.read_csv(reference_table, sep="\t", index_col=slicecode_col)
     try:
         brain_region = df.loc[slicecode, brain_region_col]
     except:
@@ -388,14 +336,13 @@ def injcode_to_region(injcode,
     """
     assert len(injcode) == 1 
     injcode = injcode.upper()
-    df = pd.read_table(reference_table, index_col=injcode_col)
+    df = pd.read_csv(reference_table, sep="\t", index_col=injcode_col)
     try:
         brain_region = df.loc[injcode, brain_region_col]
     except:
         raise ValueError("Brain region not found!")
+
     return brain_region
-
-
 
 def get_mCH_contexts():
     contexts = []
@@ -415,12 +362,10 @@ def get_expanded_context(context):
         contexts = ["CAA","CAC","CAG","CAT","CAN"]
     elif context == "CT":
         contexts = ["CTA","CTC","CTG","CTT","CTN"]
-    elif context == "CAG":
-        contexts = ["CAG"]
-    elif context == "CAC":
-        contexts = ["CAC"]
-    else:
-        raise ValueError('Invalid context.')
+    else: 
+        contexts = [context]
+    # else:
+    #    raise ValueError('Invalid context.')
     return contexts
 
 def get_chromosomes(species, include_x=True, include_chr=False):
@@ -457,7 +402,7 @@ def get_chrom_lengths_mouse(
     genome_size_fname=GENOME_SIZE_FILE_MOUSE):  
     """
     """
-    srs_gsize = pd.read_table(genome_size_fname, header=None, index_col=0, squeeze=True)
+    srs_gsize = pd.read_csv(genome_size_fname, sep="\t", header=None, index_col=0, squeeze=True)
     srs_gsize = srs_gsize.loc[get_mouse_chromosomes(include_chr=True)]
     # remove leading 'chr'
     srs_gsize.index = [idx[len('chr'):] for idx in srs_gsize.index]
@@ -468,7 +413,7 @@ def get_chrom_lengths_human(
     genome_size_fname=GENOME_SIZE_FILE_HUMAN):  
     """
     """
-    srs_gsize = pd.read_table(genome_size_fname, header=None, index_col=0, squeeze=True)
+    srs_gsize = pd.read_csv(genome_size_fname, sep="\t", header=None, index_col=0, squeeze=True)
     srs_gsize = srs_gsize.loc[get_human_chromosomes(include_chr=True)]
     # remove leading 'chr'
     srs_gsize.index = [idx[len('chr'):] for idx in srs_gsize.index]
@@ -496,23 +441,30 @@ def tabix_summary(records, context="CH", cap=0):
     return mc, c
 
 
-def read_allc_CEMBA(fname, pindex=True, compression='gzip', **kwargs):
+def read_allc_CEMBA(fname, pindex=True, compression='gzip', remove_chr=True, **kwargs):
     """
     """
     if pindex:
-        df = pd.read_table(fname, 
+        df = pd.read_csv(fname, 
+            sep="\t", 
             compression=compression,
             header=None, 
             index_col=['chr', 'pos'],
             dtype={'chr': str, 'pos': np.int, 'mc': np.int, 'c': np.int, 'methylated': np.int},
             names=['chr','pos','strand','context','mc','c','methylated'], **kwargs)
     else:
-        df = pd.read_table(fname, 
+        df = pd.read_csv(fname, 
+            sep="\t", 
             compression=compression,
             header=None, 
             # index_col=['chr', 'pos'],
             dtype={'chr': str, 'pos': np.int, 'mc': np.int, 'c': np.int, 'methylated': np.int},
             names=['chr','pos','strand','context','mc','c','methylated'], **kwargs)
+        
+    # remove chr
+    if remove_chr:
+        if df.iloc[0,0].startswith('chr'):
+            df['chr'] = df['chr'].apply(lambda x: x[3:]) 
     return df
 
 def read_genebody(fname, index=True, compression='infer', contexts=CONTEXTS, **kwargs):
@@ -524,14 +476,16 @@ def read_genebody(fname, index=True, compression='infer', contexts=CONTEXTS, **k
         dtype['m'+context] = np.int
 
     if index:
-        df = pd.read_table(fname, 
+        df = pd.read_csv(fname, 
+            sep="\t", 
             compression=compression,
             index_col=['gene_id'],
             dtype=dtype,
             **kwargs
             )
     else:
-        df = pd.read_table(fname, 
+        df = pd.read_csv(fname, 
+            sep="\t", 
             compression=compression,
             # index_col=['gene_id'],
             dtype=dtype,
@@ -548,14 +502,16 @@ def read_binc(fname, index=True, compression='infer', contexts=CONTEXTS, **kwarg
         dtype['m'+context] = np.int
 
     if index:
-        df = pd.read_table(fname, 
+        df = pd.read_csv(fname, 
+            sep="\t", 
             compression=compression,
             index_col=['chr', 'bin'],
             dtype=dtype,
             **kwargs
             )
     else:
-        df = pd.read_table(fname, 
+        df = pd.read_csv(fname, 
+            sep="\t", 
             compression=compression,
             # index_col=['gene_id'],
             dtype=dtype,
@@ -1078,7 +1034,8 @@ def get_cluster_mc_c(ens, context, genome_regions='bin',
         else:
             logging.info("Found bin*cell matrix in {}".format(input_f))
             # binc
-            df_input = pd.read_table(input_f, 
+            df_input = pd.read_csv(input_f, 
+                sep="\t", 
                 index_col=['chr', 'bin'], dtype={'chr': object}, compression='gzip')
         
     elif genome_regions == 'genebody':
@@ -1096,7 +1053,8 @@ def get_cluster_mc_c(ens, context, genome_regions='bin',
             df_input = dfs_gb[contexts.index(context)]
         else:
             logging.info("Found gene*cell matrix in {}".format(input_f))
-            df_input = pd.read_table(input_f, 
+            df_input = pd.read_csv(input_f, 
+                sep="\t", 
                 index_col=['gene_id'], compression='gzip')
 
     else: 
@@ -1143,7 +1101,7 @@ def plot_tsne_values_ax(df, ax, tx='tsne_x', ty='tsne_y', tc='mCH',
         if cbar_ax:
             clb = plt.colorbar(im, cax=cbar_ax, shrink=0.4)
         else:
-            clb = plt.colorbar(im, cax=ax, shrink=0.4)
+            clb = plt.colorbar(im, cax=ax, shrink=1)
         if cbar_label:
             clb.set_label(cbar_label, rotation=270, labelpad=10)
 
@@ -1167,7 +1125,7 @@ def plot_tsne_values_ax(df, ax, tx='tsne_x', ty='tsne_y', tc='mCH',
     else:
         pass
 
-    return 
+    return im  
 
 
 def get_mcc(df, base_call_cutoff=100, sufficient_coverage_fraction=1, suffix=True, fillna=True):
@@ -1237,7 +1195,9 @@ def get_mcc_lite(mc_table, c_table, base_call_cutoff=100, sufficient_coverage_fr
     return df_mcc.values, df_mcc.index.values
 
 def get_mcc_lite_v2(df_c, df_mc, base_call_cutoff):
-    """
+    """get mcc; 
+    return imputed values if df_c < base_call_cutoff
+    return np.nan if df_c < base_call_cutoff for all samples
     """
     # get mcc matrix with kept bins and nan values for low coverage sites
     df_c_nan = df_c.copy()
@@ -1249,6 +1209,36 @@ def get_mcc_lite_v2(df_c, df_mc, base_call_cutoff):
     means = df_mcc.mean(axis=1)
     fill_value = pd.DataFrame({col: means for col in df_mcc.columns})
     df_mcc.fillna(fill_value, inplace=True)
+    
+    return df_mcc
+
+def get_mcc_lite_v3(df_c, df_mc, base_call_cutoff):
+    """get mcc; 
+    return np.nan if df_c < base_call_cutoff
+    """
+    # get mcc matrix with kept bins and nan values for low coverage sites
+    df_c_nan = df_c.copy()
+    df_c_nan[df_c < base_call_cutoff] = np.nan
+    df_mcc = df_mc/df_c_nan
+    return df_mcc
+
+def get_mcc_lite_v4(df_c, df_mc, base_call_cutoff, sufficient_coverage_fraction=1, fillna=True):
+    """
+    """
+    # a gene is sufficiently covered in % of cells 
+    condition = (df_c > base_call_cutoff).sum(axis=1) >= sufficient_coverage_fraction*(df_c.shape[1]) 
+
+    # get mcc matrix with kept bins and nan values for low coverage sites
+    df_c_nan = df_c.copy()
+    df_c_nan[df_c < base_call_cutoff] = np.nan
+    df_mcc = df_mc.loc[condition]/df_c_nan.loc[condition]
+
+    # imputation (missing value -> mean value of all cells)
+    if fillna:
+        logging.info('Imputing data... (No effect if sufficient_coverage_fraction=1)')
+        means = df_mcc.mean(axis=1)
+        fill_value = pd.DataFrame({col: means for col in df_mcc.columns})
+        df_mcc.fillna(fill_value, inplace=True)
     
     return df_mcc
 
@@ -1305,7 +1295,8 @@ def pull_genebody_mc_c(ens, context, database=DATABASE):
         df_input = dfs_gb[contexts.index(context)]
     else:
         logging.info("Found gene*cell matrix in {}".format(input_f))
-        df_input = pd.read_table(input_f, 
+        df_input = pd.read_csv(input_f, 
+            sep="\t", 
             index_col=['gene_id'], compression='gzip')
 
     logging.info("Output shape: {}".format(df_input.shape))
@@ -1332,6 +1323,87 @@ def spearman_corrcoef(X, Y):
     """return spearman correlation matrix for each pair of rows of X and Y
     """
     return np.corrcoef(rank_rows(X), rank_rows(Y))
+
+def spearmanr_paired_rows(X, Y):
+    from scipy import stats
+    
+    X = np.array(X)
+    Y = np.array(Y)
+    corrs = []
+    ps = []
+    for x, y in zip(X, Y):
+        r, p = stats.spearmanr(x, y)
+        corrs.append(r)
+    return np.array(corrs), np.array(ps)
+
+def spearmanr_paired_rows_fast(X, Y, offset=0):
+    """low memory compared to fast2
+    """
+    # rank
+    X = rank_rows(X)
+    Y = rank_rows(Y)
+    # zscore
+    X = (X - X.mean(axis=1).reshape(-1,1))/(X.std(axis=1).reshape(-1,1)+offset)
+    Y = (Y - Y.mean(axis=1).reshape(-1,1))/(Y.std(axis=1).reshape(-1,1)+offset)
+    # corrs
+    corrs = (X*Y).mean(axis=1)
+    return corrs
+
+def spearmanr_paired_rows_fast2(X, Y, offset=0, nan_to_num=False):
+    """
+    """
+    # rank
+    X = rank_rows(X)
+    Y = rank_rows(Y)
+    # zscore
+    xz = stats.zscore(X, axis=1, nan_policy='propagate', ddof=0)
+    yz = stats.zscore(Y, axis=1, nan_policy='propagate', ddof=0)
+    xy_cc = np.nanmean(xz*yz, axis=1)
+
+    if nan_to_num:
+        xy_cc = np.nan_to_num(xy_cc) # turn np.nan into zero
+    return xy_cc
+
+def pearsonr_paired_rows_fast(X, Y, offset=0):
+    """low memory compared to fast2
+    """
+    X = np.array(X)
+    Y = np.array(Y)
+    # zscore
+    X = (X - X.mean(axis=1).reshape(-1,1))/(X.std(axis=1).reshape(-1,1)+offset)
+    Y = (Y - Y.mean(axis=1).reshape(-1,1))/(Y.std(axis=1).reshape(-1,1)+offset)
+    # corrs
+    corrs = (X*Y).mean(axis=1)
+    return corrs
+
+def pearsonr_paired_rows_fast2(X, Y, offset=0, nan_to_num=False):
+    """
+    """
+    X = np.array(X)
+    Y = np.array(Y)
+    # zscore
+    xz = stats.zscore(X, axis=1, nan_policy='propagate', ddof=0)
+    yz = stats.zscore(Y, axis=1, nan_policy='propagate', ddof=0)
+    xy_cc = np.nanmean(xz*yz, axis=1)
+
+    if nan_to_num:
+        xy_cc = np.nan_to_num(xy_cc) # turn np.nan into zero
+    return xy_cc
+
+def shuff_spearmanr_paired_rows_fast(jshuff, X, Y, shuff_col=True, verbose=False):
+    """
+    """
+    seed = int(time.time()*1e7+jshuff)%100
+    if verbose:
+        print(jshuff)
+    
+    m, n = X.shape
+    if shuff_col:
+        return snmcseq_utils.spearmanr_paired_rows_fast(X[:,np.random.RandomState(seed).permutation(n)], 
+                                                        Y)
+    else:
+        return snmcseq_utils.spearmanr_paired_rows_fast(X[np.random.RandomState(seed).permutation(m),:], 
+                                                        Y)
 
 def get_index_from_array(arr, inqs, na_rep=-1):
     """Get index of array
@@ -1412,8 +1484,8 @@ def save_gc_matrix_methylation(gc_matrix, f_gene, f_cell, f_mat_mc, f_mat_c):
     with open(f_cell, 'w') as f:
         f.write('\n'.join(gc_matrix.cell)+'\n') 
 
-def import_single_textcol(fname, header=None):
-    return pd.read_csv(fname, header=header, sep='\t')[0].values
+def import_single_textcol(fname, header=None, col=0):
+    return pd.read_csv(fname, header=header, sep='\t')[col].values
 
 def export_single_textcol(fname, array):
     with open(fname, 'w') as f:
@@ -1449,7 +1521,38 @@ def gen_annoj_url(assembly, position, bases, prefix=ANNOJ_URL_PREFIX, file=ANNOJ
                                                             'bases='+str(bases)])
     return url
 
+def combine_legends(axs_flat):
+    """Combine legends from subplots (axs.flat)
+    """
+    handles_all = [] 
+    labels_all = []
+    for ax in axs_flat:
+        handles, labels = ax.get_legend_handles_labels()
+        handles_all.append(handles)
+        labels_all.append(labels)
+    
+    return np.hstack(handles_all), np.hstack(labels_all)
 
+def dedup_legends(handles, labels,):
+    """Dedup legends by handle or by label
+    """
+    from collections import OrderedDict
+    import matplotlib.pyplot as plt
+
+    by_label = OrderedDict(zip(labels, handles))
+    return by_label.values(), by_label.keys() 
+
+#
+def get_breakpos_array(array):
+    """Find break points of an array (break at the non-repeated sections)
+    """
+    pos = []
+    for i in range(len(array)):
+        if i+1 < len(array) and array[i] != array[i+1]:
+            pos.append(i+1)
+    return pos
+    
+# old
 def nondup_legends(ax='', **kwargs):
     """Assuming plt (matplotlib.pyplot) is imported
     """
@@ -1492,8 +1595,8 @@ def vcorrcoef(X,Y):
     r = r_num/r_den
     return r
 
-def zscore(x, offset=1e-7):
-    return (x - np.mean(x))/(np.std(x) + offset)
+def zscore(x, offset=1e-7, ddof=1):
+    return (x - np.mean(x))/(np.std(x, ddof=ddof) + offset)
 
 
 def clst_umap_pipe_lite(pcs, cells_all, 
@@ -1528,10 +1631,171 @@ def clst_umap_pipe_lite(pcs, cells_all,
     else:
         return df_clst
 
-def gen_cdf(array, ax, **kwargs):
-    """
+def gen_cdf(array, ax, x_range=[], n_points=1000, show=True, flip=False, **kwargs):
+    """ returns x and y values
     """
     x = np.sort(array)
     y = np.arange(len(array))/len(array)
-    ax.plot(np.sort(array), np.arange(len(array))/len(array), **kwargs)
-    return x, y 
+    if flip:
+        # x = x[::-1]
+        y = 1 - y
+
+    if not x_range:
+        if show:
+            ax.plot(x, y, **kwargs)
+        return x, y 
+    else:
+        start, end = x_range
+        xbins = np.linspace(start, end, n_points)
+        ybins = np.interp(xbins, x, y)
+        if show:
+            ax.plot(xbins, ybins, **kwargs)
+        return xbins, ybins 
+
+def savefig(fig, path):
+    """
+    """
+    fig.savefig(path, bbox_inches='tight', dpi=300)
+    return 
+
+def setup_googlesheet():
+    """start google sheet; the sheet needs to be shared with 
+    read-google-sheets@mindful-oath-273102.iam.gserviceaccount.com 
+    """
+    import gspread as gs
+    from oauth2client.service_account import ServiceAccountCredentials
+    scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_name('/cndd2/fangming/software/mindful-oath-273102-1127dfc3e264.json', scope)
+    client = gs.authorize(creds)
+    
+    return client
+
+def gsheet_to_df(gsheet):
+    """Assuming the gsheet has a header
+    """
+    data = gsheet.get_all_values()
+    headers = data.pop(0)
+    df = pd.DataFrame(data, columns=headers)
+
+    return df
+
+def set_plot_lims(ax, x, y, 
+    xlo_p=1, xhi_p=99,
+    ylo_p=1, yhi_p=99,
+    ):
+    """set plot limit by percentiles
+    """
+    x = np.array(x)
+    y = np.array(y)
+
+    _xmax = np.percentile(x, xhi_p)
+    _ymax = np.percentile(y, yhi_p)
+    _xmin = np.percentile(x, xlo_p)
+    _ymin = np.percentile(y, ylo_p)
+    
+    ax.set_xlim([_xmin, _xmax])
+    ax.set_ylim([_ymin, _ymax])
+
+    return ax 
+
+def scatter_density(x, y, p=1):
+    """
+    """
+    from scipy.stats import gaussian_kde
+    
+    n = len(x)
+    assert n == len(y)
+    if p < 1:
+        selected = np.random.rand(n) < p
+        _x = x[selected]
+        _y = y[selected]
+    else:
+        _x = x
+        _y = y
+        
+    _xy = np.vstack([_x, _y])
+    xy = np.vstack([x, y])
+    z = gaussian_kde(_xy)(xy)
+    return z 
+
+
+def merge_bins(df, bin_size=10*BIN_SIZE, double_xsize=True, species=SPECIES, 
+               output_file=None):
+    """
+    Merge bins of BIN_SIZE to n*BIN_SIZE, where n has to be an integer.
+    The last incomplete bin for each chromosome is removed.
+   
+    df has columns: ['chr', 'bin'] (0 based) and [$sample_mc, $sample_c, ....]
+    
+    return binc file (or choose to save to file)
+    """ 
+    logging.info("Merging bins to bin_size={}, double_xsize={}".format(bin_size, double_xsize))
+    ti = time.time()
+    
+    chromosomes = get_chromosomes(species)
+    chrs_all = np.asarray([])
+    bins_all = np.asarray([])
+    mc_c_all = collections.OrderedDict()
+    
+    for col in df.columns:
+        if col not in ['chr', 'bin']:
+            mc_c_all[col] = np.array([])
+        
+    for chromosome, df_sub in df.groupby('chr'):
+        if not isinstance(chromosome, str):
+            raise ValueError("right type!!!! - it should be a string like '1' instead of 1")
+        # here -1 is very important!
+        if species == 'mouse':
+            bins = (np.arange(0, get_chrom_lengths_mouse()[chromosome], bin_size) - 1)
+        elif species == 'human': 
+            bins = (np.arange(0, get_chrom_lengths_human()[chromosome], bin_size) - 1)
+        else:
+            raise ValueError("species has to be mouse or human")
+
+        if double_xsize and chromosome == 'X':
+            # here -1 is very important!
+            if species == 'mouse':
+                bins = (np.arange(0, get_chrom_lengths_mouse()[chromosome], 2*bin_size) - 1)
+            elif species == 'human': 
+                bins = (np.arange(0, get_chrom_lengths_human()[chromosome], 2*bin_size) - 1)
+            else:
+                raise ValueError("species has to be mouse or human")
+
+        
+        res = df_sub.groupby(pd.cut(df_sub['bin'], bins)).sum().fillna(0)
+        
+        chrs = np.asarray([chromosome]*(len(bins)-1))
+        bins_all = np.concatenate([bins_all, (bins+1)[:-1]]) # +1 to restore 0-based
+        chrs_all = np.concatenate([chrs_all, chrs])
+        
+        for col in df.columns:
+            if col not in ['chr', 'bin']:
+                mc_c_all[col] = np.concatenate([mc_c_all[col], res[col]])
+        
+    # binc
+    columns = ['chr', 'bin'] + [key for key in mc_c_all]
+    binc = pd.DataFrame(columns=columns)
+    binc['chr'] = chrs_all.astype(object)
+    binc['bin'] = bins_all.astype(int)
+    for key, value in mc_c_all.items():
+        binc[key] = value.astype(int) 
+
+    # set chr bin as index
+    binc = binc.set_index(['chr', 'bin'])
+    
+    if output_file:
+        binc.to_csv(output_file, na_rep='NA', sep="\t", header=True, index=True)
+        # compress and name them .bgz
+        try:
+            sp.run("bgzip -f {}".format(output_file), shell=True)
+            sp.run("mv {}.gz {}.bgz".format(output_file, output_file), shell=True)
+        except:
+            sp.call("bgzip -f {}".format(output_file), shell=True)
+            sp.call("mv {}.gz {}.bgz".format(output_file, output_file), shell=True)
+
+        logging.info("Done with binc processing, saving results to: {}.bgz".format(output_file))
+
+    tf = time.time()
+    logging.info("Done with binc processing!")
+    logging.info("Time spent on pulling binc information: {} sec".format(tf - ti))
+    return binc

@@ -23,7 +23,9 @@ def run_mc_gene_level(allc_dirs,
 	genebody=GENEBODY, 
 	convention='CEMBA',
 	overwrite=False,
-	nprocs=1):
+	nprocs=1,
+	chr_prefix=True,
+	):
 	"""
 	run mc_gene_level in parallel
 	"""
@@ -51,6 +53,7 @@ def run_mc_gene_level(allc_dirs,
 										'genebody': genebody,
 										# 'convention': convention,
 										'overwrite': overwrite,
+										'chr_prefix': chr_prefix,
 										}) 
 					for allc_file in allc_files]
 					
@@ -85,6 +88,9 @@ def create_parser():
     	type=int, 
     	default=1,
     	help="number of processes")
+    parser.add_argument("-chr", "--chr_prefix", 
+        action='store_true',
+        help="weather allc file has a chr as prefix")
 
     return parser
 
@@ -100,5 +106,7 @@ if __name__ == '__main__':
 		genebody=args.genebody, 
 		convention='CEMBA',
 		overwrite=args.overwrite,
-		nprocs=args.nprocs)
+		nprocs=args.nprocs, 
+		chr_prefix=args.chr_prefix,
+		)
 

@@ -25,6 +25,7 @@ cap = 0 # no counts cap
 nprocs = 4
 compress = True
 bed_file_name_column = False
+species = 'human'
 
 run_mc_region_level(allc_files, output_files, 
 	bed_file, 
@@ -32,5 +33,6 @@ run_mc_region_level(allc_files, output_files,
 	contexts=contexts,
 	compress=compress, 
 	cap=cap,
+	species=species,
 	nprocs=nprocs)
 

@@ -27,122 +27,35 @@
 # 						 --ensemble_datasets $ens_datasets
 
 
-ens_id=151
-ens_name='CEMBA_MOp_all'
-message="2C 3C 4B 5D"
-ens_datasets="CEMBA_2C_180409 \
-CEMBA_2C_180410 \
-CEMBA_3C_171206 \
-CEMBA_3C_171207 \
-CEMBA_4B_171212 \
-CEMBA_4B_171213 \
-CEMBA_5D_180605 \
-CEMBA_5D_180612
-"
-			
-./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
-						 --ensemble_datasets $ens_datasets
-
-
-# ens_id=118
-# ens_name='CEMBA_2C'
-# message="2C"
-# ens_datasets="CEMBA_2C_180409 \
-# CEMBA_2C_180410
+# ens_id=154
+# ens_name='CEMBA_11B'
+# message="11B"
+# ens_datasets="CEMBA_11B_190314 \
+# CEMBA_11B_190325
 # "
 # 			
 # ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
-# 						 --ensemble_datasets $ens_datasets
-# 
-# 
-# ens_id=119
-# ens_name='CEMBA_3B'
-# message="3B"
-# ens_datasets="CEMBA_3B_180312 \
-# CEMBA_3B_180501
-# "
-# 			
-# ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
-# 						 --ensemble_datasets $ens_datasets
-# 
-# 
-# ens_id=120
-# ens_name='CEMBA_3D'
-# message="3D"
-# ens_datasets="CEMBA_3D_180412 \
-# CEMBA_3D_180416
-# "
-# 			
-# ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
-# 						 --ensemble_datasets $ens_datasets
-# 
-# ens_id=121
-# ens_name='CEMBA_5B'
-# message="5B"
-# ens_datasets="CEMBA_5B_180514 \
-# CEMBA_5B_180529
-# "
-# 			
-# ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
-# 						 --ensemble_datasets $ens_datasets
-# 
-# 
-# ens_id=122
-# ens_name='CEMBA_5D'
-# message="5D"
-# ens_datasets="CEMBA_5D_180605 \
-# CEMBA_5D_180612
-# "
-# 			
-# ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
-# 						 --ensemble_datasets $ens_datasets
-# 
-# 
-# ens_id=123
-# ens_name='CEMBA_7B'
-# message="7B"
-# ens_datasets="CEMBA_7B_180423 \
-# CEMBA_7B_180424
-# "
-# 			
-# ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
-						 --ensemble_datasets $ens_datasets
+#						 --ensemble_datasets $ens_datasets
 
 
+declare -a ens_regions
+ens_regions=(11F 12B 3F 4G 5A 5C 5E 5F 5G 5H 5J 6A 6B 6C 6D 8B 9B 9D 9H 9J)
+
+ens_id=197 # last ens_id !!!
+for ens_region in ${ens_regions[@]}
+do
+	ens_id=$((ens_id+1))
+	ens_name="CEMBA_${ens_region}"
+	message="A combined ensemble with 2 datasets in $ens_name"
+	ens_sql="SELECT cell_name FROM cells WHERE dataset LIKE \"${ens_name}_%\""
+	echo $ens_id $ens_name
+	echo $message
+	echo $ens_sql
+	./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
+				      --ensemble_sql $ens_sql
+done
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ens_id=31
-# ens_name='CEMBA_RS2_MOp'
-# message="This is an ensemble including all current RS2 datasets in MOp. (12 in total)"
-# ens_datasets="CEMBA_RS2_Bm3C_rep1 \
-# 	CEMBA_RS2_Bm3C_rep2 \
-# 	CEMBA_RS2_Bm4B_rep1 \
-# 	CEMBA_RS2_Bm4B_rep2 \
-# 	CEMBA_RS2_Pf3C \
-# 	CEMBA_RS2_Pf4B \
-# 	CEMBA_RS2_Pm3C \
-# 	CEMBA_RS2_Pm4B \
-# 	CEMBA_RS2_Tf3C \
-# 	CEMBA_RS2_Tf4B \
-# 	CEMBA_RS2_Tm3C \
-# 	CEMBA_RS2_Tm4B" 
-# ./CEMBA_init_ensemble_v2.py -ei $ens_id -en $ens_name -m $message \
-# 						 --ensemble_datasets $ens_datasets
 
 # ens_id=32
 # ens_name='CEMBA_MOp_with_RS2'

@@ -15,7 +15,7 @@ import argparse
 import snmcseq_utils
 from snmcseq_utils import create_logger
 
-def mc_region_level_worker(allc_file, output_file, bed_file, bed_file_name_column=False,
+def mc_region_level_worker(allc_file, output_file, bed_file, chr_prefix=False, bed_file_name_column=False,
     contexts=CONTEXTS, compress=True, cap=2, species=SPECIES):
     """
     allc_file 
@@ -55,7 +55,11 @@ def mc_region_level_worker(allc_file, output_file, bed_file, bed_file_name_colum
         else:
             row_out = [str(row.chr), str(row.start), str(row.end)]
 
-        records = list(allc.query(row.chr, row.start, row.end))
+        if chr_prefix: 
+            records = list(allc.query('chr'+str(row['chr']), row['start'], row['end']))
+        else:
+            records = list(allc.query(row['chr'], row['start'], row['end']))
+
         for context in contexts:
             mc, c = snmcseq_utils.tabix_summary(records, context=context, cap=cap) # remove sites with total_c > 2
             row_out += [str(mc), str(c)] 

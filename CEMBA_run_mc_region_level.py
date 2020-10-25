@@ -17,10 +17,12 @@ from snmcseq_utils import create_logger
 
 def run_mc_region_level(allc_files, output_files, 
 	bed_file, 
+	chr_prefix=False,
 	bed_file_name_column=False, 
 	contexts=CONTEXTS,
 	compress=True, 
 	cap=2,
+	species=SPECIES,
 	nprocs=1):
 	"""
 	run mc_gene_level in parallel
@@ -40,10 +42,13 @@ def run_mc_region_level(allc_files, output_files,
 	pool = mp.Pool(processes=nprocs)
 	pool_results = [pool.apply_async(mc_region_level_worker, 
 									args=(allc_file, output_file, bed_file), 
-									kwds={'contexts': contexts, 
+									kwds={
+										'chr_prefix': chr_prefix,
+										'bed_file_name_column': bed_file_name_column,
+										'contexts': contexts, 
 										'compress': compress,
 										'cap': cap,
-										'bed_file_name_column': bed_file_name_column,
+										'species': species,
 										}) 
 					for allc_file, output_file in zip(allc_files, output_files)]
 					
@@ -107,6 +112,9 @@ def create_parser():
     parser.add_argument("-b", "--bed_file", 
     	required=True,
     	help="bed file")
+    parser.add_argument("-s", "--species", 
+    	default='mouse',
+    	help="human or mouse")
     parser.add_argument("-c", "--contexts", 
     	nargs='+', 
     	default=CONTEXTS, 
@@ -138,6 +146,7 @@ if __name__ == '__main__':
 	contexts = args.contexts
 	nprocs = args.nprocs
 	cap = args.cap
+	species =args.species
 
 
 	if '/' in output_dirname:
@@ -166,7 +175,7 @@ if __name__ == '__main__':
 
 	for dataset in datasets:
 		res = run_mc_region_level_CEMBA(dataset, bed_file, output_dirname, 
-			contexts=CONTEXTS, compress=True, cap=cap, nprocs=nprocs)
+			contexts=CONTEXTS, compress=True, cap=cap, species=species, nprocs=nprocs)
 
 	# run_mc_region_level(args.input_allc_files, args.output_files, args.bed_file,
 	# 	contexts=args.contexts,

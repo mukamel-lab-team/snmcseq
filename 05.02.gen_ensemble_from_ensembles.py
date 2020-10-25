@@ -8,16 +8,16 @@ if __name__ == '__main__':
 
     log = snmcseq_utils.create_logger()
 
-    f = '/cndd/fangming/CEMBA/data/19q2_ens.txt'
+    f = '/cndd/fangming/CEMBA/data/liu_etal_2020_ens.txt'
     df = pd.read_csv(f, sep='\t', header=None).values
     datasets = df[:, 0]
     ensid_list = df[:, 1]
 
 
-    ens_id = 150
-    ens_name = 'CEMBA_19Q2'
-    ens_description = 'all CEMBA samples collected so far on cndd portal by 04/02/2019'
-    ensid_list = sorted(ensid_list)  
+    ens_id = 265
+    ens_name = 'CEMBA_RS1_first_publication'
+    ens_description = 'All CEMBA samples in Liu et al. 2020'
+    ensid_list = sorted(ensid_list) #[:2] # test 
     print(ensid_list)
 
     CEMBA_init_ensemble_v2.init_ensemble_from_ensembles(ens_id, ens_name, ens_description, 
